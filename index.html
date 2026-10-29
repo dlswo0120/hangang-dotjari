@@ -1,0 +1,1573 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="말없이 같이 앉아 강을 보는 곳, 한강 돗자리">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}[hidden]{display:none!important}</style>
+<title>한강 돗자리</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Gowun+Dodum&display=swap">
+<style>
+/* Layout: full-bleed 3D river scene, glass pills at the corners, joystick bottom-left, context actions bottom-right. Single dark look over the scene. */
+:root{
+  --ink:#f4efe6;
+  --ink-soft:rgba(244,239,230,.68);
+  --glass:rgba(20,26,34,.52);
+  --glass-strong:rgba(18,23,30,.82);
+  --line:rgba(244,239,230,.16);
+  --accent:#f1b26b;
+  --accent-ink:#2a1a0b;
+  --duck:#ffd54a;
+  --display:"Gowun Batang","Noto Serif KR",serif;
+  --body:"Gowun Dodum","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%;overflow:hidden}
+body{background:#121820;color:var(--ink);font-family:var(--body);font-size:15px;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+#scene{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pill{background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:999px}
+.hud{position:fixed;z-index:5;display:flex;gap:8px;align-items:flex-start}
+.hud-left{top:calc(14px + env(safe-area-inset-top,0px));left:max(14px,env(safe-area-inset-left,0px))}
+.hud-right{top:calc(14px + env(safe-area-inset-top,0px));right:max(14px,env(safe-area-inset-right,0px));flex-direction:column;align-items:flex-end}
+.place{display:flex;align-items:center;gap:8px;padding:10px 16px;font-size:14px;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.place .dim{color:var(--ink-soft)}
+.place svg{width:18px;height:18px;flex:none}
+.tools{display:flex;align-items:center;gap:2px;padding:4px 6px}
+.tool{background:none;border:0;padding:8px 10px;border-radius:999px;display:flex;align-items:center}
+.tool:hover{background:rgba(255,255,255,.08)}
+.tool svg,.count svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.count{padding:8px 10px 8px 8px;display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
+.panel{background:var(--glass-strong);border:1px solid var(--line);border-radius:20px;padding:16px;width:min(290px,calc(100vw - 32px));display:flex;flex-direction:column;gap:12px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.panel h3{margin:4px 0 0;font-size:12px;letter-spacing:.12em;color:var(--ink-soft);font-weight:400}
+.panel p{margin:0;font-size:13px;color:var(--ink-soft);line-height:1.5}
+.seg{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;background:rgba(255,255,255,.06);padding:4px;border-radius:12px}
+.seg button{border:0;background:none;padding:8px 0;border-radius:9px;font-size:13px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.slider{display:grid;grid-template-columns:64px 1fr;align-items:center;gap:10px;font-size:14px}
+.slider input{width:100%;accent-color:var(--accent)}
+.chat-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.chat-grid button{border:1px solid var(--line);background:rgba(255,255,255,.06);border-radius:12px;padding:10px;font-size:14px;display:flex;gap:8px;align-items:center}
+.chat-grid button:hover{background:rgba(255,255,255,.12)}
+.chat-grid kbd{font-family:inherit;font-size:11px;color:var(--ink-soft);border:1px solid var(--line);border-radius:5px;padding:0 5px}
+.cap{font-size:13px;color:var(--ink-soft)}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(241,178,107,.18);color:var(--accent);margin-left:6px;letter-spacing:.04em}
+
+/* bottom controls */
+.actions{position:fixed;z-index:6;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:flex-end;gap:8px;max-width:calc(100% - 200px)}
+.act-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.act{border:1px solid var(--line);background:var(--glass-strong);border-radius:999px;padding:12px 20px;font-size:15px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.act:hover{filter:brightness(1.15)}
+.act.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.act.duck{background:var(--duck);color:#3a2a00;border-color:transparent}
+.status{font-size:13px;color:var(--ink);padding:7px 14px;text-align:right}
+.joy{position:fixed;z-index:6;left:max(18px,env(safe-area-inset-left,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));width:128px;height:128px;border-radius:50%;background:rgba(18,23,30,.38);border:1px solid var(--line);touch-action:none;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.joy-knob{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;background:rgba(244,239,230,.85);box-shadow:0 4px 14px rgba(0,0,0,.3);pointer-events:none}
+.keys{position:fixed;z-index:4;left:max(14px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));font-size:12px;color:var(--ink-soft);padding:8px 12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.keys kbd{font-family:inherit;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:11px;color:var(--ink)}
+.toast-wrap{position:fixed;z-index:7;left:50%;transform:translateX(-50%);top:calc(74px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;width:calc(100% - 32px)}
+.toast{padding:9px 16px;font-size:13px;color:var(--ink);animation:fade 4.2s ease forwards;max-width:100%;text-align:center}
+@keyframes fade{0%{opacity:0;transform:translateY(-6px)}8%{opacity:1;transform:none}82%{opacity:1}100%{opacity:0}}
+
+/* entry */
+.gate{position:fixed;inset:0;z-index:10;display:grid;place-items:center;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px;background:linear-gradient(180deg,rgba(10,14,20,.05) 0%,rgba(10,14,20,.55) 100%)}
+.gate-hero{text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px}
+.gate-hero h1{font-family:var(--display);font-weight:700;font-size:clamp(40px,9vw,72px);margin:0;text-wrap:balance;text-shadow:0 2px 30px rgba(0,0,0,.35)}
+.gate-hero p{margin:0;color:var(--ink-soft);font-size:16px}
+.enter{margin-top:14px;background:var(--accent);color:var(--accent-ink);border:0;border-radius:999px;padding:14px 38px;font-size:17px;box-shadow:0 8px 30px rgba(241,178,107,.35)}
+.card{background:var(--glass-strong);border:1px solid var(--line);border-radius:24px;padding:24px;width:min(400px,100%);display:flex;flex-direction:column;gap:20px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);max-height:calc(100% - 8px);overflow:auto}
+.card h2{font-family:var(--display);font-size:24px;margin:0}
+.card .sub{margin:-12px 0 0;color:var(--ink-soft);font-size:14px;line-height:1.5}
+.field{display:flex;flex-direction:column;gap:8px}
+.field>span{font-size:12px;letter-spacing:.12em;color:var(--ink-soft)}
+.field input{background:rgba(255,255,255,.07);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font:inherit;color:var(--ink);font-size:16px;-webkit-user-select:text;user-select:text}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.choice{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:14px}
+.choice[aria-pressed="true"]{border-color:var(--accent);background:rgba(241,178,107,.14)}
+.choice svg{width:44px;height:44px}
+.go{background:var(--accent);color:var(--accent-ink);border:0;border-radius:14px;padding:14px;font-size:16px}
+.err{color:#ffb4a2;font-size:13px;margin:-10px 0 0;min-height:1em}
+
+/* photo */
+.shot{position:fixed;inset:0;z-index:12;background:rgba(8,10,14,.72);display:grid;place-items:center;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px}
+.shot-card{display:flex;flex-direction:column;gap:12px;width:min(560px,100%)}
+.shot-card img{width:100%;border-radius:16px;border:1px solid var(--line);display:block}
+.shot-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;align-items:center}
+.shot-actions p{margin:0 auto 0 0;font-size:12px;color:var(--ink-soft)}
+.btn{border:1px solid var(--line);background:var(--glass-strong);border-radius:999px;padding:10px 18px;font-size:14px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+@media (prefers-reduced-motion:reduce){.toast{animation:none}}
+@media (max-width:560px){.place{padding:9px 13px;font-size:13px}.tool{padding:8px}.actions{max-width:calc(100% - 170px)}.act{padding:11px 16px;font-size:14px}}
+</style>
+
+</head>
+<body>
+<canvas id="scene" aria-label="한강 풍경"></canvas>
+
+<div class="hud hud-left" id="hudLeft" hidden>
+  <div class="pill place">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M2 15c2.5 0 2.5-1.6 5-1.6S9.5 15 12 15s2.5-1.6 5-1.6 2.5 1.6 5 1.6"/><path d="M2 19c2.5 0 2.5-1.6 5-1.6S9.5 19 12 19s2.5-1.6 5-1.6 2.5 1.6 5 1.6"/><path d="M4 11V8l8-4 8 4v3"/></svg>
+    <span>한강 <span class="dim">·</span> <span id="timeLabel">밤</span> <span class="dim" id="clock">00:00</span> <span class="dim">·</span> <span id="weatherLabel">맑음</span></span>
+  </div>
+</div>
+<div class="hud hud-right" id="hudRight" hidden>
+  <div class="pill tools">
+    <div class="count" title="지금 같이 있는 사람">
+      <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c.6-3.4 3-5 6-5s5.4 1.6 6 5"/><path d="M16 5.5a3 3 0 0 1 0 5.6M18 14.4c1.6.7 2.6 2.3 3 4.6"/></svg>
+      <span><span id="count">1</span><span style="opacity:.55">/30</span></span>
+    </div>
+    <button class="tool" id="soundBtn" aria-label="소리 끄기"><svg viewBox="0 0 24 24" id="soundIcon"><path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg></button>
+    <button class="tool" id="setBtn" aria-label="설정" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
+    <button class="tool" id="chatBtn" aria-label="말하기" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M4 6.5h16v9.5H10l-4 3.5v-3.5H4z"/><path d="M8 10.5h8M8 13h5"/></svg></button>
+    <button class="tool" id="camBtn" aria-label="사진 찍기"><svg viewBox="0 0 24 24"><path d="M4 8.5h3l1.6-2.5h6.8L17 8.5h3v10H4z"/><circle cx="12" cy="13" r="3.4"/></svg></button>
+  </div>
+  <div class="panel" id="settings" hidden>
+    <h3>날씨<span class="badge" id="adminBadge" hidden>관리자</span></h3>
+    <div class="seg" id="weatherSeg" hidden>
+      <button data-w="clear">맑음</button><button data-w="cloudy">흐림</button><button data-w="rain">비</button><button data-w="snow">눈</button><button data-w="fog">안개</button>
+    </div>
+    <p id="weatherNote">날씨는 관리자가 정합니다. 시간대는 한국 시간에 맞춰 자동으로 바뀝니다.</p>
+    <h3>소리</h3>
+    <label class="slider" for="volWater">물소리<input type="range" id="volWater" min="0" max="100" value="70"></label>
+    <label class="slider" for="volNature">자연<input type="range" id="volNature" min="0" max="100" value="55"></label>
+    <label class="slider" for="volAnimal">동물<input type="range" id="volAnimal" min="0" max="100" value="45"></label>
+    <label class="slider" for="volStep">발소리<input type="range" id="volStep" min="0" max="100" value="60"></label>
+  </div>
+  <div class="panel" id="chatPanel" hidden>
+    <h3>말하기</h3>
+    <div class="chat-grid" id="chatGrid"></div>
+  </div>
+</div>
+
+<div class="joy" id="joy" hidden aria-label="이동 패드"><div class="joy-knob" id="knob"></div></div>
+<div class="pill keys" id="keys" hidden><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동</span><span><kbd>Shift</kbd> 달리기</span><span><kbd>1</kbd>~<kbd>6</kbd> 말하기</span><span>드래그로 둘러보기</span></div>
+<div class="actions" id="actions" hidden>
+  <div class="pill status" id="status" hidden></div>
+  <div class="act-row" id="actRow"></div>
+</div>
+<div class="toast-wrap" id="toasts" aria-live="polite"></div>
+
+<div class="gate" id="gate1">
+  <div class="gate-hero">
+    <h1>한강 돗자리</h1>
+    <p>말없이 같이 앉아 강을 보는 곳</p>
+    <button class="enter" id="enterBtn">입장</button>
+    <p class="cap" id="capLine" hidden></p>
+  </div>
+</div>
+<div class="gate" id="gate2" hidden>
+  <form class="card" id="joinForm" novalidate>
+    <h2>나는 누구로 갈까요</h2>
+    <p class="sub">들어가서 마음에 드는 곳까지 걸어가 돗자리를 펴면 됩니다.</p>
+    <label class="field" for="nameInput"><span>이름</span>
+      <input id="nameInput" maxlength="10" autocomplete="nickname" placeholder="강가에서 불릴 이름">
+    </label>
+    <div class="field"><span>캐릭터</span>
+      <div class="choices" id="genderChoices">
+        <button type="button" class="choice" data-g="m" aria-pressed="true">
+          <svg viewBox="0 0 48 48"><circle cx="24" cy="20" r="12" fill="#f2c9a0"/><path d="M12 19c0-8 5-12 12-12s12 4 12 12c-3-4-7-5-12-5s-9 1-12 5z" fill="#2b2420"/><rect x="15" y="31" width="18" height="13" rx="7" fill="#7fa7c9"/></svg>남자</button>
+        <button type="button" class="choice" data-g="f" aria-pressed="false">
+          <svg viewBox="0 0 48 48"><path d="M11 20c0-9 6-13 13-13s13 4 13 13v14H11z" fill="#4a3226"/><circle cx="24" cy="21" r="11" fill="#f2c9a0"/><path d="M13 19c1-7 6-10 11-10s10 3 11 10c-4-3-8-4-11-6-3 2-7 3-11 6z" fill="#4a3226"/><rect x="15" y="31" width="18" height="13" rx="7" fill="#e9a46b"/></svg>여자</button>
+      </div>
+    </div>
+    <p class="err" id="err"></p>
+    <button class="go" type="submit">한강으로 가기</button>
+  </form>
+</div>
+
+<div class="shot" id="shot" hidden>
+  <div class="shot-card">
+    <img id="shotImg" alt="방금 찍은 한강 사진">
+    <div class="shot-actions">
+      <p id="shotTip"></p>
+      <button class="btn" id="shotClose">닫기</button>
+      <button class="btn primary" id="shotSave" hidden>저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===================== 여기만 바꾸세요 =====================
+   Supabase 대시보드 > Project Settings > API 에서 복사해 붙여넣습니다.
+   anon public 키는 원래 공개용이라 이 파일에 넣어도 괜찮습니다.
+   (service_role 키는 절대 넣지 마세요) */
+window.HANGANG_CONFIG = {
+  supabaseUrl: "https://uciphkxbzcfcrpyxamew.supabase.co",
+  supabaseAnonKey: "sb_publishable_GwzGK6Oxre5OkAlCg7UZtQ_NfB6G80r",
+  roomName: "hangang-dotjari"
+};
+/* ============================================================ */
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js"></script>
+<script>
+/* ============================================================
+   한강 돗자리 · 공개 배포용 연결 코드
+   claude.ai 안에서 쓰던 기능(접속자 동기화, 날씨, 사진 저장)을
+   Supabase Realtime으로 바꿔 줍니다.
+   ============================================================ */
+(() => {
+  const CFG = window.HANGANG_CONFIG || {};
+  const ADMIN_KEY = "hangang-admin-code";
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+    del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  };
+
+  // 사진 저장은 설정이 없어도 동작
+  const downloads = {
+    async save({ filename, data }) {
+      const blob = data instanceof Blob ? data : new Blob([data]);
+      const url = URL.createObjectURL(blob), a = document.createElement("a");
+      a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      return { saved: true };
+    }
+  };
+
+  const ready = !!(CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase && window.supabase.createClient);
+  if (!ready) {
+    console.warn("[한강 돗자리] Supabase 설정이 없어 혼자 보기 모드로 실행합니다.");
+    window.claude = { use: async name => (name === "downloads" ? downloads : null) };
+    return;
+  }
+
+  const sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, { realtime: { params: { eventsPerSecond: 20 } } });
+  const myId = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+  const channel = sb.channel(CFG.roomName || "hangang-dotjari", { config: { presence: { key: myId }, broadcast: { self: false } } });
+
+  /* ---------- room: 접속자 상태 ---------- */
+  const states = new Map();       // 다른 사람 id -> 상태
+  let members = new Set();        // 지금 접속 중인 id
+  let mine = {};
+  const peerListeners = [];
+  let emitQueued = false, subscribed = false;
+  function emitPeers() {
+    emitQueued = false;
+    const peers = [{ peer: myId, by: null, isMe: true, sameTab: true, kind: "viewer", guest: false, presence: mine, updatedAt: Date.now() }];
+    members.forEach(id => { if (id !== myId && states.has(id)) peers.push({ peer: id, by: null, isMe: false, sameTab: false, kind: "viewer", guest: false, presence: states.get(id), updatedAt: Date.now() }); });
+    peerListeners.forEach(f => { try { f({ peers, joined: [], left: [], updated: [] }); } catch (e) { console.error(e); } });
+  }
+  const schedule = () => { if (!emitQueued) { emitQueued = true; requestAnimationFrame(emitPeers); } };
+
+  let lastSend = 0, sendTimer = null;
+  function sendState() {
+    if (!subscribed || !Object.keys(mine).length) return;
+    lastSend = performance.now();
+    channel.send({ type: "broadcast", event: "s", payload: { id: myId, s: mine } });
+  }
+  function queueSend(force) {
+    const wait = 200 - (performance.now() - lastSend);
+    if (force || wait <= 0) { clearTimeout(sendTimer); sendTimer = null; sendState(); }
+    else if (!sendTimer) sendTimer = setTimeout(() => { sendTimer = null; sendState(); }, wait);
+  }
+
+  channel.on("presence", { event: "sync" }, () => {
+    members = new Set(Object.keys(channel.presenceState()));
+    for (const id of [...states.keys()]) if (!members.has(id)) states.delete(id);
+    schedule();
+  });
+  channel.on("presence", { event: "join" }, ({ key }) => { if (key !== myId) queueSend(true); });
+  channel.on("broadcast", { event: "s" }, ({ payload }) => {
+    if (!payload || typeof payload.id !== "string" || payload.id === myId || !payload.s || typeof payload.s !== "object") return;
+    states.set(payload.id, payload.s); members.add(payload.id); schedule();
+  });
+
+  const weatherListeners = [];
+  channel.on("broadcast", { event: "weather" }, ({ payload }) => {
+    if (payload && typeof payload.w === "string") weatherListeners.forEach(f => f(payload.w));
+  });
+
+  channel.subscribe(async status => {
+    if (status === "SUBSCRIBED") { subscribed = true; await channel.track({ at: Date.now() }); queueSend(true); schedule(); }
+  });
+  addEventListener("pagehide", () => { try { channel.untrack(); sb.removeChannel(channel); } catch (e) {} });
+
+  const room = {
+    async presence(patch) {
+      // 앉기·눕기 같은 상태 변화와 말풍선은 바로 보내고, 걷는 위치는 0.2초마다 묶어서 보냄
+      const urgent = ("st" in patch && patch.st !== mine.st) || (patch.say && (!mine.say || patch.say.at !== mine.say.at)) || ("bt" in patch && JSON.stringify(patch.bt ?? null) !== JSON.stringify(mine.bt ?? null));
+      for (const k in patch) { if (patch[k] === null) delete mine[k]; else mine[k] = patch[k]; }
+      queueSend(urgent);
+      schedule();
+    },
+    onPeers(handler) { peerListeners.push(handler); setTimeout(emitPeers, 0); return () => { const i = peerListeners.indexOf(handler); if (i >= 0) peerListeners.splice(i, 1); }; },
+    peers() { return []; },
+    connected() { return subscribed; }
+  };
+
+  /* ---------- db: 날씨 하나만 다룸 ---------- */
+  const db = {
+    doc(path) {
+      if (path !== "live/weather") throw new Error("unsupported path");
+      return {
+        onSnapshot(next) {
+          const deliver = w => next({ exists: true, data: () => ({ w }) });
+          const load = async () => {
+            const { data, error } = await sb.from("world").select("weather").eq("id", 1).maybeSingle();
+            if (!error && data && data.weather) deliver(data.weather);
+          };
+          load(); const t = setInterval(load, 60000);
+          weatherListeners.push(deliver);
+          return () => clearInterval(t);
+        },
+        async set({ w }) {
+          const code = store.get(ADMIN_KEY) || "";
+          const { data, error } = await sb.rpc("set_weather", { p_code: code, p_weather: w });
+          if (error || data !== true) throw new Error("not_permitted");
+          channel.send({ type: "broadcast", event: "weather", payload: { w } });
+        }
+      };
+    }
+  };
+
+  /* ---------- user: 관리자 여부 ---------- */
+  const user = { async canEdit() { return !!store.get(ADMIN_KEY); }, async isOwner() { return !!store.get(ADMIN_KEY); } };
+
+  window.claude = {
+    use: async name => name === "room" ? room : name === "db" ? db : name === "user" ? user : name === "downloads" ? downloads : null
+  };
+
+  /* ---------- 관리자 로그인: 주소 뒤에 #admin ---------- */
+  function adminBox() {
+    if (document.getElementById("adminBox")) return;
+    const wrap = document.createElement("div");
+    wrap.id = "adminBox";
+    wrap.style.cssText = "position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:rgba(8,10,14,.7);padding:16px";
+    const loggedIn = !!store.get(ADMIN_KEY);
+    wrap.innerHTML = `
+      <form style="background:#1b2330;border:1px solid rgba(244,239,230,.16);border-radius:20px;padding:22px;width:min(340px,100%);display:flex;flex-direction:column;gap:12px;color:#f4efe6;font-family:inherit">
+        <b style="font-size:18px">관리자</b>
+        <span style="font-size:13px;opacity:.7">${loggedIn ? "이 기기는 관리자로 로그인되어 있습니다." : "비밀번호를 넣으면 이 기기에서 날씨를 바꿀 수 있습니다."}</span>
+        ${loggedIn ? "" : '<input type="password" id="adminCode" autocomplete="current-password" placeholder="관리자 비밀번호" style="background:rgba(255,255,255,.07);border:1px solid rgba(244,239,230,.16);border-radius:12px;padding:12px;color:#f4efe6;font:inherit;font-size:16px">'}
+        <span id="adminMsg" style="font-size:13px;color:#ffb4a2;min-height:1em"></span>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" id="adminClose" style="border:1px solid rgba(244,239,230,.16);background:none;color:inherit;border-radius:999px;padding:10px 16px;font:inherit;cursor:pointer">닫기</button>
+          <button type="submit" style="border:0;background:#f1b26b;color:#2a1a0b;border-radius:999px;padding:10px 16px;font:inherit;cursor:pointer">${loggedIn ? "로그아웃" : "로그인"}</button>
+        </div>
+      </form>`;
+    document.body.appendChild(wrap);
+    const close = () => { wrap.remove(); history.replaceState(null, "", location.pathname + location.search); };
+    wrap.querySelector("#adminClose").onclick = close;
+    wrap.querySelector("form").onsubmit = async e => {
+      e.preventDefault();
+      if (loggedIn) { store.del(ADMIN_KEY); location.replace(location.pathname + location.search); return; }
+      const code = wrap.querySelector("#adminCode").value;
+      const { data, error } = await sb.rpc("check_admin", { p_code: code });
+      if (error) { wrap.querySelector("#adminMsg").textContent = "서버에 연결하지 못했습니다. 설정을 확인해 주세요."; return; }
+      if (data !== true) { wrap.querySelector("#adminMsg").textContent = "비밀번호가 맞지 않습니다."; return; }
+      store.set(ADMIN_KEY, code); location.replace(location.pathname + location.search);
+    };
+  }
+  const checkHash = () => { if (location.hash === "#admin") (document.readyState === "loading" ? addEventListener("DOMContentLoaded", adminBox) : adminBox()); };
+  checkHash(); addEventListener("hashchange", checkHash);
+})();
+
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+"use strict";
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+/* ================= renderer ================= */
+const canvas = $("scene");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 2000);
+scene.fog = new THREE.Fog(0x1a2236, 80, 760);
+function resize() {
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.fov = w < h ? 68 : 55; camera.updateProjectionMatrix();
+}
+addEventListener("resize", resize); resize();
+
+/* ================= time of day (KST) ================= */
+const P = {
+  night:     { top:0x060b18, mid:0x14203a, hor:0x2b3550, sun:0x9fb6ff, sunI:.45, sunDir:[.35,.55,-.75], hemiS:0x7f93c8, hemiG:0x2a3326, hemiI:.95, fog:0x1a2236, deep:0x070d1a, shallow:0x16233a, glow:.8, lamps:1, stars:1, streak:1, disk:.5 },
+  dawn:      { top:0x26335c, mid:0x7b7aa0, hor:0xe8a98e, sun:0xffb48a, sunI:.6, sunDir:[.6,.08,-1], hemiS:0xb0a8c8, hemiG:0x3a4436, hemiI:.8, fog:0x9c95aa, deep:0x22304a, shallow:0x6a6a86, glow:.45, lamps:.5, stars:.25, streak:.5, disk:1 },
+  morning:   { top:0x5d9ad4, mid:0xb2d4ea, hor:0xf4e7d4, sun:0xfff0d6, sunI:1.1, sunDir:[.5,.45,-.75], hemiS:0xd4e6f6, hemiG:0x5d7a45, hemiI:.9, fog:0xd6e2e8, deep:0x2c5c74, shallow:0x5590a8, glow:.06, lamps:0, stars:0, streak:0, disk:1 },
+  day:       { top:0x5b9fd8, mid:0xa9d3ee, hor:0xe8f1f2, sun:0xfff4dc, sunI:1.25, sunDir:[.3,.75,-.6], hemiS:0xcfe8ff, hemiG:0x5d7a45, hemiI:.85, fog:0xcfe1ea, deep:0x2b5d72, shallow:0x4f8ea3, glow:.06, lamps:0, stars:0, streak:0, disk:1 },
+  afternoon: { top:0x5a90c8, mid:0xb8cfdc, hor:0xf2dcbc, sun:0xffe4b8, sunI:1.15, sunDir:[-.1,.45,-.9], hemiS:0xe0e4e0, hemiG:0x5d7a45, hemiI:.85, fog:0xd8d8d0, deep:0x2b5670, shallow:0x5c8a9a, glow:.1, lamps:0, stars:0, streak:.05, disk:1 },
+  sunset:    { top:0x334a7a, mid:0xd98a6a, hor:0xf6c27f, sun:0xffb070, sunI:1.05, sunDir:[-.15,.10,-1], hemiS:0xf0b590, hemiG:0x3e4a35, hemiI:.7, fog:0xd9a07a, deep:0x2a3a55, shallow:0x7a6170, glow:.55, lamps:.6, stars:0, streak:.55, disk:1 },
+  dusk:      { top:0x16203e, mid:0x403e64, hor:0xb06a62, sun:0xff9a6a, sunI:.5, sunDir:[-.25,.02,-1], hemiS:0x8a7aa0, hemiG:0x232a22, hemiI:.8, fog:0x4a4058, deep:0x121a30, shallow:0x3a3a58, glow:.85, lamps:1, stars:.4, streak:.9, disk:.6 }
+};
+const KEYS = [[0,"night"],[4.3,"night"],[5.6,"dawn"],[7.2,"morning"],[11,"day"],[14.5,"day"],[16.5,"afternoon"],[18.3,"sunset"],[19.4,"dusk"],[20.3,"night"],[24,"night"]];
+const SCALARS = ["sunI", "hemiI", "glow", "lamps", "stars", "streak", "disk"];
+function kst() { const d = new Date(); return new Date(d.getTime() + d.getTimezoneOffset() * 60000 + 9 * 3600000); }
+function phaseLabel(h) { return h >= 4 && h < 7 ? "새벽" : h >= 7 && h < 11 ? "아침" : h >= 11 && h < 14 ? "점심" : h >= 14 && h < 17.5 ? "오후" : h >= 17.5 && h < 19.5 ? "노을" : "밤"; }
+const cA = new THREE.Color(), cB = new THREE.Color();
+function blend(h) {
+  let i = 0; while (i < KEYS.length - 2 && KEYS[i + 1][0] <= h) i++;
+  const [h0, k0] = KEYS[i], [h1, k1] = KEYS[i + 1], t = h1 > h0 ? clamp((h - h0) / (h1 - h0), 0, 1) : 0;
+  const a = P[k0], b = P[k1], o = {};
+  for (const k in a) {
+    if (Array.isArray(a[k])) o[k] = a[k].map((v, j) => v + (b[k][j] - v) * t);
+    else if (SCALARS.includes(k)) o[k] = a[k] + (b[k] - a[k]) * t;
+    else o[k] = cA.set(a[k]).lerp(cB.set(b[k]), t).getHex();
+  }
+  return o;
+}
+let hourNow = 0, phase = "밤";
+
+/* ================= weather ================= */
+const WEATHER = { clear: "맑음", cloudy: "흐림", rain: "비", snow: "눈", fog: "안개" };
+let weather = "clear";
+
+/* ================= lights / sky / water ================= */
+const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, .7); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffffff, 1); scene.add(sun);
+const playerLight = new THREE.PointLight(0xffe2b8, 0, 16, 1.5); scene.add(playerLight);
+const lampLights = [];
+[[-30,6,24],[10,6,24],[50,6,24],[90,6,24]].forEach(p => { const l = new THREE.PointLight(0xffc98a, 0, 34, 1.6); l.position.set(...p); scene.add(l); lampLights.push(l); });
+
+const skyU = { top:{value:new THREE.Color()}, mid:{value:new THREE.Color()}, hor:{value:new THREE.Color()}, sunCol:{value:new THREE.Color()}, sunDir:{value:new THREE.Vector3()}, stars:{value:0}, disk:{value:1}, t:{value:0} };
+const sky = new THREE.Mesh(new THREE.SphereGeometry(1200, 32, 16), new THREE.ShaderMaterial({
+  uniforms: skyU, side: THREE.BackSide, depthWrite: false,
+  vertexShader: `varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+  fragmentShader: `
+    uniform vec3 top, mid, hor, sunCol, sunDir; uniform float stars, disk, t; varying vec3 vD;
+    float hash(vec3 p){ p=fract(p*0.3183099+.1); p*=17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
+    void main(){
+      float y = max(vD.y, 0.0);
+      vec3 c = mix(hor, mid, smoothstep(0.0, 0.18, y));
+      c = mix(c, top, smoothstep(0.15, 0.7, y));
+      if (vD.y < 0.0) c = hor;
+      float s = max(dot(normalize(vD), normalize(sunDir)), 0.0);
+      c += sunCol * (pow(s, 900.0) * 1.6 * disk + pow(s, 12.0) * 0.28);
+      if (stars > 0.0 && vD.y > 0.08) {
+        float h = hash(floor(vD * 260.0));
+        c += vec3(step(0.9985, h) * (0.6 + 0.4 * sin(t * 2.0 + h * 40.0)) * stars * smoothstep(0.08, 0.3, vD.y));
+      }
+      gl_FragColor = vec4(c, 1.0);
+    }`
+}));
+scene.add(sky);
+
+const waterU = { t:{value:0}, deep:{value:new THREE.Color()}, shallow:{value:new THREE.Color()}, skyC:{value:new THREE.Color()}, sunCol:{value:new THREE.Color()}, sunDir:{value:new THREE.Vector3()}, fogCol:{value:new THREE.Color()}, camPos:{value:new THREE.Vector3()}, fogNear:{value:80}, fogFar:{value:760}, rough:{value:0.9} };
+const water = new THREE.Mesh(new THREE.PlaneGeometry(2400, 300, 1, 1), new THREE.ShaderMaterial({
+  uniforms: waterU,
+  vertexShader: `varying vec3 vW; void main(){ vec4 w = modelMatrix*vec4(position,1.0); vW = w.xyz; gl_Position = projectionMatrix*viewMatrix*w; }`,
+  fragmentShader: `
+    uniform float t, fogNear, fogFar, rough; uniform vec3 deep, shallow, skyC, sunCol, sunDir, fogCol, camPos; varying vec3 vW;
+    float h(vec2 p){ return sin(p.x*.09+t*.55)*.5 + sin(p.y*.13-t*.8)*.4 + sin((p.x+p.y)*.27+t*1.3)*.22 + sin((p.x*.7-p.y)*.61-t*1.9)*.1 + sin((p.x*1.3+p.y*.4)*1.1+t*2.4)*.05; }
+    void main(){
+      vec2 p = vW.xz; float e = .4;
+      float dx = (h(p-vec2(e,0.))-h(p+vec2(e,0.)))/(2.*e);
+      float dz = (h(p-vec2(0.,e))-h(p+vec2(0.,e)))/(2.*e);
+      vec3 n = normalize(vec3(dx*rough, 1., dz*rough));
+      vec3 v = normalize(camPos - vW);
+      float fres = pow(1. - max(dot(n, v), 0.), 4.);
+      vec3 c = mix(deep, shallow, smoothstep(-260., 0., vW.z) * .5 + .2);
+      c = mix(c, skyC, clamp(fres * 1.4 + .12, 0., 1.));
+      float sp = pow(max(dot(reflect(-v, n), normalize(sunDir)), 0.), 140.);
+      c += sunCol * sp * 2.2;
+      c = mix(c, fogCol, smoothstep(fogNear, fogFar, length(camPos - vW)));
+      gl_FragColor = vec4(c, 1.);
+    }`
+}));
+water.rotation.x = -Math.PI / 2; water.position.set(0, -0.6, -130); scene.add(water);
+
+/* ================= world ================= */
+const UPV = new THREE.Vector3(0, 1, 0);
+const mat = (c, o = {}) => new THREE.MeshLambertMaterial(Object.assign({ color: c }, o));
+function rand(seed) { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
+const R = rand(20261029);
+
+const grass = new THREE.Mesh(new THREE.PlaneGeometry(700, 90), mat(0x6f9a52)); grass.rotation.x = -Math.PI / 2; grass.position.set(40, 0, 45); scene.add(grass);
+const edge = new THREE.Mesh(new THREE.BoxGeometry(700, 1.2, 2.4), mat(0x9a958a)); edge.position.set(40, -0.2, 0.4); scene.add(edge);
+const steps = new THREE.Mesh(new THREE.BoxGeometry(700, 0.5, 1.4), mat(0xb6b0a2)); steps.position.set(40, 0.05, 2.2); scene.add(steps);
+const pathM = new THREE.Mesh(new THREE.PlaneGeometry(700, 4.2), mat(0xc9c2b4)); pathM.rotation.x = -Math.PI / 2; pathM.position.set(40, 0.03, 29.2); scene.add(pathM);
+const bike = new THREE.Mesh(new THREE.PlaneGeometry(700, 2.6), mat(0x8f5a4a)); bike.rotation.x = -Math.PI / 2; bike.position.set(40, 0.031, 32.4); scene.add(bike);
+for (let x = -300; x < 380; x += 6) { const d = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 0.14), new THREE.MeshBasicMaterial({ color: 0xe8d38a })); d.rotation.x = -Math.PI / 2; d.position.set(x, 0.035, 32.4); scene.add(d); }
+
+const trunkM = mat(0x5b4434), leafMs = [mat(0x4f7d3e), mat(0x3f6b37), mat(0x6d9246)];
+function tree(x, z, s) {
+  const g = new THREE.Group();
+  const t = new THREE.Mesh(new THREE.CylinderGeometry(0.22 * s, 0.32 * s, 3 * s, 6), trunkM); t.position.y = 1.5 * s; g.add(t);
+  const lm = leafMs[Math.floor(R() * 3)];
+  [[0, 3.8, 0, 1.9], [0.9, 3.2, 0.3, 1.3], [-0.8, 3.3, -0.2, 1.4], [0.1, 4.8, 0, 1.3]].forEach(([a, b, c, r]) => {
+    const m = new THREE.Mesh(new THREE.IcosahedronGeometry(r * s, 0), lm); m.position.set(a * s, b * s, c * s); m.rotation.set(R(), R(), R()); g.add(m);
+  });
+  g.position.set(x, 0, z); scene.add(g);
+}
+for (let x = -150; x < 260; x += 7 + R() * 6) tree(x, 40 + R() * 14, 0.85 + R() * 0.45);
+for (let x = -150; x < 260; x += 14 + R() * 10) tree(x, 58 + R() * 14, 1 + R() * 0.5);
+
+const lampHeadM = new THREE.MeshBasicMaterial({ color: 0xffd7a0 });
+for (let x = -140; x < 260; x += 22) {
+  const p = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 4.4, 6), mat(0x3d4247)); p.position.set(x, 2.2, 26.6); scene.add(p);
+  const h = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 8), lampHeadM); h.position.set(x, 4.5, 26.6); scene.add(h);
+}
+const BENCHES = [];
+for (let x = -60; x < 240; x += 44) {
+  BENCHES.push({ x: x + 11, z: 26 });
+  const b = new THREE.Group();
+  const s = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.12, 0.6), mat(0x8a6040)); s.position.y = 0.5; b.add(s);
+  const bk = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.6, 0.1), mat(0x8a6040)); bk.position.set(0, 0.9, 0.3); b.add(bk);
+  [-1, 1].forEach(k => { const l = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.5, 0.5), mat(0x3d4247)); l.position.set(k, 0.25, 0); b.add(l); });
+  b.position.set(x + 11, 0, 26); scene.add(b);
+}
+// walkable map limits, marked by hedges on land and a buoy line on the water
+const BOUND = { x0: -56, x1: 112, landZ0: 0.6, landZ1: 37.5, waterZ0: -32 };
+[BOUND.x0 - 1, BOUND.x1 + 1].forEach(x => {
+  for (let z = 4; z < 38; z += 2.2) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.55, 8, 6), leafMs[1]); b.position.set(x, 0.35, z); b.scale.y = 0.7; scene.add(b); }
+});
+const buoyM = mat(0xf26b3a);
+for (let x = BOUND.x0; x <= BOUND.x1; x += 6) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 8), buoyM); b.position.set(x, -0.5, BOUND.waterZ0 - 1); scene.add(b); }
+for (let z = BOUND.waterZ0; z < -1; z += 6) [BOUND.x0 - 1, BOUND.x1 + 1].forEach(x => { const b = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 8), buoyM); b.position.set(x, -0.5, z); scene.add(b); });
+
+// far bank & city
+const far = new THREE.Mesh(new THREE.BoxGeometry(2400, 3, 40), mat(0x4f5a4a)); far.position.set(0, 0.5, -278); scene.add(far);
+const farRoad = new THREE.Mesh(new THREE.BoxGeometry(2400, 2.5, 6), mat(0x6c6a66)); farRoad.position.set(0, 4, -262); scene.add(farRoad);
+const wc = document.createElement("canvas"); wc.width = 64; wc.height = 128;
+const wx = wc.getContext("2d"); wx.fillStyle = "#000"; wx.fillRect(0, 0, 64, 128);
+for (let y = 4; y < 128; y += 8) for (let x = 4; x < 64; x += 8) { if (R() < 0.3) { wx.fillStyle = R() < 0.8 ? "#ffd9a0" : "#cfe6ff"; wx.fillRect(x, y, 4, 4); } }
+const winTex = new THREE.CanvasTexture(wc); winTex.wrapS = winTex.wrapT = THREE.RepeatWrapping; winTex.repeat.set(2, 3);
+const cityM = new THREE.MeshLambertMaterial({ color: 0x8a909c, emissive: 0xffffff, emissiveMap: winTex, emissiveIntensity: 0.6 });
+const city = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), cityM, 220);
+const dummy = new THREE.Object3D(); const tints = [0x8a909c, 0x9ca3ad, 0x7d8592, 0xa6a39b, 0x6f7886];
+for (let i = 0; i < 220; i++) {
+  const w = 10 + R() * 18, h = 10 + Math.pow(R(), 2.4) * 48, d = 10 + R() * 14;
+  dummy.position.set(-1000 + R() * 2000, h / 2 + 1, -300 - R() * 120); dummy.scale.set(w, h, d); dummy.rotation.y = (R() - 0.5) * 0.2; dummy.updateMatrix();
+  city.setMatrixAt(i, dummy.matrix); city.setColorAt(i, new THREE.Color(tints[i % 5]));
+}
+scene.add(city);
+for (let i = 0; i < 9; i++) { const m = new THREE.Mesh(new THREE.ConeGeometry(120 + R() * 120, 70 + R() * 70, 5), mat(0x3e4b4a)); m.position.set(-1000 + i * 250 + R() * 80, 30, -470 - R() * 60); scene.add(m); }
+
+// bridges
+const bridgeLights = [];
+function bridge(x, opt) {
+  const g = new THREE.Group(), deckM = mat(opt.deck || 0xa9a59c);
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(16, 1.6, 300), deckM); deck.position.set(0, 11, -130); g.add(deck);
+  const rail = new THREE.Mesh(new THREE.BoxGeometry(16.4, 0.5, 300), mat(0xd8d4ca)); rail.position.set(0, 12.1, -130); g.add(rail);
+  for (let z = 14; z > -280; z -= opt.span) {
+    [-5, 5].forEach(k => { const p = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.3, 13, 10), deckM); p.position.set(k, 4, z); g.add(p); });
+    const cap = new THREE.Mesh(new THREE.BoxGeometry(14, 1, 3), deckM); cap.position.set(0, 9.9, z); g.add(cap);
+  }
+  if (opt.arch) {
+    const archM = mat(opt.archColor);
+    [-7.5, 7.5].forEach(k => {
+      const pts = []; for (let i = 0; i <= 24; i++) { const u = i / 24; pts.push(new THREE.Vector3(k, 12 + Math.sin(u * Math.PI) * opt.archH, opt.arch[0] + (opt.arch[1] - opt.arch[0]) * u)); }
+      g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 48, 0.7, 8, false), archM));
+      for (let i = 2; i < 23; i += 2) { const u = i / 24, hh = Math.sin(u * Math.PI) * opt.archH; const hg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, hh, 4), archM); hg.position.set(k, 12 + hh / 2, opt.arch[0] + (opt.arch[1] - opt.arch[0]) * u); g.add(hg); }
+    });
+  }
+  const lm = new THREE.MeshBasicMaterial({ color: opt.light }); bridgeLights.push({ m: lm, base: new THREE.Color(opt.light) });
+  const lg = new THREE.SphereGeometry(0.35, 6, 6);
+  for (let z = 10; z > -275; z -= 9) [-8, 8].forEach(k => { const l = new THREE.Mesh(lg, lm); l.position.set(k, 12.7, z); g.add(l); });
+  g.position.x = x; scene.add(g);
+}
+bridge(-70, { span: 36, arch: [-95, -165], archH: 18, archColor: 0xb8423a, light: 0xffe0a8 });
+bridge(125, { span: 30, light: 0x9fd2ff, deck: 0x9a9ca2 });
+bridge(-560, { span: 40, light: 0xffd08a });
+bridge(640, { span: 34, arch: [-60, -200], archH: 26, archColor: 0xe9e4d6, light: 0xffffff });
+
+// the red arch bridge is walkable: stairs from the park, a waist-high glass rail on both sides
+const BR = { x: -70, half: 7.25, y: 12.35, z0: -150, z1: 18 };
+const STAIR = { top: -62.6, bot: -38, z0: 8.2, z1: 10.8 };
+const inStairs = (x, z) => x >= STAIR.top && x <= STAIR.bot && z >= STAIR.z0 && z <= STAIR.z1;
+const stairY = x => BR.y * clamp((STAIR.bot - x) / (STAIR.bot - STAIR.top), 0, 1);
+const inDeck = (x, z) => x >= BR.x - BR.half - 0.4 && x <= BR.x + BR.half + 0.4 && z >= BR.z0 && z <= BR.z1;
+{
+  const railM = mat(0xe3e8ec);
+  const glassM = new THREE.MeshBasicMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0.1, depthWrite: false, side: THREE.DoubleSide });
+  const postG = new THREE.CylinderGeometry(0.035, 0.035, 0.8, 6);
+  const railRun = (x, za, zb) => {
+    const len = za - zb, zc = (za + zb) / 2;
+    const top = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, len, 6), railM); top.rotation.x = Math.PI / 2; top.position.set(x, BR.y + 0.8, zc); scene.add(top);
+    const glass = new THREE.Mesh(new THREE.PlaneGeometry(len, 0.66), glassM); glass.rotation.y = Math.PI / 2; glass.position.set(x, BR.y + 0.42, zc); scene.add(glass);
+    const n = Math.max(1, Math.floor(len / 3)), posts = new THREE.InstancedMesh(postG, railM, n + 1);
+    for (let i = 0; i <= n; i++) { dummy.position.set(x, BR.y + 0.4, za - i * len / n); dummy.rotation.set(0, 0, 0); dummy.scale.set(1, 1, 1); dummy.updateMatrix(); posts.setMatrixAt(i, dummy.matrix); }
+    scene.add(posts);
+  };
+  const W = BR.x - BR.half - 0.3, E = BR.x + BR.half + 0.3;
+  railRun(W, 20, -280);
+  railRun(E, 20, STAIR.z1 + 0.15); railRun(E, STAIR.z0 - 0.15, -280);
+  const north = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, E - W, 6), railM); north.rotation.z = Math.PI / 2; north.position.set(BR.x, BR.y + 0.8, BR.z1 + 0.6); scene.add(north);
+  const northG = new THREE.Mesh(new THREE.PlaneGeometry(E - W, 0.66), glassM); northG.position.set(BR.x, BR.y + 0.42, BR.z1 + 0.6); scene.add(northG);
+  // stairs
+  const stepM = mat(0xbcb6a9), n = 30, run = (STAIR.bot - STAIR.top) / n, depth = STAIR.z1 - STAIR.z0 + 0.3;
+  for (let i = 0; i < n; i++) {
+    const h = BR.y * (i + 1) / n;
+    const st = new THREE.Mesh(new THREE.BoxGeometry(run + 0.02, h, depth), stepM);
+    st.position.set(STAIR.bot - run * (i + 0.5), h / 2, (STAIR.z0 + STAIR.z1) / 2); scene.add(st);
+  }
+  const a = new THREE.Vector3(STAIR.bot, 0.85, 0), b = new THREE.Vector3(STAIR.top, BR.y + 0.85, 0), d = b.clone().sub(a), L = d.length();
+  [STAIR.z0 - 0.12, STAIR.z1 + 0.12].forEach(z => {
+    const hr = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, L, 6), railM);
+    hr.quaternion.setFromUnitVectors(UPV, d.clone().normalize()); hr.position.set((a.x + b.x) / 2, (a.y + b.y) / 2, z); scene.add(hr);
+    for (let i = 0; i <= 10; i++) { const x = STAIR.bot - (STAIR.bot - STAIR.top) * i / 10; const p = new THREE.Mesh(postG, railM); p.position.set(x, stairY(x) + 0.42, z); scene.add(p); }
+  });
+}
+
+// light streaks on water
+const sc = document.createElement("canvas"); sc.width = 8; sc.height = 128;
+const sx = sc.getContext("2d"); const grd = sx.createLinearGradient(0, 0, 0, 128);
+grd.addColorStop(0, "rgba(255,255,255,0)"); grd.addColorStop(0.15, "rgba(255,255,255,.9)"); grd.addColorStop(1, "rgba(255,255,255,0)");
+sx.fillStyle = grd; sx.fillRect(0, 0, 8, 128);
+const streakTex = new THREE.CanvasTexture(sc), streaks = [], streakSrc = [];
+for (let i = 0; i < 70; i++) streakSrc.push([-700 + R() * 1400, -250, R() < 0.75 ? 0xffd39a : 0xbfe0ff, 40 + R() * 70]);
+[-70, 125, -560, 640].forEach((bx, j) => { for (let z = -40; z > -240; z -= 36) streakSrc.push([bx + (R() < 0.5 ? -8 : 8), z, j === 1 ? 0x9fd2ff : 0xffe0a8, 22]); });
+streakSrc.forEach(([x, z, c, len]) => {
+  const m = new THREE.MeshBasicMaterial({ map: streakTex, color: c, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0 });
+  const s = new THREE.Mesh(new THREE.PlaneGeometry(1.4, len), m); s.rotation.x = -Math.PI / 2; s.position.set(x, -0.5, z + len / 2); scene.add(s); streaks.push({ m, ph: R() * 6 });
+});
+
+/* ================= duck boats & dock ================= */
+const DOCK = { x: 94, z: 0.6 };
+const dock = new THREE.Group();
+{ const wood = mat(0x8a6a48);
+  const d = new THREE.Mesh(new THREE.BoxGeometry(18, 0.3, 2.6), wood); d.position.set(0, -0.15, -1.1); dock.add(d);
+  for (let x = -8; x <= 8; x += 4) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 1.6, 6), wood); p.position.set(x, -0.6, -2.3); dock.add(p); }
+  const sign = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1, 0.12), mat(0xffd54a)); sign.position.set(-6.5, 1.4, 1.8); dock.add(sign);
+  const sp = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.4, 6), mat(0x3d4247)); sp.position.set(-6.5, 0.7, 1.8); dock.add(sp);
+}
+dock.position.set(DOCK.x, 0, 0); scene.add(dock);
+const BOAT_HOME = [[88, -4.4], [94, -4.4], [100, -4.4]];
+function makeDuckBoat(tint) {
+  const g = new THREE.Group(), hullM = mat(0xf7f3ea), duckM = mat(tint), beakM = mat(0xf28c28), eyeM2 = new THREE.MeshBasicMaterial({ color: 0x1d1a18 });
+  const hull = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 12, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), hullM); hull.scale.set(1.15, 0.6, 1.8); hull.position.y = 0.32; g.add(hull);
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(1, 0.1, 6, 24), duckM); rim.rotation.x = Math.PI / 2; rim.scale.set(1.15, 1.8, 1); rim.position.y = 0.32; g.add(rim);
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.42, 1.1, 12), duckM); neck.position.set(0, 0.85, -1.45); neck.rotation.x = 0.25; g.add(neck);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.55, 16, 12), duckM); head.position.set(0, 1.55, -1.7); g.add(head);
+  const beak = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.6, 10), beakM); beak.rotation.x = -Math.PI / 2; beak.position.set(0, 1.45, -2.3); beak.scale.z = 0.6; g.add(beak);
+  [-0.26, 0.26].forEach(k => { const e = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), eyeM2); e.position.set(k, 1.7, -2.15); g.add(e); });
+  const tail = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.7, 8), duckM); tail.position.set(0, 0.75, 1.75); tail.rotation.x = -0.9; g.add(tail);
+  const roof = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.08, 1.8), mat(0x4d8fd6)); roof.position.set(0, 2.05, 0.15); g.add(roof);
+  [[-0.85, -0.6], [0.85, -0.6], [-0.85, 0.9], [0.85, 0.9]].forEach(([x, z]) => { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.7, 6), mat(0xdddddd)); p.position.set(x, 1.2, z); g.add(p); });
+  const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.2, 10), mat(0xe9e4d6)); wheel.rotation.z = Math.PI / 2; wheel.position.set(1.2, 0.2, 0.5); g.add(wheel);
+  g.userData.wheel = wheel; return g;
+}
+const boats = BOAT_HOME.map(([x, z], i) => {
+  const b = makeDuckBoat([0xffd54a, 0xffe07a, 0xf5c542][i]); b.position.set(x, -0.6, z); scene.add(b);
+  return { id: i, obj: b, home: [x, z], x, z, r: 0, tx: x, tz: z, tr: 0, pair: null };
+});
+
+/* ================= avatars ================= */
+const MAT_STYLES = [["#3f8f6b", "#efe6c6"], ["#3b6ea8", "#f2e9cf"], ["#c85a4a", "#f5e4c4"], ["#d9a441", "#fff4da"], ["#7a6ab0", "#efe8dc"]];
+const matTex = MAT_STYLES.map(([a, b]) => {
+  const c = document.createElement("canvas"); c.width = 64; c.height = 96; const x = c.getContext("2d");
+  x.fillStyle = b; x.fillRect(0, 0, 64, 96); x.fillStyle = a; for (let i = 0; i < 96; i += 16) x.fillRect(0, i, 64, 8); x.fillRect(0, 0, 4, 96); x.fillRect(60, 0, 4, 96);
+  return new THREE.CanvasTexture(c);
+});
+const SHIRTS = [0xe9a46b, 0x7fa7c9, 0x9cc59a, 0xe7c86b, 0xc99ad6, 0xef8f8f];
+const skinM = mat(0xf2c9a0), cheekM = new THREE.MeshBasicMaterial({ color: 0xf0a3a0 }), eyeM = new THREE.MeshBasicMaterial({ color: 0x2a201c }), pantsM = mat(0x4a5361);
+const tubeMs = [mat(0xff7a3d), mat(0xfaf6ee)];
+
+function nameSprite(text, mine) {
+  const c = document.createElement("canvas"); c.width = 256; c.height = 64; const x = c.getContext("2d");
+  x.font = "28px 'Gowun Dodum', sans-serif";
+  const w = Math.min(240, x.measureText(text).width + 34), l = (256 - w) / 2;
+  x.fillStyle = mine ? "rgba(241,178,107,.92)" : "rgba(16,20,28,.62)";
+  x.beginPath(); if (x.roundRect) x.roundRect(l, 10, w, 44, 22); else x.rect(l, 10, w, 44); x.fill();
+  x.fillStyle = mine ? "#2a1a0b" : "#f4efe6"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(text, 128, 33);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthWrite: false, transparent: true }));
+  s.scale.set(1.9, 0.48, 1); return s;
+}
+// pose: stand | sit | lie | swim | tube | boat
+function makeAvatar({ g, c, pose, name, mine, matStyle }) {
+  const root = new THREE.Group(), inner = new THREE.Group(); root.add(inner);
+  const shirt = mat(SHIRTS[c % SHIRTS.length]), hairM = mat(g === "f" ? 0x4a3226 : 0x2b2420, { side: THREE.DoubleSide });
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.3, 0.62, 12), shirt); body.position.y = 0.31; inner.add(body);
+  const head = new THREE.Group(); head.position.y = 0.98; inner.add(head);
+  head.add(new THREE.Mesh(new THREE.SphereGeometry(0.42, 20, 16), skinM));
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.445, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.52), hairM); cap.rotation.x = 0.28; head.add(cap);
+  if (g === "f") { const back = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.36, 0.62, 16, 1, true, -Math.PI * 0.35, Math.PI * 1.7), hairM); back.position.set(0, -0.2, 0.03); back.rotation.y = Math.PI; head.add(back); }
+  [-0.15, 0.15].forEach(k => {
+    const e = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), eyeM); e.position.set(k, 0.02, -0.4); e.scale.set(1.4, 0.5, 0.6); head.add(e);
+    const ck = new THREE.Mesh(new THREE.CircleGeometry(0.06, 12), cheekM); ck.position.set(k * 1.5, -0.1, -0.385); ck.rotation.y = Math.PI; head.add(ck);
+  });
+  const legs = [], arms = [], seated = pose === "sit" || pose === "boat";
+  [-0.12, 0.12].forEach(k => {
+    const l = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.52, 8), pantsM);
+    if (seated) { l.rotation.x = Math.PI / 2; l.position.set(k, 0.02, -0.28); } else l.position.set(k, -0.24, 0);
+    inner.add(l); legs.push(l);
+    const pivot = new THREE.Group(); pivot.position.set(k * 2.4, 0.56, 0); inner.add(pivot);
+    const a = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.065, 0.42, 8), shirt); a.position.y = -0.2; pivot.add(a);
+    if (seated) pivot.rotation.x = 0.7; else pivot.rotation.z = k > 0 ? 0.12 : -0.12;
+    if (pose === "tube") pivot.rotation.z = k > 0 ? 1.2 : -1.2;
+    arms.push(pivot);
+  });
+  let h = 2.2;
+  if (pose === "sit" || pose === "boat") { inner.position.y = 0.16; h = 1.75; }
+  else if (pose === "lie") { inner.rotation.x = Math.PI / 2; inner.position.set(0, 0.32, 0.15); h = 1.05; }
+  else if (pose === "swim") { inner.rotation.x = Math.PI / 2; inner.position.set(0, 0.42, 0); h = 1.1; }
+  else if (pose === "tube") {
+    inner.position.y = 0.0; h = 1.85;
+    for (let i = 0; i < 6; i++) { const seg = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.17, 8, 8, Math.PI / 3), tubeMs[i % 2]); seg.rotation.x = Math.PI / 2; seg.rotation.z = i * Math.PI / 3; seg.position.y = 0.42; root.add(seg); }
+  } else inner.position.y = 0.52;
+  if (matStyle != null && (pose === "sit" || pose === "lie")) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 2.5), new THREE.MeshLambertMaterial({ map: matTex[matStyle % matTex.length] }));
+    m.rotation.x = -Math.PI / 2; m.position.set(0, 0.04, pose === "lie" ? 0.15 : 0.1); root.add(m);
+  }
+  if (name) { const s = nameSprite(name, mine); s.position.y = h; root.add(s); }
+  Object.assign(root.userData, { legs, arms, inner, head, pose, h });
+  return root;
+}
+function animateAvatar(a, t, moving, speed) {
+  const u = a.userData;
+  if (u.pose === "stand") {
+    const fast = speed > 5, sw = moving ? Math.sin(t * (fast ? 11 : 7)) * (fast ? 0.8 : 0.5) : 0;
+    u.legs[0].rotation.x = sw; u.legs[1].rotation.x = -sw; u.arms[0].rotation.x = -sw * 0.8; u.arms[1].rotation.x = sw * 0.8;
+    u.inner.position.y = 0.52 + (moving ? Math.abs(Math.sin(t * (fast ? 11 : 7))) * 0.05 : 0);
+  } else if (u.pose === "swim") {
+    u.arms[0].rotation.x = t * 3; u.arms[1].rotation.x = t * 3 + Math.PI;
+    u.legs[0].rotation.x = Math.sin(t * 9) * 0.35; u.legs[1].rotation.x = -Math.sin(t * 9) * 0.35;
+  } else if (u.pose === "tube") {
+    u.legs[0].rotation.x = Math.sin(t * 4) * 0.4; u.legs[1].rotation.x = -Math.sin(t * 4) * 0.4;
+  } else u.head.position.y = 0.98 + Math.sin(t * 1.2 + a.position.x) * 0.012;
+}
+
+/* NPCs: walkers, runners, cyclists */
+const npcs = [];
+function makeBike(color) {
+  const g = new THREE.Group(), fm = mat(color), tm = mat(0x2a2d31), wheels = [];
+  [-0.55, 0.55].forEach(z => { const w = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.045, 6, 18), tm); w.rotation.y = Math.PI / 2; w.position.set(0, 0.34, z); g.add(w); wheels.push(w); });
+  const bar = (p1, p2, m = fm, r = 0.035) => { const a = new THREE.Vector3(...p1), b = new THREE.Vector3(...p2), d = b.clone().sub(a); const o = new THREE.Mesh(new THREE.CylinderGeometry(r, r, d.length(), 5), m); o.quaternion.setFromUnitVectors(UPV, d.normalize()); o.position.copy(a).add(b).multiplyScalar(0.5); g.add(o); };
+  bar([0, .34, .55], [0, .78, .05]); bar([0, .78, .05], [0, .82, -.45]); bar([0, .34, -.55], [0, .82, -.45]); bar([0, .34, .55], [0, .42, -.05]); bar([0, .42, -.05], [0, .78, .05]);
+  bar([0, .82, -.45], [0, .98, -.5]); bar([-.26, .98, -.5], [.26, .98, -.5], tm, 0.03);
+  const seat = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.05, 0.26), tm); seat.position.set(0, 0.82, 0.1); g.add(seat);
+  const basket = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.22, 0.26), mat(0xc9a46a)); basket.position.set(0, 0.88, -0.72); g.add(basket);
+  g.userData.wheels = wheels; return g;
+}
+function addNpc(o) {
+  const n = Object.assign({ off: 0, toff: 0, offUntil: 0, sayAt: -99, bellAt: -99, nextBell: 4 + Math.random() * 12 }, o);
+  if (o.kind === "bike") {
+    const g = new THREE.Group(), bike = makeBike(o.color), rider = makeAvatar({ g: o.g, c: o.c, pose: "boat" });
+    rider.position.set(0, 0.5, 0.18); rider.userData.inner.rotation.x = -0.25;
+    rider.userData.arms.forEach(a => a.rotation.x = 1.15);
+    g.add(bike); g.add(rider); g.userData.h = 2.3; n.obj = g; n.bike = bike; n.rider = rider;
+  } else n.obj = makeAvatar({ g: o.g, c: o.c, pose: "stand" });
+  scene.add(n.obj); npcs.push(n); return n;
+}
+addNpc({ kind: "walk", g: "f", c: 4, x: -40, dir: 1, speed: 1.4, lane: 28.2, dog: true });
+addNpc({ kind: "walk", g: "m", c: 3, x: 40, dir: 1, speed: 1.1, lane: 29.6 });
+addNpc({ kind: "run", g: "m", c: 1, x: 100, dir: -1, speed: 3.8, lane: 29.9 });
+addNpc({ kind: "run", g: "f", c: 5, x: -60, dir: 1, speed: 3.3, lane: 29.1 });
+addNpc({ kind: "run", g: "m", c: 2, x: -85, dir: 1, speed: 4.2, lane: 29.1 });
+addNpc({ kind: "bike", g: "m", c: 0, x: -70, dir: 1, speed: 7.5, lane: 31.9, color: 0x5aa0d8 });
+addNpc({ kind: "bike", g: "f", c: 3, x: 130, dir: -1, speed: 8.5, lane: 32.9, color: 0xe07a5f });
+addNpc({ kind: "bike", g: "f", c: 2, x: 20, dir: 1, speed: 6.4, lane: 31.9, color: 0x8fbf7a });
+const dog = new THREE.Group();
+{ const fur = mat(0xd9b07a), dark = mat(0x6b4a30);
+  const b = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.3, 0.7), fur); b.position.y = 0.38; dog.add(b);
+  const h = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 10), fur); h.position.set(0, 0.62, -0.42); dog.add(h);
+  [-0.11, 0.11].forEach(k => { const e = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.16, 0.1), dark); e.position.set(k, 0.76, -0.4); dog.add(e); });
+  const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, 0.3, 6), fur); tail.position.set(0, 0.6, 0.38); tail.rotation.x = -0.8; dog.add(tail); dog.userData.tail = tail;
+  dog.userData.legs = [];
+  [[-0.11, -0.25], [0.11, -0.25], [-0.11, 0.25], [0.11, 0.25]].forEach(([x, z]) => { const l = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.26, 0.08), fur); l.position.set(x, 0.13, z); dog.add(l); dog.userData.legs.push(l); });
+}
+scene.add(dog);
+
+/* speech bubbles */
+const bubbles = [];
+function bubbleSprite(text) {
+  const c = document.createElement("canvas"); c.width = 512; c.height = 128; const x = c.getContext("2d");
+  x.font = "44px 'Gowun Dodum', sans-serif";
+  const w = Math.min(496, x.measureText(text).width + 56), l = (512 - w) / 2;
+  x.fillStyle = "rgba(255,252,246,.96)"; x.beginPath();
+  if (x.roundRect) x.roundRect(l, 8, w, 84, 42); else x.rect(l, 8, w, 84);
+  x.moveTo(244, 90); x.lineTo(256, 116); x.lineTo(270, 90); x.fill();
+  x.fillStyle = "#2a2420"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(text, 256, 51);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthWrite: false, transparent: true }));
+  s.scale.set(2.6, 0.65, 1); s.renderOrder = 5; return s;
+}
+function showBubble(getObj, text, dur, key) {
+  for (let i = bubbles.length - 1; i >= 0; i--) if (bubbles[i].key === key) { scene.remove(bubbles[i].s); bubbles.splice(i, 1); }
+  const s = bubbleSprite(text); scene.add(s); bubbles.push({ getObj, s, until: T + dur, dur, key });
+}
+
+/* ================= weather particles ================= */
+const RAIN_N = 1400, rainPos = new Float32Array(RAIN_N * 6);
+for (let i = 0; i < RAIN_N; i++) { const x = (Math.random() - .5) * 70, y = Math.random() * 30, z = (Math.random() - .5) * 70; rainPos.set([x, y, z, x, y - 0.7, z], i * 6); }
+const rainGeo = new THREE.BufferGeometry(); rainGeo.setAttribute("position", new THREE.BufferAttribute(rainPos, 3));
+const rain = new THREE.LineSegments(rainGeo, new THREE.LineBasicMaterial({ color: 0xbfd3e6, transparent: true, opacity: 0.45 })); rain.frustumCulled = false; rain.visible = false; scene.add(rain);
+const SNOW_N = 1200, snowPos = new Float32Array(SNOW_N * 3);
+for (let i = 0; i < SNOW_N; i++) snowPos.set([(Math.random() - .5) * 70, Math.random() * 30, (Math.random() - .5) * 70], i * 3);
+const snowGeo = new THREE.BufferGeometry(); snowGeo.setAttribute("position", new THREE.BufferAttribute(snowPos, 3));
+const snow = new THREE.Points(snowGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.16, transparent: true, opacity: 0.9 })); snow.frustumCulled = false; snow.visible = false; scene.add(snow);
+const splashN = 40, splashPos = new Float32Array(splashN * 3), splashVel = [];
+const splashGeo = new THREE.BufferGeometry(); splashGeo.setAttribute("position", new THREE.BufferAttribute(splashPos, 3));
+const splash = new THREE.Points(splashGeo, new THREE.PointsMaterial({ color: 0xdff1ff, size: 0.22, transparent: true, opacity: 0 })); splash.frustumCulled = false; scene.add(splash);
+let splashT = 9;
+function doSplash(x, z) {
+  for (let i = 0; i < splashN; i++) { splashPos.set([x, -0.5, z], i * 3); const a = Math.random() * Math.PI * 2, s = 1 + Math.random() * 2.5; splashVel[i] = [Math.cos(a) * s, 3 + Math.random() * 4, Math.sin(a) * s]; }
+  splashGeo.attributes.position.needsUpdate = true; splashT = 0; if (audio.ready) audio.splash();
+}
+
+/* ================= audio ================= */
+const audio = { ready: false, muted: false };
+audio.init = function () {
+  const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+  const ac = this.ac = new AC();
+  this.master = ac.createGain(); this.master.gain.value = 0.9; this.master.connect(ac.destination);
+  const bus = v => { const g = ac.createGain(); g.gain.value = v; g.connect(this.master); return g; };
+  this.water = bus(0.7); this.nature = bus(0.55); this.animal = bus(0.45); this.sfx = bus(0.6);
+  const len = ac.sampleRate * 4;
+  const mk = type => {
+    const b = ac.createBuffer(2, len, ac.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = b.getChannelData(ch); let last = 0, b0 = 0, b1 = 0, b2 = 0;
+      for (let i = 0; i < len; i++) {
+        const w = Math.random() * 2 - 1;
+        if (type === "brown") { last = (last + 0.02 * w) / 1.02; d[i] = last * 3.2; }
+        else { b0 = 0.99765 * b0 + w * 0.099; b1 = 0.963 * b1 + w * 0.2965; b2 = 0.57 * b2 + w * 1.0526; d[i] = (b0 + b1 + b2 + w * 0.1848) * 0.12; }
+      }
+    }
+    return b;
+  };
+  this.brown = mk("brown"); this.pink = mk("pink");
+  const loop = (buf, nodes, dest) => { const s = ac.createBufferSource(); s.buffer = buf; s.loop = true; let n = s; nodes.forEach(x => { n.connect(x); n = x; }); n.connect(dest); s.start(); };
+  const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 520;
+  const wg = ac.createGain(); wg.gain.value = 0.55;
+  const lfo = ac.createOscillator(), lfoG = ac.createGain(); lfo.frequency.value = 0.07; lfoG.gain.value = 0.18; lfo.connect(lfoG); lfoG.connect(wg.gain); lfo.start();
+  loop(this.brown, [lp, wg], this.water);
+  const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 850; bp.Q.value = 0.8;
+  this.lap = ac.createGain(); this.lap.gain.value = 0; loop(this.pink, [bp, this.lap], this.water);
+  const hp = ac.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 1400;
+  this.wind = ac.createGain(); this.wind.gain.value = 0.05;
+  const wl = ac.createOscillator(), wlg = ac.createGain(); wl.frequency.value = 0.045; wlg.gain.value = 0.035; wl.connect(wlg); wlg.connect(this.wind.gain); wl.start();
+  loop(this.pink, [hp, this.wind], this.nature);
+  const rh = ac.createBiquadFilter(); rh.type = "highpass"; rh.frequency.value = 700;
+  this.rainG = ac.createGain(); this.rainG.gain.value = 0; loop(this.pink, [rh, this.rainG], this.nature);
+  this.ready = true; this.onEnv(); this.schedule();
+};
+audio.pan = function (p) { const n = this.ac.createStereoPanner ? this.ac.createStereoPanner() : this.ac.createGain(); if (n.pan) n.pan.value = p; return n; };
+audio.lapOnce = function () { const t = this.ac.currentTime, g = this.lap.gain, d = 0.8 + Math.random() * 1.2; g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(0.12 + Math.random() * 0.14, t + d * 0.35); g.linearRampToValueAtTime(0.0001, t + d); };
+audio.tone = function (dest, type, f0, f1, dur, vol, t0) {
+  const ac = this.ac, t = t0 || ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+  o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur * 0.8);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + Math.min(0.02, dur * 0.2)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(dest); o.start(t); o.stop(t + dur + 0.02);
+};
+audio.bird = function () {
+  const out = this.pan(Math.random() * 1.6 - 0.8); out.connect(this.nature);
+  const n = 2 + Math.floor(Math.random() * 5), base = 2600 + Math.random() * 1800, up = Math.random() < 0.5;
+  for (let i = 0; i < n; i++) { const f = base * (0.9 + Math.random() * 0.3); this.tone(out, "sine", up ? f : f * 1.35, up ? f * 1.4 : f * 0.8, 0.1, 0.09, this.ac.currentTime + i * (0.11 + Math.random() * 0.08)); }
+};
+audio.cricket = function () {
+  const out = this.pan(Math.random() * 1.4 - 0.7); out.connect(this.nature); const f = 4300 + Math.random() * 500;
+  for (let r = 0; r < 3; r++) for (let i = 0; i < 3; i++) this.tone(out, "sine", f, f, 0.035, 0.035, this.ac.currentTime + r * 0.55 + i * 0.045);
+};
+audio.voice = function (dest, p, d, f0, f1, f2, form) {
+  const ac = this.ac, t = ac.currentTime, o = ac.createOscillator(), bp = ac.createBiquadFilter(), lp = ac.createBiquadFilter(), g = ac.createGain();
+  o.type = "sawtooth"; bp.type = "bandpass"; bp.Q.value = 3.5; lp.type = "lowpass"; lp.frequency.value = 2600;
+  o.frequency.setValueAtTime(f0 * p, t); o.frequency.linearRampToValueAtTime(f1 * p, t + d * 0.35); o.frequency.linearRampToValueAtTime(f2 * p, t + d);
+  bp.frequency.setValueAtTime(form[0], t); bp.frequency.linearRampToValueAtTime(form[1], t + d * 0.3); bp.frequency.linearRampToValueAtTime(form[2], t + d);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.2, t + 0.05); g.gain.setValueAtTime(0.2, t + d * 0.6); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+  o.connect(bp); bp.connect(lp); lp.connect(g); g.connect(dest); o.start(t); o.stop(t + d + 0.05);
+};
+audio.meow = function () { const out = this.pan(Math.random() * 1.6 - 0.8); out.connect(this.animal); this.voice(out, 0.9 + Math.random() * 0.3, 0.7 + Math.random() * 0.3, 400, 640, 430, [800, 1500, 700]); };
+audio.quack = function () { [0, 220].forEach(ms => setTimeout(() => { if (this.ready) this.voice(this.animal, 1, 0.18, 300, 260, 220, [1100, 900, 700]); }, ms)); };
+audio.bark = function () {
+  const ac = this.ac, out = this.pan(Math.random() * 1.2 - 0.6); out.connect(this.animal);
+  const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1700; lp.connect(out);
+  const n = 1 + Math.floor(Math.random() * 2);
+  for (let i = 0; i < n; i++) {
+    const t = ac.currentTime + i * 0.28; this.tone(lp, "sawtooth", 330, 170, 0.17, 0.3, t);
+    const s = ac.createBufferSource(); s.buffer = this.pink; const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 900; bp.Q.value = 1.2; const ng = ac.createGain();
+    ng.gain.setValueAtTime(0.0001, t); ng.gain.exponentialRampToValueAtTime(0.5, t + 0.008); ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+    s.connect(bp); bp.connect(ng); ng.connect(lp); s.start(t, Math.random() * 3); s.stop(t + 0.15);
+  }
+};
+audio.splash = function () {
+  const ac = this.ac, t = ac.currentTime, s = ac.createBufferSource(); s.buffer = this.pink;
+  const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.setValueAtTime(1800, t); bp.frequency.exponentialRampToValueAtTime(400, t + 0.7); bp.Q.value = 0.7;
+  const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(1.6, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
+  s.connect(bp); bp.connect(g); g.connect(this.water); s.start(t, Math.random()); s.stop(t + 1);
+  this.tone(this.water, "sine", 520, 140, 0.25, 0.3, t);
+};
+audio.step = function (surf, side) {
+  const p = side ? 1 : 1.07, t = this.ac.currentTime;
+  if (surf === "grass") { this.tone(this.sfx, "sine", 430 * p, 300 * p, 0.07, 0.07, t); }
+  else if (surf === "path") { this.tone(this.sfx, "triangle", 640 * p, 470 * p, 0.06, 0.07, t); }
+  else if (surf === "deck") { this.tone(this.sfx, "sine", 920 * p, 700 * p, 0.07, 0.08, t); this.tone(this.sfx, "sine", 1840 * p, 1400 * p, 0.05, 0.02, t); }
+  else { this.tone(this.sfx, "triangle", 520 * p, 380 * p, 0.09, 0.1, t); }
+};
+audio.paddle = function () {
+  const ac = this.ac, t = ac.currentTime, s = ac.createBufferSource(); s.buffer = this.pink;
+  const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1200; bp.Q.value = 1;
+  const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t + 0.05); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+  s.connect(bp); bp.connect(g); g.connect(this.sfx); s.start(t, Math.random() * 3); s.stop(t + 0.4);
+};
+audio.bell = function (vol) {
+  if (vol <= 0.01) return; const t = this.ac.currentTime;
+  [0, 0.13].forEach(d => { this.tone(this.sfx, "sine", 2950, 2900, 0.7, 0.12 * vol, t + d); this.tone(this.sfx, "sine", 4400, 4350, 0.4, 0.05 * vol, t + d); });
+};
+audio.pop = function () { this.tone(this.sfx, "sine", 620, 940, 0.09, 0.08); };
+audio.speak = function (text, vol) {
+  try {
+    if (this.muted || vol <= 0.05 || !("speechSynthesis" in window)) return;
+    const u = new SpeechSynthesisUtterance(String(text).replace(/[~!?.,\u223C\uFF5E]/g, "").trim()); u.lang = "ko-KR"; u.pitch = 1.3; u.rate = 1.2; u.volume = clamp(vol, 0, 1);
+    const v = speechSynthesis.getVoices().find(v => /^ko/i.test(v.lang)); if (v) u.voice = v;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+};
+audio.schedule = function () {
+  const every = (fn, lo, hi) => { const go = () => { try { fn(); } catch (e) {} setTimeout(go, (lo + Math.random() * (hi - lo)) * 1000); }; setTimeout(go, (lo * 0.4 + Math.random() * lo) * 1000); };
+  every(() => this.lapOnce(), 1.2, 3.6);
+  every(() => { if (phase !== "밤" && weather !== "rain") this.bird(); }, 2.5, 9);
+  every(() => { if (phase === "밤" && weather !== "rain" && weather !== "snow") this.cricket(); }, 1.4, 4.2);
+  every(() => this.meow(), 28, 70);
+  every(() => this.bark(), 22, 60);
+};
+audio.onEnv = function () {
+  const t = this.ac.currentTime;
+  this.rainG.gain.setTargetAtTime(weather === "rain" ? 0.5 : 0, t, 0.8);
+  this.wind.gain.setTargetAtTime(weather === "snow" || weather === "rain" ? 0.09 : phase === "밤" ? 0.03 : 0.05, t, 0.8);
+};
+audio.setMuted = function (m) { this.muted = m; if (this.ready) this.master.gain.setTargetAtTime(m ? 0 : 0.9, this.ac.currentTime, 0.15); };
+
+/* ================= apply environment ================= */
+let envStreak = 0;
+function applyEnv() {
+  const k = kst(); hourNow = k.getHours() + k.getMinutes() / 60; phase = phaseLabel(hourNow);
+  const T = blend(hourNow), w = weather;
+  const overcast = w === "cloudy" ? 0.6 : w === "rain" ? 0.8 : w === "snow" ? 0.65 : w === "fog" ? 0.5 : 0;
+  const grey = new THREE.Color(0x8e959d).multiplyScalar(0.25 + 0.75 * Math.min(1, T.hemiI));
+  const mix = (hex, amt) => new THREE.Color(hex).lerp(grey, amt);
+  skyU.top.value.copy(mix(T.top, overcast)); skyU.mid.value.copy(mix(T.mid, overcast)); skyU.hor.value.copy(mix(T.hor, overcast * 0.9));
+  skyU.sunCol.value.set(T.sun).multiplyScalar(1 - overcast * 0.85); skyU.sunDir.value.set(...T.sunDir).normalize();
+  skyU.stars.value = T.stars * (1 - overcast); skyU.disk.value = T.disk * (1 - overcast);
+  sun.color.set(T.sun); sun.intensity = T.sunI * (1 - overcast * 0.6); sun.position.copy(skyU.sunDir.value).multiplyScalar(200);
+  hemi.color.set(T.hemiS).lerp(grey, overcast * 0.5); hemi.groundColor.set(T.hemiG); hemi.intensity = T.hemiI * (1 - overcast * 0.15);
+  const fogC = mix(T.fog, overcast * 0.8); scene.fog.color.copy(fogC);
+  const near = w === "fog" ? 6 : w === "rain" || w === "snow" ? 30 : 80, farD = w === "fog" ? 150 : w === "rain" ? 380 : w === "snow" ? 420 : 760;
+  scene.fog.near = near; scene.fog.far = farD; waterU.fogNear.value = near; waterU.fogFar.value = farD;
+  waterU.deep.value.copy(mix(T.deep, overcast * 0.4)); waterU.shallow.value.copy(mix(T.shallow, overcast * 0.4));
+  waterU.skyC.value.copy(skyU.mid.value).lerp(skyU.hor.value, 0.5);
+  waterU.sunCol.value.copy(skyU.sunCol.value).multiplyScalar(phase === "밤" ? 0.5 : 1); waterU.sunDir.value.copy(skyU.sunDir.value); waterU.fogCol.value.copy(fogC);
+  waterU.rough.value = w === "rain" ? 1.6 : 0.9;
+  cityM.emissiveIntensity = T.glow; cityM.color.set(T.glow > 0.6 ? 0x3a3f4a : 0x8a909c);
+  lampHeadM.color.set(T.lamps > 0.3 ? 0xffd7a0 : 0xbfb9ad);
+  const lampsOn = Math.max(T.lamps, overcast > 0.5 ? 0.4 : 0);
+  lampLights.forEach(l => l.intensity = lampsOn * 1.4); playerLight.intensity = lampsOn * 0.9;
+  bridgeLights.forEach(b => b.m.color.copy(b.base).multiplyScalar(0.35 + T.glow * 0.65));
+  envStreak = T.streak * (1 - overcast * 0.3);
+  rain.visible = w === "rain"; snow.visible = w === "snow";
+  $("timeLabel").textContent = phase; $("clock").textContent = String(k.getHours()).padStart(2, "0") + ":" + String(k.getMinutes()).padStart(2, "0");
+  $("weatherLabel").textContent = WEATHER[w];
+  document.querySelectorAll("#weatherSeg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.w === w)));
+  if (audio.ready) audio.onEnv();
+}
+
+/* ================= player ================= */
+const me = { name: "", g: "m", c: Math.floor(Math.random() * SHIRTS.length), m: Math.floor(Math.random() * MAT_STYLES.length),
+  x: 6, z: 30.5, y: 0, r: 0, st: "walk", tube: false, bt: null, moving: false, speed: 0, level: "ground", moveYaw: 0 };
+let lastInput = { f: 0, r: 0 };
+let myAvatar = null, started = false, anim = null;
+const boatLocal = { x: 0, z: 0, r: 0 };
+let boarded = null; // {id, partner, driver}
+
+function poseFor() { return me.st === "walk" ? "stand" : me.st === "swim" ? (me.tube ? "tube" : "swim") : me.st === "bench" ? "boat" : me.st; }
+function rebuildMe() {
+  if (myAvatar) scene.remove(myAvatar);
+  myAvatar = makeAvatar({ g: me.g, c: me.c, pose: poseFor(), name: me.name, mine: true, matStyle: me.m });
+  scene.add(myAvatar);
+}
+
+/* input */
+const keys = new Set(); const joyV = { x: 0, y: 0 };
+addEventListener("keydown", e => {
+  if (e.target && e.target.closest && e.target.closest("input")) return;
+  const k = e.key.toLowerCase();
+  if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright", "shift"].includes(k)) { keys.add(k); if (k.startsWith("arrow")) e.preventDefault(); }
+});
+addEventListener("keyup", e => keys.delete(e.key.toLowerCase()));
+addEventListener("blur", () => keys.clear());
+function inputVec() {
+  let f = 0, r = 0;
+  if (keys.has("w") || keys.has("arrowup")) f += 1; if (keys.has("s") || keys.has("arrowdown")) f -= 1;
+  if (keys.has("d") || keys.has("arrowright")) r += 1; if (keys.has("a") || keys.has("arrowleft")) r -= 1;
+  f += joyV.y; r += joyV.x;
+  const l = Math.hypot(f, r); if (l > 1) { f /= l; r /= l; }
+  return { f, r, run: keys.has("shift") || Math.hypot(joyV.x, joyV.y) > 0.95 };
+}
+const touchy = matchMedia("(pointer: coarse)").matches || "ontouchstart" in window;
+const joy = $("joy"), knob = $("knob"); let joyId = null;
+function joyMove(e) {
+  const r = joy.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, R0 = r.width / 2 - 14;
+  let dx = e.clientX - cx, dy = e.clientY - cy; const l = Math.hypot(dx, dy); if (l > R0) { dx *= R0 / l; dy *= R0 / l; }
+  knob.style.transform = `translate(${dx}px,${dy}px)`; joyV.x = dx / R0; joyV.y = -dy / R0;
+}
+joy.addEventListener("pointerdown", e => { joyId = e.pointerId; joy.setPointerCapture(e.pointerId); joyMove(e); e.stopPropagation(); });
+joy.addEventListener("pointermove", e => { if (e.pointerId === joyId) joyMove(e); });
+const joyEnd = e => { if (e.pointerId !== joyId) return; joyId = null; joyV.x = joyV.y = 0; knob.style.transform = ""; };
+joy.addEventListener("pointerup", joyEnd); joy.addEventListener("pointercancel", joyEnd);
+
+const cam = { yaw: 0, pitch: 0.26, dist: 6.5, tYaw: 0, tPitch: 0.26, tDist: 6.5, tx: 6, ty: 1.2, tz: 30, dragAt: 0, init: false };
+const camPos = new THREE.Vector3();
+const ptrs = new Map(); let pinch0 = 0;
+canvas.addEventListener("pointerdown", e => { canvas.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y); } });
+canvas.addEventListener("pointermove", e => {
+  const p = ptrs.get(e.pointerId); if (!p || !started) return;
+  cam.dragAt = performance.now();
+  if (ptrs.size === 1) { cam.tYaw -= (e.clientX - p.x) * 0.005; cam.tPitch = clamp(cam.tPitch + (e.clientY - p.y) * 0.004, 0.02, 0.9); }
+  else if (ptrs.size === 2) { p.x = e.clientX; p.y = e.clientY; const [a, b] = [...ptrs.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch0) cam.tDist = clamp(cam.tDist * pinch0 / d, 2.8, 16); pinch0 = d; return; }
+  p.x = e.clientX; p.y = e.clientY;
+});
+const ptrUp = e => { ptrs.delete(e.pointerId); pinch0 = 0; };
+canvas.addEventListener("pointerup", ptrUp); canvas.addEventListener("pointercancel", ptrUp);
+canvas.addEventListener("wheel", e => { if (!started) return; e.preventDefault(); cam.tDist = clamp(cam.tDist * (1 + Math.sign(e.deltaY) * 0.1), 2.8, 16); }, { passive: false });
+
+/* ================= room / peers ================= */
+let room = null, myPeer = null;
+const others = new Map(); // peer -> {p, key, obj, x, z, r}
+const seen = new Set();
+const num = (v, lo, hi, d) => (typeof v === "number" && isFinite(v) ? clamp(v, lo, hi) : d);
+function cleanPresence(p) {
+  if (!p || typeof p !== "object" || typeof p.n !== "string") return null;
+  const st = ["walk", "sit", "lie", "swim", "boat", "bench"].includes(p.st) ? p.st : "walk";
+  const o = {
+    n: p.n.replace(/[\u0000-\u001f​-‏‪-‮]/g, "").slice(0, 10) || "손님",
+    g: p.g === "f" ? "f" : "m", c: Number.isInteger(p.c) ? Math.abs(p.c) % SHIRTS.length : 0, m: Number.isInteger(p.m) ? Math.abs(p.m) % MAT_STYLES.length : 0,
+    x: num(p.x, BOUND.x0 - 2, BOUND.x1 + 2, 0), z: num(p.z, BOUND.waterZ0 - 2, BOUND.landZ1 + 1, 30), r: num(p.r, -100, 100, 0),
+    y: num(p.y, -2, 14, 0), st, tb: p.tb === true, bt: null, say: null
+  };
+  if (p.say && typeof p.say === "object" && Number.isInteger(p.say.i) && p.say.i >= 0 && p.say.i < MACROS.length && typeof p.say.at === "number") o.say = { i: p.say.i, at: p.say.at };
+  if (p.bt && typeof p.bt === "object" && Number.isInteger(p.bt.id) && p.bt.id >= 0 && p.bt.id < boats.length) o.bt = { id: p.bt.id };
+  if (typeof p.bx === "number" && typeof p.bz === "number") { o.bx = num(p.bx, BOUND.x0 - 5, BOUND.x1 + 5, 0); o.bz = num(p.bz, BOUND.waterZ0 - 5, 0, -5); o.br = num(p.br, -1000, 1000, 0); }
+  return o;
+}
+function poseOf(p) { return p.st === "walk" ? "stand" : p.st === "swim" ? (p.tb ? "tube" : "swim") : p.st === "bench" ? "boat" : p.st; }
+const MACROS = ["자리요", "가세요", "나와주세요", "안녕하세요", "반갑습니다", "감사합니다"];
+const MAX_PEOPLE = 30;
+function syncPeers(peers) {
+  const live = new Set();
+  for (const peer of peers) {
+    if (peer.sameTab) { myPeer = peer.peer; continue; }
+    if (peer.kind !== "viewer") continue;
+    const p = cleanPresence(peer.presence); if (!p) continue;
+    live.add(peer.peer);
+    const key = [p.n, p.g, p.c, p.m, poseOf(p)].join("|"); let cur = others.get(peer.peer);
+    if (!cur || cur.key !== key) {
+      if (cur) scene.remove(cur.obj);
+      const obj = makeAvatar({ g: p.g, c: p.c, pose: poseOf(p), name: p.n, matStyle: p.m });
+      obj.position.set(p.x, 0, p.z); scene.add(obj);
+      cur = Object.assign(cur || { x: p.x, z: p.z, r: p.r }, { key, obj });
+      others.set(peer.peer, cur);
+    }
+    cur.p = p;
+    const sayAt = p.say ? p.say.at : 0;
+    if (cur.lastSay === undefined) cur.lastSay = sayAt;
+    else if (sayAt !== cur.lastSay) { cur.lastSay = sayAt; if (p.say) { const id = peer.peer; showBubble(() => (others.get(id) || {}).obj, MACROS[p.say.i], 4, id); if (audio.ready) audio.pop(); } }
+    if (!seen.has(peer.peer)) { seen.add(peer.peer); if (started) toast(p.n + "님이 한강에 왔습니다"); }
+  }
+  for (const [peer, o] of others) if (!live.has(peer)) { scene.remove(o.obj); others.delete(peer); seen.delete(peer); }
+  evaluateBoat();
+  $("count").textContent = String(others.size + (started ? 1 : 0) || 1);
+  if (!started) { $("capLine").hidden = false; $("capLine").textContent = others.size >= MAX_PEOPLE ? `지금 ${MAX_PEOPLE}명이 모두 와 있어서 자리가 없습니다` : `지금 ${others.size}명이 강가에 있습니다 · 최대 ${MAX_PEOPLE}명`; }
+}
+(async () => {
+  try {
+    if (!window.claude || typeof window.claude.use !== "function") return;
+    room = await window.claude.use("room"); if (!room) return;
+    room.onPeers(ch => syncPeers(ch.peers), () => { room = null; });
+  } catch (e) { room = null; }
+})();
+let lastPub = 0, lastPubKey = "", mySay = null;
+function presenceObj() {
+  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id } : null, say: mySay };
+  if (boarded && boarded.driver) { o.bx = +boatLocal.x.toFixed(2); o.bz = +boatLocal.z.toFixed(2); o.br = +boatLocal.r.toFixed(2); }
+  else { o.bx = null; o.bz = null; o.br = null; }
+  return o;
+}
+function publish(force) {
+  if (!room || !started) return;
+  const now = performance.now(); if (!force && now - lastPub < 110) return;
+  const o = presenceObj(), key = JSON.stringify(o); if (!force && key === lastPubKey) return;
+  lastPub = now; lastPubKey = key; room.presence(o).catch(() => {});
+}
+
+/* ================= duck boat logic ================= */
+function claimsFor(id) {
+  const list = [];
+  for (const [peer, o] of others) if (o.p.bt && o.p.bt.id === id) list.push(peer);
+  if (me.bt && me.bt.id === id && myPeer) list.push(myPeer);
+  return list.sort();
+}
+function boatPairs() { return boats.map(b => { const c = claimsFor(b.id); return c.length >= 2 ? c.slice(0, 2) : null; }); }
+function evaluateBoat() {
+  if (!started) return;
+  if (!me.bt) { boarded = null; return; }
+  if (!myPeer) return;
+  const claims = claimsFor(me.bt.id), idx = claims.indexOf(myPeer);
+  if (idx >= 2) { me.bt = null; toast("이미 두 명이 탄 오리배입니다"); publish(true); refreshActions(); return; }
+  if (claims.length >= 2) {
+    const partner = claims[idx === 0 ? 1 : 0], driver = idx === 0;
+    if (!boarded) {
+      const b = boats[me.bt.id]; boatLocal.x = b.x; boatLocal.z = b.z; boatLocal.r = b.r;
+      boarded = { id: me.bt.id, partner, driver };
+      me.st = "boat"; me.tube = false; rebuildMe(); if (audio.ready) audio.quack();
+      const pn = others.get(partner); toast((pn ? pn.p.n + "님과 " : "") + "오리배에 탔습니다!" + (driver ? " 내가 운전합니다" : ""));
+      cam.tDist = 9; cam.tPitch = 0.3;
+    } else { boarded.driver = driver; boarded.partner = partner; }
+  } else if (boarded) {
+    leaveBoat(true); // partner got off or left: everyone off
+    return;
+  }
+  publish(true); refreshActions();
+}
+function claimBoat(id) {
+  if (!room || !myPeer) { toast("오리배는 두 명이 모여야 탈 수 있습니다. 지금은 같이 탈 사람이 없어요."); return; }
+  me.bt = { id }; toast("오리배 앞에서 같이 탈 사람을 기다립니다");
+  publish(true); evaluateBoat(); refreshActions();
+}
+function leaveBoat(forced) {
+  const id = boarded ? boarded.id : null;
+  me.bt = null; boarded = null;
+  if (id != null) {
+    const b = boats[id], dHome = Math.hypot(b.x - b.home[0], b.z - b.home[1]);
+    me.level = "ground"; me.y = 0;
+    if (dHome < 7) { me.x = b.home[0] + (Math.random() - 0.5) * 3; me.z = 2.4; me.st = "walk"; me.tube = false; rebuildMe(); toast(forced ? "짝꿍이 내려서 나도 선착장에 내렸습니다" : "선착장에 내렸습니다"); }
+    else { me.x = clamp(b.x + (Math.random() < 0.5 ? -1.6 : 1.6), BOUND.x0, BOUND.x1); me.z = b.z; me.st = "swim"; me.tube = false; rebuildMe(); doSplash(me.x, me.z); toast(forced ? "짝꿍이 내리는 바람에 같이 풍덩! 헤엄쳐서 나오세요" : "풍덩! 강 한가운데서 내렸습니다"); }
+    cam.tDist = 7; cam.tPitch = 0.22;
+  }
+  publish(true); actKey = ""; refreshActions();
+}
+
+/* ================= actions UI ================= */
+function onGrass(x, z) { return (z > 3.1 && z < 26.8) || (z > 34.2 && z <= BOUND.landZ1); }
+function onPath(z) { return z >= 26.8 && z <= 34.2; }
+function matConflict(x, z) {
+  for (const o of others.values()) if ((o.p.st === "sit" || o.p.st === "lie") && Math.hypot(o.p.x - x, o.p.z - z) < 3.2) return o.p.n;
+  return null;
+}
+function canSpread() { return (me.level === "ground" && onGrass(me.x, me.z)) || me.level === "bridge"; }
+function benchSeats() { const out = []; BENCHES.forEach(b => { if (b.x > BOUND.x0 && b.x < BOUND.x1) [-0.6, 0.6].forEach(k => out.push({ x: b.x + k, z: b.z - 0.05 })); }); return out; }
+function nearBench() {
+  if (me.level !== "ground") return null;
+  let best = null, bd = 2.4;
+  benchSeats().forEach(s => {
+    const taken = [...others.values()].some(o => o.p.st === "bench" && Math.abs(o.p.x - s.x) < 0.3 && Math.abs(o.p.z - s.z) < 0.5);
+    const d = Math.hypot(s.x - me.x, s.z - me.z); if (!taken && d < bd) { bd = d; best = s; }
+  });
+  return best;
+}
+function nearDock() {
+  if (me.st === "walk") return Math.abs(me.x - DOCK.x) < 9 && me.z < 6;
+  if (me.st === "swim") return boats.some(b => !b.pair && Math.hypot(b.x - me.x, b.z - me.z) < 3.5);
+  return false;
+}
+function freeBoat() {
+  let best = null, bd = 1e9;
+  boats.forEach(b => {
+    const c = claimsFor(b.id); if (c.length >= 2) return;
+    const d = Math.hypot(b.x - me.x, b.z - me.z) - (c.length === 1 ? 50 : 0); // join someone who's waiting first
+    if (d < bd) { bd = d; best = b.id; }
+  });
+  return best;
+}
+let actKey = "";
+function refreshActions() {
+  if (!started) return;
+  const acts = []; let status = "";
+  if (anim) { /* mid-animation */ }
+  else if (boarded) {
+    const pn = others.get(boarded.partner);
+    status = boarded.driver ? "오리배 운전 중" + (pn ? " · " + pn.p.n + "님과 함께" : "") : (pn ? pn.p.n + "님이 운전 중" : "오리배 탑승 중");
+    acts.push(["leave", "내리기", "duck"]);
+  } else if (me.bt) {
+    status = "같이 탈 사람을 기다리는 중… 한 명이 더 오면 출발합니다";
+    acts.push(["cancel", "그만 기다리기", ""]);
+  } else if (me.st === "walk") {
+    if (nearBench()) acts.push(["bench", "벤치에 앉기", "primary"]);
+    if (canSpread()) { acts.push(["sit", "앉기", nearBench() ? "" : "primary"]); acts.push(["lie", "눕기", ""]); }
+    else if (me.level === "stairs") status = "대교로 올라가는 계단";
+    else if (onPath(me.z) && !nearBench()) status = "길 위에는 돗자리를 펼 수 없습니다";
+    if (nearDock()) acts.push(["boat", "오리배 타기", "duck"]);
+  } else if (me.st === "bench") {
+    acts.push(["stand", "일어나기", "primary"]);
+  } else if (me.st === "sit" || me.st === "lie") {
+    acts.push(["stand", "일어나기", "primary"]);
+    acts.push([me.st === "sit" ? "lie" : "sit", me.st === "sit" ? "눕기" : "앉기", ""]);
+  } else if (me.st === "swim") {
+    status = me.tube ? "튜브 타고 둥둥 · 강가 쪽으로 가면 올라갑니다" : "배영 중 · 강가 쪽으로 헤엄치면 올라갑니다";
+    acts.push(["tube", me.tube ? "튜브 빼기" : "튜브 끼기", ""]);
+    if (nearDock()) acts.push(["boat", "오리배 타기", "duck"]);
+  }
+  const key = JSON.stringify([acts, status]); if (key === actKey) return; actKey = key;
+  const row = $("actRow"); row.textContent = "";
+  acts.forEach(([id, label, cls]) => { const b = document.createElement("button"); b.className = "act " + cls; b.textContent = label; b.dataset.act = id; row.appendChild(b); });
+  $("status").textContent = status; $("status").hidden = !status;
+}
+$("actRow").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return; const a = b.dataset.act;
+  if (a === "sit" || a === "lie") {
+    if (me.st === "walk") {
+      if (!canSpread()) { toast("잔디나 대교 위에서만 돗자리를 펼 수 있습니다"); return; }
+      const who = matConflict(me.x, me.z);
+      if (who) { toast(who + "님 돗자리와 너무 가깝습니다. 조금만 떨어져 주세요"); return; }
+      me.r = 0;
+    }
+    me.st = a; rebuildMe(); cam.tPitch = a === "lie" ? 0.42 : 0.22; cam.tDist = a === "lie" ? 7.5 : 6.5;
+  } else if (a === "bench") {
+    const seat = nearBench(); if (!seat) { toast("벤치 자리가 다 찼습니다"); return; }
+    me.st = "bench"; me.x = seat.x; me.z = seat.z; me.y = 0.4; me.r = 0; rebuildMe(); cam.tPitch = 0.22; cam.tDist = 6;
+  } else if (a === "stand") {
+    if (me.st === "bench") { me.z = 24.8; me.y = 0; }
+    me.st = "walk"; rebuildMe(); cam.tPitch = 0.26; cam.tDist = 6.5;
+  }
+  else if (a === "tube") { me.tube = !me.tube; rebuildMe(); }
+  else if (a === "boat") { const id = freeBoat(); if (id == null) toast("남은 오리배가 없습니다"); else claimBoat(id); }
+  else if (a === "cancel") { me.bt = null; }
+  else if (a === "leave") { leaveBoat(false); return; }
+  publish(true); actKey = ""; refreshActions();
+});
+
+/* mat preview */
+const ghost = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 2.5), new THREE.MeshBasicMaterial({ color: 0x9be3a0, transparent: true, opacity: 0.32, depthWrite: false }));
+ghost.rotation.x = -Math.PI / 2; ghost.visible = false; scene.add(ghost);
+
+/* ================= admin weather (db + user) ================= */
+let weatherRef = null, isAdmin = false;
+(async () => {
+  try {
+    if (!window.claude || typeof window.claude.use !== "function") return;
+    const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+    if (user) { try { isAdmin = await user.canEdit(); } catch (e) { isAdmin = false; } }
+    if (!db) return;
+    if (isAdmin) { $("weatherSeg").hidden = false; $("adminBadge").hidden = false; $("weatherNote").textContent = "관리자만 날씨를 바꿀 수 있습니다. 바꾸면 접속한 모두에게 바로 적용됩니다. 시간대는 한국 시간에 맞춰 자동입니다."; }
+    weatherRef = db.doc("live/weather");
+    weatherRef.onSnapshot(snap => {
+      const d = snap.exists ? snap.data() : null; const w = d && typeof d.w === "string" && WEATHER[d.w] ? d.w : "clear";
+      if (w !== weather) { weather = w; applyEnv(); if (started) toast("날씨가 " + WEATHER[w] + "(으)로 바뀌었습니다"); }
+    }, () => {});
+  } catch (e) {}
+})();
+$("weatherSeg").addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b || !isAdmin || !weatherRef) return;
+  const w = b.dataset.w, prev = weather; weather = w; applyEnv();
+  try { await weatherRef.set({ w, at: Date.now() }); } catch (err) { weather = prev; applyEnv(); toast("날씨를 바꾸지 못했습니다. 편집 권한이 있는지 확인해 주세요"); }
+});
+
+/* ================= UI glue ================= */
+function toast(text) {
+  const t = document.createElement("div"); t.className = "pill toast"; t.textContent = text;
+  $("toasts").appendChild(t); setTimeout(() => t.remove(), 4300);
+  while ($("toasts").children.length > 3) $("toasts").firstChild.remove();
+}
+function pressG() { document.querySelectorAll("#genderChoices .choice").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.g === me.g))); }
+$("enterBtn").addEventListener("click", () => {
+  try { audio.init(); } catch (e) {}
+  $("gate1").hidden = true; $("gate2").hidden = false;
+  try { const n = localStorage.getItem("hangang-name"); if (n) $("nameInput").value = n; const g = localStorage.getItem("hangang-g"); if (g === "f" || g === "m") { me.g = g; pressG(); } } catch (e) {}
+  if (!touchy) setTimeout(() => $("nameInput").focus(), 50);
+});
+$("genderChoices").addEventListener("click", e => { const b = e.target.closest(".choice"); if (!b) return; me.g = b.dataset.g; pressG(); });
+$("joinForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const n = $("nameInput").value.replace(/[\u0000-\u001f​-‏‪-‮]/g, "").trim();
+  if (!n) { $("err").textContent = "이름을 한 글자 이상 적어주세요."; $("nameInput").focus(); return; }
+  if (others.size >= MAX_PEOPLE) { $("err").textContent = `지금 ${MAX_PEOPLE}명이 모두 와 있습니다. 조금 뒤에 다시 와 주세요.`; return; }
+  me.name = n.slice(0, 10);
+  try { localStorage.setItem("hangang-name", me.name); localStorage.setItem("hangang-g", me.g); } catch (e) {}
+  me.x = 4 + (Math.random() - 0.5) * 16; me.z = 30.5; me.r = 0; me.st = "walk"; me.level = "ground"; me.y = 0;
+  rebuildMe(); started = true; $("nameInput").blur();
+  cam.tx = me.x; cam.tz = me.z; cam.yaw = cam.tYaw = 0; cam.tPitch = 0.26; cam.tDist = 6.5; cam.init = false;
+  $("gate2").hidden = true; $("hudLeft").hidden = false; $("hudRight").hidden = false; $("actions").hidden = false;
+  if (touchy) $("joy").hidden = false; else { $("keys").hidden = false; setTimeout(() => { $("keys").hidden = true; }, 15000); }
+  publish(true); refreshActions(); $("count").textContent = String(others.size + 1);
+  toast(touchy ? "패드로 걸어가서 마음에 드는 잔디에 돗자리를 펴세요" : "WASD로 걸어가서 마음에 드는 잔디에 돗자리를 펴세요");
+});
+$("soundBtn").addEventListener("click", () => {
+  if (!audio.ready) { try { audio.init(); } catch (e) {} }
+  audio.setMuted(!audio.muted);
+  $("soundBtn").setAttribute("aria-label", audio.muted ? "소리 켜기" : "소리 끄기");
+  $("soundIcon").innerHTML = audio.muted ? '<path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/>' : '<path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>';
+});
+MACROS.forEach((m, i) => { const b = document.createElement("button"); b.dataset.i = i; const k = document.createElement("kbd"); k.textContent = i + 1; b.append(k, m); $("chatGrid").appendChild(b); });
+let lastSayAt = 0;
+function sayMacro(i) {
+  if (!started || !myAvatar) return; const now = Date.now(); if (now - lastSayAt < 1200) return; lastSayAt = now;
+  mySay = { i, at: now }; showBubble(() => myAvatar, MACROS[i], 4, "me"); if (audio.ready) audio.pop(); publish(true);
+}
+$("chatGrid").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; sayMacro(+b.dataset.i); $("chatPanel").hidden = true; $("chatBtn").setAttribute("aria-expanded", "false"); });
+$("chatBtn").addEventListener("click", () => { const s = $("chatPanel"); s.hidden = !s.hidden; $("chatBtn").setAttribute("aria-expanded", String(!s.hidden)); $("settings").hidden = true; });
+addEventListener("keydown", e => { if (e.target && e.target.closest && e.target.closest("input")) return; if (/^[1-6]$/.test(e.key)) sayMacro(+e.key - 1); });
+$("setBtn").addEventListener("click", () => { const s = $("settings"); s.hidden = !s.hidden; $("setBtn").setAttribute("aria-expanded", String(!s.hidden)); });
+[["volWater", "water"], ["volNature", "nature"], ["volAnimal", "animal"], ["volStep", "sfx"]].forEach(([id, k]) => {
+  $(id).addEventListener("input", e => { if (audio.ready) audio[k].gain.setTargetAtTime(e.target.value / 100, audio.ac.currentTime, 0.1); });
+});
+document.addEventListener("pointerdown", e => {
+  if (!e.target.closest("#settings,#setBtn")) { $("settings").hidden = true; $("setBtn").setAttribute("aria-expanded", "false"); }
+  if (!e.target.closest("#chatPanel,#chatBtn")) { $("chatPanel").hidden = true; $("chatBtn").setAttribute("aria-expanded", "false"); }
+});
+
+/* photo */
+let shotBlob = null, downloads = null;
+(async () => { try { if (window.claude && typeof window.claude.use === "function") downloads = await window.claude.use("downloads"); } catch (e) { downloads = null; } })();
+$("camBtn").addEventListener("click", () => {
+  renderer.render(scene, camera);
+  const w = canvas.width, h = canvas.height, c = document.createElement("canvas"); c.width = w; c.height = h;
+  const x = c.getContext("2d"); x.drawImage(canvas, 0, 0);
+  const k = kst(), s = Math.max(1, w / 900);
+  x.font = `${Math.round(16 * s)}px 'Gowun Batang', serif`; x.fillStyle = "rgba(255,255,255,.9)"; x.textAlign = "right"; x.textBaseline = "bottom";
+  x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = 8 * s;
+  x.fillText(`한강 돗자리 · ${me.name} · ${k.getMonth() + 1}월 ${k.getDate()}일 ${phase}`, w - 18 * s, h - 16 * s);
+  c.toBlob(b => {
+    if (!b) return; shotBlob = b; const img = $("shotImg"); if (img.src) URL.revokeObjectURL(img.src); img.src = URL.createObjectURL(b);
+    $("shotSave").hidden = !downloads; $("shotTip").textContent = downloads ? "" : "이미지를 길게 누르거나 우클릭해서 저장할 수 있습니다.";
+    $("shot").hidden = false;
+  }, "image/png");
+});
+$("shotClose").addEventListener("click", () => { $("shot").hidden = true; });
+$("shotSave").addEventListener("click", async () => {
+  if (!downloads || !shotBlob) return; const k = kst(), pad = n => String(n).padStart(2, "0");
+  try { await downloads.save({ filename: `hangang-${k.getFullYear()}${pad(k.getMonth() + 1)}${pad(k.getDate())}-${pad(k.getHours())}${pad(k.getMinutes())}.png`, data: shotBlob }); toast("사진을 저장했습니다"); $("shot").hidden = true; }
+  catch (e) { if (e && e.code !== "declined" && e.code !== "cancelled") $("shotTip").textContent = "저장하지 못했습니다. 이미지를 길게 눌러 저장해 주세요."; }
+});
+
+/* ================= simulation ================= */
+let boundToastAt = 0;
+function hitBound() { const n = performance.now(); if (n - boundToastAt > 6000) { boundToastAt = n; toast("여기까지만 갈 수 있습니다"); } }
+function yawFrom(dx, dz) { return Math.atan2(-dx, -dz); }
+function lerpAngle(a, b, t) { const d = ((b - a + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI; return a + d * t; }
+function onDock(x, z) { return Math.abs(x - DOCK.x) < 8.5 && z > -2.2 && z < BOUND.landZ0 + 0.1; }
+function stepPlayer(dt) {
+  if (anim) {
+    anim.t += dt; const u = Math.min(1, anim.t / anim.dur);
+    me.x = anim.from[0] + (anim.to[0] - anim.from[0]) * u; me.z = anim.from[1] + (anim.to[1] - anim.from[1]) * u;
+    me.y = anim.from[2] + (anim.to[2] - anim.from[2]) * u + Math.sin(u * Math.PI) * anim.hop;
+    if (u >= 1) { const then = anim.then; anim = null; then(); }
+    return;
+  }
+  const inp = inputVec(); lastInput = inp;
+  const fx = -Math.sin(cam.yaw), fz = -Math.cos(cam.yaw), rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw);
+  let dx = fx * inp.f + rx * inp.r, dz = fz * inp.f + rz * inp.r; const mag = Math.hypot(dx, dz);
+  me.moving = mag > 0.05;
+  if (boarded) {
+    if (boarded.driver) {
+      boatLocal.r -= inp.r * dt * 1.4;
+      const sp = inp.f * 3.2 * dt; boatLocal.x += -Math.sin(boatLocal.r) * sp; boatLocal.z += -Math.cos(boatLocal.r) * sp;
+      const bx = clamp(boatLocal.x, BOUND.x0 + 1, BOUND.x1 - 1), bz = clamp(boatLocal.z, BOUND.waterZ0 + 1, -3.4);
+      if (bx !== boatLocal.x || bz !== boatLocal.z) { if (Math.abs(inp.f) > 0.2) hitBound(); boatLocal.x = bx; boatLocal.z = bz; }
+    }
+    return;
+  }
+  if (me.st === "sit" || me.st === "lie" || me.st === "bench") { me.moving = false; return; }
+  if (!me.moving) { me.speed = 0; return; }
+  dx /= Math.max(mag, 1); dz /= Math.max(mag, 1);
+  const base = me.st === "swim" ? (me.tube ? 1.4 : 1.8) : inp.run ? 7 : 3.6;
+  me.speed = base * Math.min(1, mag);
+  let nx = me.x + dx * base * dt, nz = me.z + dz * base * dt;
+  me.moveYaw = yawFrom(dx, dz);
+  me.r = lerpAngle(me.r, me.moveYaw + (me.st === "swim" && !me.tube ? Math.PI : 0), Math.min(1, dt * 10));
+  if (me.st === "walk" && me.level === "stairs") {
+    nz = clamp(nz, STAIR.z0 + 0.15, STAIR.z1 - 0.15);
+    if (nx > STAIR.bot) me.level = "ground";
+    else if (nx < STAIR.top) { if (inDeck(nx, nz)) me.level = "bridge"; else nx = STAIR.top; }
+    me.y = me.level === "bridge" ? BR.y : me.level === "stairs" ? stairY(nx) : 0;
+  } else if (me.st === "walk" && me.level === "bridge") {
+    const gap = nz > STAIR.z0 + 0.15 && nz < STAIR.z1 - 0.15;
+    if (nx > BR.x + BR.half && gap) { me.level = "stairs"; me.y = stairY(nx); }
+    else {
+      const cx = clamp(nx, BR.x - BR.half, BR.x + BR.half), cz = clamp(nz, BR.z0, BR.z1);
+      if (cz !== nz) hitBound();
+      nx = cx; nz = cz; me.y = BR.y;
+    }
+  } else if (me.st === "walk" && inStairs(nx, nz)) {
+    if (me.x >= STAIR.bot - 0.6) { me.level = "stairs"; me.y = stairY(nx); }
+    else { nx = me.x; nz = me.z; }
+  } else if (me.st === "walk") {
+    if (nx < BOUND.x0 || nx > BOUND.x1 || nz > BOUND.landZ1) { hitBound(); nx = clamp(nx, BOUND.x0, BOUND.x1); nz = Math.min(nz, BOUND.landZ1); }
+    if (nz < BOUND.landZ0 && !onDock(nx, nz)) {
+      const dockSide = Math.abs(nx - DOCK.x) < 8.5;
+      const tz = dockSide ? -4 : -2.2, tx = dockSide && Math.abs(nx - DOCK.x) < 8.5 ? nx : nx;
+      anim = { t: 0, dur: 0.6, from: [me.x, me.z, me.y || 0], to: [tx, tz, -0.85], hop: 0.9, then: () => {
+        me.st = "swim"; me.y = 0; rebuildMe(); doSplash(me.x, me.z); toast("풍덩! 한강에 빠졌습니다. 강가로 헤엄쳐 나오세요"); publish(true); actKey = ""; refreshActions();
+      } };
+      return;
+    }
+  } else if (me.st === "swim") {
+    if (nx < BOUND.x0 || nx > BOUND.x1 || nz < BOUND.waterZ0) { hitBound(); nx = clamp(nx, BOUND.x0, BOUND.x1); nz = Math.max(nz, BOUND.waterZ0); }
+    const underDock = Math.abs(nx - DOCK.x) < 9.5;
+    const shore = underDock ? -2.8 : -0.9;
+    if (nz > shore) {
+      if (dz > 0.3 && !underDock) {
+        anim = { t: 0, dur: 0.7, from: [me.x, me.z, -0.85], to: [nx, 2.6, 0], hop: 0.9, then: () => {
+          me.st = "walk"; me.level = "ground"; me.tube = false; me.y = 0; rebuildMe(); toast("뭍으로 올라왔습니다"); publish(true); actKey = ""; refreshActions();
+        } };
+        me.st = "walk"; me.tube = false; rebuildMe(); return;
+      }
+      nz = shore;
+    }
+  }
+  me.x = nx; me.z = nz;
+}
+
+/* ================= main loop ================= */
+applyEnv(); setInterval(applyEnv, 30000);
+const clock = new THREE.Clock(); let T = 0, actTimer = 0;
+const tmpV = new THREE.Vector3(), UP = UPV;
+let stepPh = 0, stepSide = false;
+function seatOf(boatIdx, peer) {
+  const b = boats[boatIdx], s = b.pair && b.pair[1] === peer ? 1 : -1;
+  tmpV.set(s * 0.45, 0, 0.25).applyAxisAngle(UP, b.r);
+  return { x: b.x + tmpV.x, z: b.z + tmpV.z, y: b.obj.position.y + 0.2, r: b.r };
+}
+function frame() {
+  const dt = Math.min(clock.getDelta(), 0.05); T += dt;
+  waterU.t.value = T; skyU.t.value = T;
+  streaks.forEach(s => { s.m.opacity = envStreak * (0.55 + 0.25 * Math.sin(T * 1.7 + s.ph) + 0.15 * Math.sin(T * 4.3 + s.ph * 2)); });
+
+  if (started) stepPlayer(dt);
+
+  // boats
+  const pairs = boatPairs();
+  boats.forEach((b, i) => {
+    const pair = pairs[i]; b.pair = pair;
+    if (boarded && boarded.id === i && boarded.driver) { b.tx = boatLocal.x; b.tz = boatLocal.z; b.tr = boatLocal.r; }
+    else if (pair) { const drv = others.get(pair[0]); if (drv && typeof drv.p.bx === "number") { b.tx = drv.p.bx; b.tz = drv.p.bz; b.tr = drv.p.br; } }
+    else { b.tx = b.home[0]; b.tz = b.home[1]; b.tr = 0; }
+    const k = Math.min(1, dt * (pair ? 8 : 1.2));
+    b.x += (b.tx - b.x) * k; b.z += (b.tz - b.z) * k; b.r = lerpAngle(b.r, b.tr, k);
+    b.obj.position.set(b.x, -0.6 + Math.sin(T * 1.6 + i) * 0.05, b.z);
+    b.obj.rotation.set(Math.sin(T * 1.3 + i) * 0.03, b.r, Math.sin(T * 1.1 + i * 2) * 0.03);
+    if (pair) b.obj.userData.wheel.rotation.x += dt * 4;
+  });
+
+  // me
+  if (myAvatar) {
+    if (boarded) { const s = seatOf(boarded.id, myPeer); me.x = s.x; me.z = s.z; me.r = s.r; myAvatar.position.set(s.x, s.y, s.z); myAvatar.rotation.y = s.r; }
+    else {
+      const baseY = me.st === "swim" ? (me.tube ? -0.95 : -0.85) + Math.sin(T * 2) * 0.04 : me.y;
+      myAvatar.position.set(me.x, anim ? me.y : baseY, me.z);
+      myAvatar.rotation.y = me.st === "sit" || me.st === "lie" || me.st === "bench" ? 0 : me.r;
+    }
+    animateAvatar(myAvatar, T, me.moving, me.speed);
+    const showGhost = me.st === "walk" && !anim && !me.moving && !me.bt && canSpread();
+    ghost.visible = showGhost;
+    if (showGhost) { ghost.position.set(me.x, me.y + 0.05, me.z + 0.1); ghost.material.color.set(matConflict(me.x, me.z) ? 0xff8a7a : 0x9be3a0); }
+    playerLight.position.set(me.x + 1.5, me.y + 4, me.z + 3);
+    // footsteps and strokes
+    if (!anim && me.moving && (me.st === "walk" || me.st === "swim")) {
+      const rate = me.st === "swim" ? 3 : me.speed > 5 ? 11 : 7;
+      stepPh += dt * rate;
+      if (stepPh > Math.PI) {
+        stepPh -= Math.PI; stepSide = !stepSide;
+        if (audio.ready) {
+          if (me.st === "swim") { if (stepSide) audio.paddle(); }
+          else audio.step(me.level !== "ground" ? "deck" : onDock(me.x, me.z) ? "wood" : onPath(me.z) ? "path" : "grass", stepSide);
+        }
+      }
+    } else stepPh = Math.PI * 0.75;
+  }
+
+  // others
+  for (const [peer, o] of others) {
+    const p = o.p; let tx = p.x, tz = p.z, tr = p.r, ty = 0, onBoat = false;
+    if (p.st === "boat" && p.bt) { const b = boats[p.bt.id]; if (b.pair && b.pair.includes(peer)) { const s = seatOf(p.bt.id, peer); tx = s.x; tz = s.z; tr = s.r; ty = s.y; onBoat = true; } }
+    if (p.st === "sit" || p.st === "lie" || p.st === "bench") tr = 0;
+    if (!onBoat) ty = p.y;
+    if (p.st === "swim") ty = (p.tb ? -0.95 : -0.85) + Math.sin(T * 2 + p.x) * 0.04;
+    const k = onBoat ? 1 : Math.min(1, dt * 10);
+    const moving = Math.hypot(tx - o.x, tz - o.z) > 0.03;
+    o.x += (tx - o.x) * k; o.z += (tz - o.z) * k; o.r = lerpAngle(o.r, tr, k);
+    o.obj.position.set(o.x, ty, o.z); o.obj.rotation.y = o.r;
+    animateAvatar(o.obj, T, moving, 3.6);
+  }
+
+  // NPCs
+  const camP = camera.position;
+  npcs.forEach(n => {
+    n.x += n.dir * n.speed * dt; if (n.x > 150) n.dir = -1; if (n.x < -90) n.dir = 1;
+    if (T > n.offUntil) n.toff = 0; n.off += (n.toff - n.off) * Math.min(1, dt * 3);
+    const z = n.lane + n.off;
+    n.obj.position.set(n.x, 0, z); n.obj.rotation.y = n.dir > 0 ? -Math.PI / 2 : Math.PI / 2;
+    if (n.kind === "bike") {
+      n.bike.userData.wheels.forEach(w => w.rotation.x -= dt * n.speed / 0.32);
+      const pd = T * n.speed * 1.4; n.rider.userData.legs[0].rotation.x = Math.PI / 2 - 0.5 + Math.sin(pd) * 0.45; n.rider.userData.legs[1].rotation.x = Math.PI / 2 - 0.5 - Math.sin(pd) * 0.45;
+      // bell: when someone is ahead in the bike lane, or now and then
+      const ahead = (ox, oz) => { const dx = (ox - n.x) * n.dir; return dx > 0 && dx < 11 && Math.abs(oz - z) < 1.6; };
+      let ring = T > n.nextBell;
+      if (!ring && T - n.bellAt > 6) ring = (started && me.level === "ground" && ahead(me.x, me.z)) || [...others.values()].some(o => ahead(o.x, o.z));
+      if (ring) { n.bellAt = T; n.nextBell = T + 10 + Math.random() * 18; if (audio.ready) { const d = Math.hypot(n.x - camP.x, z - camP.z); audio.bell(Math.pow(clamp(1 - d / 45, 0, 1), 2)); } }
+    } else animateAvatar(n.obj, T, true, n.kind === "run" ? 6 : 3);
+    if (n.dog) {
+      dog.position.set(n.x + n.dir * 1.7, 0, z - 0.7); dog.rotation.y = n.obj.rotation.y;
+      const ds = Math.sin(T * 10) * 0.5; dog.userData.legs.forEach((l, i) => l.rotation.x = (i % 3 === 0 ? ds : -ds)); dog.userData.tail.rotation.z = Math.sin(T * 14) * 0.6;
+    }
+  });
+  // runners: "지나갈게요~~" when about to bump into someone
+  npcs.forEach(r => {
+    if (r.kind !== "run" || T - r.sayAt < 7) return;
+    const rz = r.lane + r.off, list = [];
+    npcs.forEach(o => { if (o !== r && o.kind !== "bike") list.push([o.x, o.lane + o.off, o.dir * o.speed]); });
+    if (started && me.level === "ground" && !anim) list.push([me.x, me.z, 0]);
+    others.forEach(o => list.push([o.x, o.z, 0]));
+    for (const [ox, oz, vx] of list) {
+      const dx = (ox - r.x) * r.dir;
+      if (dx > 0 && dx < 2.4 && Math.abs(oz - rz) < 0.9 && vx * r.dir < r.speed - 0.3) {
+        r.sayAt = T; r.toff = oz > rz ? -0.95 : 0.95; r.offUntil = T + 1.8;
+        showBubble(() => r.obj, "지나갈게요~!", 2.2, r);
+        if (audio.ready) { const d = Math.hypot(r.x - camP.x, rz - camP.z); audio.speak("지나갈게요", 0.9 * clamp(1 - d / 28, 0, 1)); }
+        break;
+      }
+    }
+  });
+  // bubbles follow their owners
+  for (let i = bubbles.length - 1; i >= 0; i--) {
+    const b = bubbles[i], o = b.getObj();
+    if (!o || T > b.until) { scene.remove(b.s); bubbles.splice(i, 1); continue; }
+    b.s.position.set(o.position.x, o.position.y + (o.userData.h || 2) + 0.55, o.position.z);
+    b.s.material.opacity = Math.min(1, (b.until - T) / 0.4, (T - (b.until - b.dur)) / 0.15);
+  }
+
+  // weather particles
+  if (rain.visible) {
+    const a = rainGeo.attributes.position.array;
+    for (let i = 0; i < RAIN_N; i++) { const j = i * 6; a[j + 1] -= 32 * dt; a[j + 4] -= 32 * dt; if (a[j + 4] < -1) { const x = (Math.random() - .5) * 70, z = (Math.random() - .5) * 70, y = 26 + Math.random() * 6; a[j] = x; a[j + 1] = y; a[j + 2] = z; a[j + 3] = x; a[j + 4] = y - 0.7; a[j + 5] = z; } }
+    rainGeo.attributes.position.needsUpdate = true; rain.position.set(camera.position.x, 0, camera.position.z);
+  }
+  if (snow.visible) {
+    const a = snowGeo.attributes.position.array;
+    for (let i = 0; i < SNOW_N; i++) { const j = i * 3; a[j + 1] -= 1.6 * dt; a[j] += Math.sin(T + i) * 0.4 * dt; if (a[j + 1] < -0.5) { a[j] = (Math.random() - .5) * 70; a[j + 1] = 28; a[j + 2] = (Math.random() - .5) * 70; } }
+    snowGeo.attributes.position.needsUpdate = true; snow.position.set(camera.position.x, 0, camera.position.z);
+  }
+  if (splashT < 1.2) {
+    splashT += dt; const a = splashGeo.attributes.position.array;
+    for (let i = 0; i < splashN; i++) { const v = splashVel[i]; v[1] -= 14 * dt; a[i * 3] += v[0] * dt; a[i * 3 + 1] = Math.max(-0.6, a[i * 3 + 1] + v[1] * dt); a[i * 3 + 2] += v[2] * dt; }
+    splashGeo.attributes.position.needsUpdate = true; splash.material.opacity = Math.max(0, 1 - splashT / 1.2);
+  }
+
+  // camera
+  if (!started) {
+    const x = -10 + Math.sin(T * 0.05) * 50;
+    camera.position.set(x, 7 + Math.sin(T * 0.08) * 1.5, 34); camera.lookAt(x - 15, 6, -150);
+  } else {
+    const k = 1 - Math.exp(-dt * 6);
+    if (me.st === "swim" && !anim) cam.tPitch = Math.max(cam.tPitch, 0.45); // stay above the embankment wall
+    const idle = performance.now() - cam.dragAt > 900;
+    if (boarded && idle) cam.tYaw = lerpAngle(cam.tYaw, boats[boarded.id].r, Math.min(1, dt * 1.5));
+    cam.yaw = lerpAngle(cam.yaw, cam.tYaw, k); cam.pitch += (cam.tPitch - cam.pitch) * k; cam.dist += (cam.tDist - cam.dist) * k;
+    const head = boarded ? 0.8 : me.st === "swim" ? -0.5 : me.st === "lie" ? 0.6 : me.st === "bench" ? 1.6 : 1.25;
+    const fk = 1 - Math.exp(-dt * 10), fy = (boarded ? 0 : anim ? me.y : me.y) + head;
+    cam.tx += (me.x - cam.tx) * fk; cam.ty += (fy - cam.ty) * fk; cam.tz += (me.z - cam.tz) * fk;
+    const cp = Math.cos(cam.pitch);
+    const px = cam.tx + Math.sin(cam.yaw) * cp * cam.dist, pz = cam.tz + Math.cos(cam.yaw) * cp * cam.dist;
+    let py = cam.ty + Math.sin(cam.pitch) * cam.dist;
+    const floor = (me.level === "bridge" && inDeck(px, pz) ? BR.y : pz > BOUND.landZ0 ? 0 : -0.6) + 0.4;
+    if (py < floor) py = floor;
+    camPos.set(px, py, pz);
+    if (!cam.init) { camera.position.copy(camPos); cam.init = true; } else camera.position.lerp(camPos, 1 - Math.exp(-dt * 14));
+    camera.lookAt(cam.tx - Math.sin(cam.yaw) * 2.5, cam.ty + 0.35, cam.tz - Math.cos(cam.yaw) * 2.5);
+    publish(false);
+    actTimer += dt; if (actTimer > 0.2) { actTimer = 0; refreshActions(); }
+  }
+  waterU.camPos.value.copy(camera.position); sky.position.copy(camera.position);
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>
