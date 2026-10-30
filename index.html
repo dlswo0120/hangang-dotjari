@@ -378,6 +378,8 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const canvas = $("scene");
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const LOW_END = matchMedia("(pointer: coarse)").matches;
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 2000);
 scene.fog = new THREE.Fog(0x1a2236, 80, 760);
@@ -422,6 +424,10 @@ let weather = "clear";
 /* ================= lights / sky / water ================= */
 const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, .7); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xffffff, 1); scene.add(sun);
+sun.castShadow = true; sun.shadow.mapSize.set(LOW_END ? 1024 : 2048, LOW_END ? 1024 : 2048);
+Object.assign(sun.shadow.camera, { left: -24, right: 24, top: 24, bottom: -24, near: 1, far: 420 });
+sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.03;
+const sunTarget = new THREE.Object3D(); scene.add(sunTarget); sun.target = sunTarget;
 const playerLight = new THREE.PointLight(0xffe2b8, 0, 16, 1.5); scene.add(playerLight);
 const lampLights = [];
 [[-30,6,24],[10,6,24],[50,6,24],[90,6,24]].forEach(p => { const l = new THREE.PointLight(0xffc98a, 0, 34, 1.6); l.position.set(...p); scene.add(l); lampLights.push(l); });
@@ -475,24 +481,76 @@ water.rotation.x = -Math.PI / 2; water.position.set(0, -0.6, -130); scene.add(wa
 
 /* ================= world ================= */
 const UPV = new THREE.Vector3(0, 1, 0);
+const MAT_W = 1.5, MAT_L = 2.2;
 const mat = (c, o = {}) => new THREE.MeshLambertMaterial(Object.assign({ color: c }, o));
 function rand(seed) { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
 const R = rand(20261029);
 
-const grass = new THREE.Mesh(new THREE.PlaneGeometry(700, 90), mat(0x6f9a52)); grass.rotation.x = -Math.PI / 2; grass.position.set(40, 0, 45); scene.add(grass);
-const edge = new THREE.Mesh(new THREE.BoxGeometry(700, 1.2, 2.4), mat(0x9a958a)); edge.position.set(40, -0.2, 0.4); scene.add(edge);
-const steps = new THREE.Mesh(new THREE.BoxGeometry(700, 0.5, 1.4), mat(0xb6b0a2)); steps.position.set(40, 0.05, 2.2); scene.add(steps);
-const pathM = new THREE.Mesh(new THREE.PlaneGeometry(700, 4.2), mat(0xc9c2b4)); pathM.rotation.x = -Math.PI / 2; pathM.position.set(40, 0.03, 29.2); scene.add(pathM);
-const bike = new THREE.Mesh(new THREE.PlaneGeometry(700, 2.6), mat(0x8f5a4a)); bike.rotation.x = -Math.PI / 2; bike.position.set(40, 0.031, 32.4); scene.add(bike);
+function canvasTex(w, h, draw, rx, ry) {
+  const c = document.createElement("canvas"); c.width = w; c.height = h; draw(c.getContext("2d"), w, h);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); t.anisotropy = 4; return t;
+}
+const grassTex = canvasTex(256, 256, (x, w, h) => {
+  x.fillStyle = "#6f9a52"; x.fillRect(0, 0, w, h);
+  for (let i = 0; i < 2600; i++) { const g = 120 + R() * 60 | 0; x.fillStyle = `rgba(${70 + R() * 40 | 0},${g},${55 + R() * 30 | 0},${0.25 + R() * 0.4})`; x.fillRect(R() * w, R() * h, 1 + R() * 2, 3 + R() * 6); }
+  for (let i = 0; i < 40; i++) { x.fillStyle = `rgba(${R() < .5 ? "150,185,95" : "70,110,55"},.18)`; x.beginPath(); x.arc(R() * w, R() * h, 8 + R() * 24, 0, 7); x.fill(); }
+}, 120, 16);
+const pathTex = canvasTex(256, 64, (x, w, h) => {
+  x.fillStyle = "#cbc4b6"; x.fillRect(0, 0, w, h);
+  for (let i = 0; i < 1800; i++) { const v = 170 + R() * 60 | 0; x.fillStyle = `rgba(${v},${v - 6},${v - 16},.5)`; x.fillRect(R() * w, R() * h, 1.5, 1.5); }
+  x.fillStyle = "rgba(120,112,100,.35)"; for (let i = 0; i < w; i += 64) x.fillRect(i, 0, 2, h);
+}, 175, 1);
+const laneTex = canvasTex(128, 64, (x, w, h) => {
+  x.fillStyle = "#8f5a4a"; x.fillRect(0, 0, w, h);
+  for (let i = 0; i < 1400; i++) { const v = R(); x.fillStyle = v < .5 ? "rgba(60,30,25,.35)" : "rgba(190,130,110,.3)"; x.fillRect(R() * w, R() * h, 1.2, 1.2); }
+}, 350, 1);
+const woodTex = canvasTex(128, 32, (x, w, h) => {
+  x.fillStyle = "#8a6040"; x.fillRect(0, 0, w, h);
+  for (let i = 0; i < 60; i++) { x.strokeStyle = `rgba(${R() < .5 ? "60,38,22" : "170,120,80"},.35)`; x.beginPath(); const y = R() * h; x.moveTo(0, y); x.bezierCurveTo(w * .3, y + R() * 4 - 2, w * .7, y + R() * 4 - 2, w, y); x.stroke(); }
+}, 1, 1);
+const grass = new THREE.Mesh(new THREE.PlaneGeometry(700, 90), mat(0xffffff, { map: grassTex })); grass.rotation.x = -Math.PI / 2; grass.position.set(40, 0, 45); grass.receiveShadow = true; scene.add(grass);
+const edge = new THREE.Mesh(new THREE.BoxGeometry(700, 1.2, 2.4), mat(0x9a958a)); edge.position.set(40, -0.2, 0.4); edge.receiveShadow = true; scene.add(edge);
+const steps = new THREE.Mesh(new THREE.BoxGeometry(700, 0.5, 1.4), mat(0xb6b0a2)); steps.position.set(40, 0.05, 2.2); steps.receiveShadow = true; scene.add(steps);
+const pathM = new THREE.Mesh(new THREE.PlaneGeometry(700, 4.2), mat(0xffffff, { map: pathTex })); pathM.rotation.x = -Math.PI / 2; pathM.position.set(40, 0.03, 29.2); pathM.receiveShadow = true; scene.add(pathM);
+const bike = new THREE.Mesh(new THREE.PlaneGeometry(700, 2.6), mat(0xffffff, { map: laneTex })); bike.rotation.x = -Math.PI / 2; bike.position.set(40, 0.031, 32.4); bike.receiveShadow = true; scene.add(bike);
 for (let x = -300; x < 380; x += 6) { const d = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 0.14), new THREE.MeshBasicMaterial({ color: 0xe8d38a })); d.rotation.x = -Math.PI / 2; d.position.set(x, 0.035, 32.4); scene.add(d); }
-
-const trunkM = mat(0x5b4434), leafMs = [mat(0x4f7d3e), mat(0x3f6b37), mat(0x6d9246)];
+// grass tufts and little flowers near where people sit (hidden under picnic mats)
+const PLANTS = [], ZERO_M = new THREE.Matrix4().makeScale(0, 0, 0);
+function hidePlantsUnderMats(rects) {
+  const dirty = new Set();
+  for (const pl of PLANTS) {
+    let under = false;
+    for (const r of rects) if (Math.abs(pl.x - r.x) < MAT_W / 2 + .1 && Math.abs(pl.z - r.z) < MAT_L / 2 + .1) { under = true; break; }
+    if (under !== pl.hidden) { pl.hidden = under; pl.mesh.setMatrixAt(pl.i, under ? ZERO_M : pl.m); dirty.add(pl.mesh); }
+  }
+  dirty.forEach(m => m.instanceMatrix.needsUpdate = true);
+}
+{
+  const tuftG = new THREE.ConeGeometry(0.05, 0.2, 3); tuftG.translate(0, 0.1, 0);
+  const N = LOW_END ? 1400 : 2800, tufts = new THREE.InstancedMesh(tuftG, mat(0xffffff), N), o = new THREE.Object3D(), c = new THREE.Color();
+  for (let i = 0; i < N; i++) {
+    const back = R() < .12; o.position.set(-70 + R() * 200, 0, back ? 34.6 + R() * 6 : 3.4 + R() * 23.2);
+    o.rotation.set((R() - .5) * .5, R() * 6, (R() - .5) * .5); const k = .5 + R() * .7; o.scale.set(k, k, k); o.updateMatrix();
+    tufts.setMatrixAt(i, o.matrix); tufts.setColorAt(i, c.setHSL(.24 + R() * .05, .4, .26 + R() * .1));
+    PLANTS.push({ mesh: tufts, i, x: o.position.x, z: o.position.z, m: o.matrix.clone(), hidden: false });
+  }
+  scene.add(tufts);
+  const FN = 420, fl = new THREE.InstancedMesh(new THREE.SphereGeometry(0.06, 6, 4), new THREE.MeshLambertMaterial({ color: 0xffffff }), FN);
+  const fc = [0xfff6e0, 0xffe066, 0xffb3c7, 0xc9b6ff];
+  for (let i = 0; i < FN; i++) {
+    let cx = -60 + R() * 180, cz = 4 + R() * 21; o.position.set(cx + (R() - .5) * 2, 0.12, cz + (R() - .5) * 2); o.rotation.set(0, 0, 0); o.scale.set(1, .7, 1); o.updateMatrix();
+    fl.setMatrixAt(i, o.matrix); fl.setColorAt(i, c.set(fc[i % 4]));
+    PLANTS.push({ mesh: fl, i, x: o.position.x, z: o.position.z, m: o.matrix.clone(), hidden: false });
+  }
+  scene.add(fl);
+}
+const trunkM = mat(0x6b5040), leafMs = [mat(0x5a8a45), mat(0x4a7a3f), mat(0x76a050), mat(0x8fae5a)];
 function tree(x, z, s) {
   const g = new THREE.Group();
-  const t = new THREE.Mesh(new THREE.CylinderGeometry(0.22 * s, 0.32 * s, 3 * s, 6), trunkM); t.position.y = 1.5 * s; g.add(t);
-  const lm = leafMs[Math.floor(R() * 3)];
-  [[0, 3.8, 0, 1.9], [0.9, 3.2, 0.3, 1.3], [-0.8, 3.3, -0.2, 1.4], [0.1, 4.8, 0, 1.3]].forEach(([a, b, c, r]) => {
-    const m = new THREE.Mesh(new THREE.IcosahedronGeometry(r * s, 0), lm); m.position.set(a * s, b * s, c * s); m.rotation.set(R(), R(), R()); g.add(m);
+  const t = new THREE.Mesh(new THREE.CylinderGeometry(0.2 * s, 0.32 * s, 3 * s, 7), trunkM); t.position.y = 1.5 * s; t.castShadow = true; g.add(t);
+  const lm = leafMs[Math.floor(R() * leafMs.length)];
+  [[0, 3.8, 0, 1.9], [0.95, 3.25, 0.3, 1.35], [-0.85, 3.35, -0.2, 1.45], [0.1, 4.85, 0.1, 1.35], [0.2, 3.4, -0.9, 1.2]].forEach(([a, b, c, r]) => {
+    const m = new THREE.Mesh(new THREE.IcosahedronGeometry(r * s, 1), lm); m.position.set(a * s, b * s, c * s); m.rotation.set(R(), R(), R()); m.castShadow = true; g.add(m);
   });
   g.position.set(x, 0, z); scene.add(g);
 }
@@ -508,9 +566,11 @@ const BENCHES = [];
 for (let x = -60; x < 240; x += 44) {
   BENCHES.push({ x: x + 11, z: 26 });
   const b = new THREE.Group();
-  const s = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.12, 0.6), mat(0x8a6040)); s.position.y = 0.5; b.add(s);
-  const bk = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.6, 0.1), mat(0x8a6040)); bk.position.set(0, 0.9, 0.3); b.add(bk);
+  const wm = mat(0xffffff, { map: woodTex });
+  const s = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.12, 0.6), wm); s.position.y = 0.5; b.add(s);
+  const bk = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.6, 0.1), wm); bk.position.set(0, 0.9, 0.3); b.add(bk);
   [-1, 1].forEach(k => { const l = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.5, 0.5), mat(0x3d4247)); l.position.set(k, 0.25, 0); b.add(l); });
+  b.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   b.position.set(x + 11, 0, 26); scene.add(b);
 }
 // walkable map limits, marked by hedges on land and a buoy line on the water
@@ -539,6 +599,26 @@ for (let i = 0; i < 220; i++) {
 }
 scene.add(city);
 for (let i = 0; i < 9; i++) { const m = new THREE.Mesh(new THREE.ConeGeometry(120 + R() * 120, 70 + R() * 70, 5), mat(0x3e4b4a)); m.position.set(-1000 + i * 250 + R() * 80, 30, -470 - R() * 60); scene.add(m); }
+// a hill with a tall tower, like the one everyone looks for from the river
+const towerGlow = new THREE.MeshBasicMaterial({ color: 0xfff0d0 });
+{
+  const hill = new THREE.Mesh(new THREE.SphereGeometry(130, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), mat(0x415246)); hill.scale.y = 0.5; hill.position.set(-150, 0, -520); scene.add(hill);
+  const tw = new THREE.Group(), tm = mat(0xe9e6df);
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 3.4, 70, 12), tm); shaft.position.y = 35; tw.add(shaft);
+  const pod = new THREE.Mesh(new THREE.CylinderGeometry(6.5, 5.2, 9, 16), tm); pod.position.y = 66; tw.add(pod);
+  const ring = new THREE.Mesh(new THREE.CylinderGeometry(6.6, 6.6, 1.6, 16), towerGlow); ring.position.y = 68; tw.add(ring);
+  const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 1, 34, 8), tm); ant.position.y = 88; tw.add(ant);
+  tw.position.set(-150, 62, -520); scene.add(tw);
+}
+const cloudTex = (() => { const c = document.createElement("canvas"); c.width = c.height = 128; const x = c.getContext("2d");
+  for (let i = 0; i < 7; i++) { const g = x.createRadialGradient(30 + i * 11, 70 - Math.sin(i) * 14, 2, 30 + i * 11, 70 - Math.sin(i) * 14, 30); g.addColorStop(0, "rgba(255,255,255,.9)"); g.addColorStop(1, "rgba(255,255,255,0)"); x.fillStyle = g; x.fillRect(0, 0, 128, 128); }
+  return new THREE.CanvasTexture(c); })();
+const clouds = [];
+for (let i = 0; i < 14; i++) {
+  const m = new THREE.SpriteMaterial({ map: cloudTex, transparent: true, depthWrite: false, fog: false, opacity: 0.8 });
+  const sp = new THREE.Sprite(m); const k = 160 + R() * 160; sp.scale.set(k, k * 0.45, 1);
+  sp.position.set(-900 + R() * 1800, 140 + R() * 120, -500 - R() * 400); scene.add(sp); clouds.push(sp);
+}
 
 // bridges
 const bridgeLights = [];
@@ -630,23 +710,68 @@ const dock = new THREE.Group();
 }
 dock.position.set(DOCK.x, 0, 0); scene.add(dock);
 const BOAT_HOME = [[88, -4.4], [94, -4.4], [100, -4.4]];
+const SEATS = [new THREE.Vector3(-0.42, 0.68, 0.18), new THREE.Vector3(0.42, 0.68, 0.18), new THREE.Vector3(0, 0.98, 1.05)];
+const SINK_TIME = 9;
 function makeDuckBoat(tint) {
-  const g = new THREE.Group(), hullM = mat(0xf7f3ea), duckM = mat(tint), beakM = mat(0xf28c28), eyeM2 = new THREE.MeshBasicMaterial({ color: 0x1d1a18 });
-  const hull = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 12, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), hullM); hull.scale.set(1.15, 0.6, 1.8); hull.position.y = 0.32; g.add(hull);
-  const rim = new THREE.Mesh(new THREE.TorusGeometry(1, 0.1, 6, 24), duckM); rim.rotation.x = Math.PI / 2; rim.scale.set(1.15, 1.8, 1); rim.position.y = 0.32; g.add(rim);
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.42, 1.1, 12), duckM); neck.position.set(0, 0.85, -1.45); neck.rotation.x = 0.25; g.add(neck);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.55, 16, 12), duckM); head.position.set(0, 1.55, -1.7); g.add(head);
-  const beak = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.6, 10), beakM); beak.rotation.x = -Math.PI / 2; beak.position.set(0, 1.45, -2.3); beak.scale.z = 0.6; g.add(beak);
-  [-0.26, 0.26].forEach(k => { const e = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), eyeM2); e.position.set(k, 1.7, -2.15); g.add(e); });
-  const tail = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.7, 8), duckM); tail.position.set(0, 0.75, 1.75); tail.rotation.x = -0.9; g.add(tail);
-  const roof = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.08, 1.8), mat(0x4d8fd6)); roof.position.set(0, 2.05, 0.15); g.add(roof);
-  [[-0.85, -0.6], [0.85, -0.6], [-0.85, 0.9], [0.85, 0.9]].forEach(([x, z]) => { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.7, 6), mat(0xdddddd)); p.position.set(x, 1.2, z); g.add(p); });
-  const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.2, 10), mat(0xe9e4d6)); wheel.rotation.z = Math.PI / 2; wheel.position.set(1.2, 0.2, 0.5); g.add(wheel);
-  g.userData.wheel = wheel; return g;
+  const g = new THREE.Group(), duckM = mat(tint), duckD = mat(new THREE.Color(tint).multiplyScalar(0.86).getHex()), whiteM = mat(0xfbf8f0);
+  const beakM = mat(0xf5902a), beakD = mat(0xd9731a), eyeB = new THREE.MeshBasicMaterial({ color: 0x1d1a18 }), eyeW = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const add = (geo, m, x, y, z, sx = 1, sy = 1, sz = 1, parent = g) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); o.castShadow = true; parent.add(o); return o; };
+  const SPH = new THREE.SphereGeometry(1, 20, 14);
+  // body
+  add(new THREE.SphereGeometry(1, 28, 14, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), duckM, 0, 0.5, 0, 1.25, 0.8, 2.0);
+  const side = add(new THREE.CylinderGeometry(1, 1, 0.34, 32, 1, true), mat(tint, { side: THREE.DoubleSide }), 0, 0.66, 0, 1.25, 1, 2.0);
+  const rim = add(new THREE.TorusGeometry(1, 0.07, 8, 40), whiteM, 0, 0.83, 0, 1.25, 2.0, 1); rim.rotation.x = Math.PI / 2;
+  const floor = add(new THREE.CircleGeometry(1, 28), mat(0xe8dcc4), 0, 0.5, 0, 1.15, 1.9, 1); floor.rotation.x = -Math.PI / 2; floor.castShadow = false;
+  [-1, 1].forEach(k => { const w = add(SPH, duckD, k * 1.2, 0.72, 0.4, 0.17, 0.36, 0.85); w.rotation.z = k * 0.25; });
+  // neck, head, face
+  const neck = add(new THREE.CylinderGeometry(0.36, 0.48, 1.05, 16), duckM, 0, 1.2, -1.62); neck.rotation.x = 0.2;
+  add(SPH, duckM, 0, 2.0, -1.86, 0.68, 0.66, 0.66);
+  [-1, 1].forEach(k => {
+    add(SPH, eyeW, k * 0.3, 2.13, -2.38, 0.17, 0.19, 0.08);
+    add(SPH, eyeB, k * 0.3, 2.11, -2.45, 0.09, 0.11, 0.04);
+    add(SPH, eyeW, k * 0.3 + 0.035, 2.16, -2.49, 0.03, 0.03, 0.02);
+    add(SPH, mat(0xffa3a3), k * 0.48, 1.88, -2.25, 0.12, 0.08, 0.06);
+  });
+  add(SPH, beakM, 0, 1.9, -2.5, 0.42, 0.12, 0.36);
+  add(SPH, beakD, 0, 1.79, -2.44, 0.33, 0.08, 0.28);
+  [-0.1, 0.05, 0.18].forEach((x, i) => { const t = add(new THREE.ConeGeometry(0.07, 0.3, 6), duckM, x, 2.68, -1.8 + i * 0.05); t.rotation.z = -x * 2; });
+  const tail = add(new THREE.ConeGeometry(0.4, 0.8, 10), duckM, 0, 1.08, 1.98); tail.rotation.x = -1.0;
+  // canopy
+  const post = new THREE.CylinderGeometry(0.035, 0.035, 1.65, 6);
+  [[-0.98, -0.5], [0.98, -0.5], [-0.98, 1.3], [0.98, 1.3]].forEach(([x, z]) => add(post, whiteM, x, 1.62, z));
+  add(new THREE.BoxGeometry(2.25, 0.08, 2.15), mat(0x4d8fd6), 0, 2.46, 0.4);
+  add(new THREE.BoxGeometry(2.3, 0.1, 0.14), whiteM, 0, 2.42, -0.67);
+  add(new THREE.BoxGeometry(2.3, 0.1, 0.14), whiteM, 0, 2.42, 1.47);
+  // seats: two at the front with pedals, one perched at the back
+  add(new THREE.BoxGeometry(1.75, 0.12, 0.5), whiteM, 0, 0.62, 0.2);
+  add(new THREE.BoxGeometry(1.75, 0.42, 0.08), whiteM, 0, 0.86, 0.47);
+  add(new THREE.BoxGeometry(0.34, 0.4, 0.34), whiteM, 0, 0.72, 1.05);
+  add(new THREE.BoxGeometry(0.85, 0.1, 0.48), mat(0xff8fa8), 0, 0.92, 1.05);
+  add(new THREE.BoxGeometry(0.85, 0.36, 0.08), mat(0xff8fa8), 0, 1.12, 1.3);
+  add(new THREE.BoxGeometry(1.7, 0.36, 0.3), whiteM, 0, 0.78, -0.95);
+  const wheelT = add(new THREE.TorusGeometry(0.16, 0.03, 6, 16), mat(0x3a3d42), -0.42, 1.08, -0.82); wheelT.rotation.x = -0.6;
+  // pedal cranks (one pair for each front seat)
+  const crank = new THREE.Group(); crank.position.set(0, 0.56, -0.22); g.add(crank);
+  const hubM = mat(0x8a8f96), pedM = mat(0x3a3d42);
+  add(new THREE.CylinderGeometry(0.035, 0.035, 1.5, 8), hubM, 0, 0, 0, 1, 1, 1, crank).rotation.z = Math.PI / 2;
+  [-0.42, 0.42].forEach(sx => [-1, 1].forEach(f => {
+    const arm = new THREE.Group(); arm.position.x = sx + f * 0.1; arm.rotation.x = f > 0 ? Math.PI : 0; crank.add(arm);
+    add(new THREE.BoxGeometry(0.03, 0.14, 0.04), hubM, 0, 0.07, 0, 1, 1, 1, arm);
+    add(new THREE.BoxGeometry(0.1, 0.03, 0.08), pedM, f * 0.04, 0.14, 0, 1, 1, 1, arm);
+  }));
+  // paddle wheel at the stern
+  const wheel = new THREE.Group(); wheel.position.set(0, 0.2, 1.62); g.add(wheel);
+  add(new THREE.CylinderGeometry(0.1, 0.1, 0.5, 8), hubM, 0, 0, 0, 1, 1, 1, wheel).rotation.z = Math.PI / 2;
+  for (let i = 0; i < 6; i++) { const pd = add(new THREE.BoxGeometry(0.42, 0.3, 0.04), whiteM, 0, 0, 0, 1, 1, 1, wheel); const a = i * Math.PI / 3; pd.position.set(0, Math.cos(a) * 0.24, Math.sin(a) * 0.24); pd.rotation.x = -a; }
+  // water that fills the hull when it's overloaded
+  const fill = add(new THREE.CircleGeometry(1, 28), new THREE.MeshLambertMaterial({ color: 0x4f86a8, transparent: true, opacity: 0.82 }), 0, 0.52, 0, 1.12, 1.85, 1);
+  fill.rotation.x = -Math.PI / 2; fill.visible = false; fill.castShadow = false;
+  g.userData = { crank, wheel, fill };
+  return g;
 }
 const boats = BOAT_HOME.map(([x, z], i) => {
   const b = makeDuckBoat([0xffd54a, 0xffe07a, 0xf5c542][i]); b.position.set(x, -0.6, z); scene.add(b);
-  return { id: i, obj: b, home: [x, z], x, z, r: 0, tx: x, tz: z, tr: 0, pair: null };
+  return { id: i, obj: b, home: [x, z], x, z, r: 0, tx: x, tz: z, tr: 0, crew: null, crank: 0, sink: 0, sinkT: 0, doomed: false };
 });
 
 /* ================= avatars ================= */
@@ -670,58 +795,169 @@ function nameSprite(text, mine) {
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthWrite: false, transparent: true }));
   s.scale.set(1.9, 0.48, 1); return s;
 }
-// pose: stand | sit | lie | swim | tube | boat
+// ---------- character rig: one body, many poses, smooth transitions ----------
+const POSES = {
+  stand: { hipY: .48, pitch: 0, lift: 0, thL: 0, thR: 0, knL: 0, knR: 0, arL: 0, arR: 0, azL: .12, azR: .12, lean: 0, nod: 0, matZ: -.15, matP: 0, tube: 0, label: 2.1 },
+  kneel: { hipY: .3, pitch: 0, lift: 0, thL: .25, thR: .25, knL: -1.75, knR: -1.75, arL: 1.25, arR: 1.25, azL: .05, azR: .05, lean: .55, nod: .25, matZ: -.15, matP: 0, tube: 0, label: 1.9 },
+  sit: { hipY: .13, pitch: 0, lift: 0, thL: 1.42, thR: 1.42, knL: -.45, knR: -.45, arL: .55, arR: .55, azL: .18, azR: .18, lean: -.05, nod: -.05, matZ: -.15, matP: 1, tube: 0, label: 1.8 },
+  lie: { hipY: .3, pitch: Math.PI / 2, lift: .24, thL: .08, thR: -.04, knL: -.05, knR: -.15, arL: -.1, arR: -.1, azL: .35, azR: .35, lean: 0, nod: -.2, matZ: .5, matP: 1, tube: 0, label: 1.0 },
+  bench: { hipY: .6, pitch: 0, lift: 0, thL: 1.5, thR: 1.5, knL: -1.45, knR: -1.45, arL: .45, arR: .45, azL: .15, azR: .15, lean: -.08, nod: 0, matZ: -.15, matP: 0, tube: 0, label: 2.2 },
+  boat: { hipY: .06, pitch: 0, lift: 0, thL: 1.35, thR: 1.35, knL: -.9, knR: -.9, arL: .5, arR: .5, azL: .2, azR: .2, lean: -.05, nod: 0, matZ: -.15, matP: 0, tube: 0, label: 1.85 },
+  bike: { hipY: 0, pitch: 0, lift: 0, thL: 1.2, thR: 1.2, knL: -1, knR: -1, arL: 1.25, arR: 1.25, azL: .05, azR: .05, lean: .35, nod: -.2, matZ: -.15, matP: 0, tube: 0, label: 1.6 },
+  swim: { hipY: .3, pitch: Math.PI / 2, lift: .3, thL: 0, thR: 0, knL: 0, knR: 0, arL: 0, arR: 0, azL: .3, azR: .3, lean: 0, nod: -.3, matZ: .5, matP: 0, tube: 0, label: .95 },
+  tube: { hipY: .12, pitch: 0, lift: 0, thL: .3, thR: .3, knL: -.4, knR: -.4, arL: .2, arR: .2, azL: 1.15, azR: 1.15, lean: -.1, nod: -.1, matZ: -.15, matP: 0, tube: 1, label: 1.85 }
+};
+const POSE_KEYS = Object.keys(POSES.stand);
+const skin2 = mat(0xffdcc2), whiteM2 = mat(0xfffaf2), shortsM = mat(0x3e4a63), sockM = mat(0xffffff);
+const shoeBoy = mat(0xf3f1ec), shoeGirl = mat(0xb5434f), bowM = mat(0xff7fa3), eyeHi = new THREE.MeshBasicMaterial({ color: 0xffffff });
+const blushM = new THREE.MeshBasicMaterial({ color: 0xffa9a9, transparent: true, opacity: .75 }), mouthM = new THREE.MeshBasicMaterial({ color: 0x8a3d32 });
+const G_SPH = new THREE.SphereGeometry(1, 20, 14), G_SPH_S = new THREE.SphereGeometry(1, 10, 8);
 function makeAvatar({ g, c, pose, name, mine, matStyle }) {
-  const root = new THREE.Group(), inner = new THREE.Group(); root.add(inner);
-  const shirt = mat(SHIRTS[c % SHIRTS.length]), hairM = mat(g === "f" ? 0x4a3226 : 0x2b2420, { side: THREE.DoubleSide });
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.3, 0.62, 12), shirt); body.position.y = 0.31; inner.add(body);
-  const head = new THREE.Group(); head.position.y = 0.98; inner.add(head);
-  head.add(new THREE.Mesh(new THREE.SphereGeometry(0.42, 20, 16), skinM));
-  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.445, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.52), hairM); cap.rotation.x = 0.28; head.add(cap);
-  if (g === "f") { const back = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.36, 0.62, 16, 1, true, -Math.PI * 0.35, Math.PI * 1.7), hairM); back.position.set(0, -0.2, 0.03); back.rotation.y = Math.PI; head.add(back); }
-  [-0.15, 0.15].forEach(k => {
-    const e = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), eyeM); e.position.set(k, 0.02, -0.4); e.scale.set(1.4, 0.5, 0.6); head.add(e);
-    const ck = new THREE.Mesh(new THREE.CircleGeometry(0.06, 12), cheekM); ck.position.set(k * 1.5, -0.1, -0.385); ck.rotation.y = Math.PI; head.add(ck);
-  });
-  const legs = [], arms = [], seated = pose === "sit" || pose === "boat";
-  [-0.12, 0.12].forEach(k => {
-    const l = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.52, 8), pantsM);
-    if (seated) { l.rotation.x = Math.PI / 2; l.position.set(k, 0.02, -0.28); } else l.position.set(k, -0.24, 0);
-    inner.add(l); legs.push(l);
-    const pivot = new THREE.Group(); pivot.position.set(k * 2.4, 0.56, 0); inner.add(pivot);
-    const a = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.065, 0.42, 8), shirt); a.position.y = -0.2; pivot.add(a);
-    if (seated) pivot.rotation.x = 0.7; else pivot.rotation.z = k > 0 ? 0.12 : -0.12;
-    if (pose === "tube") pivot.rotation.z = k > 0 ? 1.2 : -1.2;
-    arms.push(pivot);
-  });
-  let h = 2.2;
-  if (pose === "sit" || pose === "boat") { inner.position.y = 0.16; h = 1.75; }
-  else if (pose === "lie") { inner.rotation.x = Math.PI / 2; inner.position.set(0, 0.32, 0.15); h = 1.05; }
-  else if (pose === "swim") { inner.rotation.x = Math.PI / 2; inner.position.set(0, 0.42, 0); h = 1.1; }
-  else if (pose === "tube") {
-    inner.position.y = 0.0; h = 1.85;
-    for (let i = 0; i < 6; i++) { const seg = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.17, 8, 8, Math.PI / 3), tubeMs[i % 2]); seg.rotation.x = Math.PI / 2; seg.rotation.z = i * Math.PI / 3; seg.position.y = 0.42; root.add(seg); }
-  } else inner.position.y = 0.52;
-  if (matStyle != null && (pose === "sit" || pose === "lie")) {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 2.5), new THREE.MeshLambertMaterial({ map: matTex[matStyle % matTex.length] }));
-    m.rotation.x = -Math.PI / 2; m.position.set(0, 0.04, pose === "lie" ? 0.15 : 0.1); root.add(m);
+  const col = SHIRTS[c % SHIRTS.length], top = mat(col), topD = mat(new THREE.Color(col).multiplyScalar(.8).getHex());
+  const hairM = mat(g === "f" ? 0x5b3a2b : 0x2f2723, { side: THREE.DoubleSide });
+  const root = new THREE.Group(), inner = new THREE.Group(), hips = new THREE.Group(), torso = new THREE.Group(), head = new THREE.Group();
+  root.add(inner); inner.add(hips); hips.add(torso); torso.add(head); head.position.y = .84;
+  const add = (parent, geo, m, x = 0, y = 0, z = 0, sx = 1, sy = 1, sz = 1) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); parent.add(o); return o; };
+  // body and clothes
+  add(torso, new THREE.CylinderGeometry(.19, .24, .42, 16), top, 0, .21, 0);
+  add(torso, G_SPH, top, 0, .41, 0, .19, .07, .19);
+  add(torso, new THREE.CylinderGeometry(.075, .085, .1, 10), skin2, 0, .46, 0);
+  if (g === "f") {
+    add(torso, new THREE.CylinderGeometry(.2, .37, .32, 20), top, 0, .0, 0);
+    add(torso, new THREE.CylinderGeometry(.372, .372, .04, 20), whiteM2, 0, -.15, 0);
+    const collar = add(torso, new THREE.TorusGeometry(.13, .035, 6, 18), whiteM2, 0, .43, 0); collar.rotation.x = Math.PI / 2;
+    [-1, 1].forEach(k => { const b = add(torso, G_SPH_S, bowM, k * .055, .36, -.2, .06, .04, .03); b.rotation.z = k * .4; });
+  } else {
+    add(torso, new THREE.CylinderGeometry(.245, .25, .17, 16), shortsM, 0, .0, 0);
+    const hood = add(torso, new THREE.TorusGeometry(.13, .065, 8, 16), topD, 0, .45, .1); hood.rotation.x = Math.PI / 2.6;
+    add(torso, new THREE.BoxGeometry(.24, .09, .03), topD, 0, .12, -.232);
+    [-1, 1].forEach(k => add(torso, new THREE.CylinderGeometry(.008, .008, .12, 4), whiteM2, k * .05, .32, -.205));
   }
-  if (name) { const s = nameSprite(name, mine); s.position.y = h; root.add(s); }
-  Object.assign(root.userData, { legs, arms, inner, head, pose, h });
+  // head and face (face looks toward -z)
+  add(head, new THREE.SphereGeometry(.44, 28, 20), skin2);
+  [-1, 1].forEach(k => {
+    add(head, G_SPH_S, skin2, k * .43, -.05, 0, .06, .1, .08);
+    add(head, G_SPH, eyeM, k * .15, -.04, -.405, .055, .075, .03);
+    add(head, G_SPH_S, eyeHi, k * .15 + .02, -.015, -.43, .018, .018, .01);
+    add(head, G_SPH_S, blushM, k * .26, -.15, -.35, .065, .035, .02);
+  });
+  const mouth = add(head, new THREE.TorusGeometry(.04, .011, 6, 12, Math.PI), mouthM, 0, -.15, -.425); mouth.rotation.z = Math.PI;
+  const cap = add(head, new THREE.SphereGeometry(.465, 28, 18, 0, Math.PI * 2, 0, Math.PI * .56), hairM); cap.rotation.x = .38;
+  const fringeZ = (x, y) => -Math.sqrt(Math.max(0, .465 * .465 - x * x - y * y)) + .04;
+  if (g === "f") {
+    [-.2, 0, .2].forEach((x, i) => { const b = add(head, G_SPH, hairM, x, .13, fringeZ(x, .13), .16, .1, .07); b.rotation.z = (i - 1) * -.35; });
+    // long hair stays strictly behind the face (z > 0) so nothing hangs under the chin
+    add(head, new THREE.SphereGeometry(.5, 24, 16, 0, Math.PI, Math.PI * .22, Math.PI * .58), hairM, 0, -.02, .02);
+    [-1, 1].forEach(k => {
+      add(head, G_SPH, hairM, k * .36, .33, .12, .15, .15, .15);
+      const b1 = add(head, G_SPH_S, bowM, k * .28, .45, .02, .07, .045, .03); b1.rotation.z = k * .5;
+      const b2 = add(head, G_SPH_S, bowM, k * .4, .47, .02, .07, .045, .03); b2.rotation.z = -k * .5;
+    });
+  } else {
+    [-.24, -.08, .08, .24].forEach((x, i) => { const b = add(head, G_SPH, hairM, x, .12, fringeZ(x, .12), .12, .1, .06); b.rotation.z = (i % 2 ? .3 : -.3); });
+    const tuft = add(head, new THREE.ConeGeometry(.05, .2, 6), hairM, .04, .5, .02); tuft.rotation.z = -.6;
+  }
+  // limbs
+  const legs = [], knees = [], arms = [];
+  [-1, 1].forEach(k => {
+    const lp = new THREE.Group(); lp.position.set(k * .1, 0, 0); hips.add(lp);
+    add(lp, new THREE.CylinderGeometry(.075, .068, .22, 10), skin2, 0, -.11, 0);
+    const kp = new THREE.Group(); kp.position.y = -.22; lp.add(kp);
+    add(kp, new THREE.CylinderGeometry(.068, .06, .2, 10), g === "f" ? sockM : skin2, 0, -.1, 0);
+    if (g !== "f") add(kp, new THREE.CylinderGeometry(.063, .062, .06, 10), sockM, 0, -.17, 0);
+    add(kp, G_SPH, g === "f" ? shoeGirl : shoeBoy, 0, -.22, -.035, .085, .055, .125);
+    legs.push(lp); knees.push(kp);
+    const ap = new THREE.Group(); ap.position.set(k * .25, .36, 0); torso.add(ap);
+    if (g === "f") { add(ap, new THREE.CylinderGeometry(.075, .065, .1, 10), top, 0, -.04, 0); add(ap, new THREE.CylinderGeometry(.05, .048, .18, 8), skin2, 0, -.17, 0); }
+    else add(ap, new THREE.CylinderGeometry(.062, .056, .25, 10), top, 0, -.12, 0);
+    add(ap, G_SPH_S, skin2, 0, -.29, 0, .065, .065, .065);
+    arms.push(ap);
+  });
+  root.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  // picnic mat that rolls out
+  let matG = null, roll = null;
+  if (matStyle != null) {
+    const mm = new THREE.MeshLambertMaterial({ map: matTex[matStyle % matTex.length] });
+    matG = new THREE.Group(); root.add(matG);
+    const mesh = add(matG, new THREE.PlaneGeometry(MAT_W, MAT_L), mm, 0, .035, -MAT_L / 2); mesh.rotation.x = -Math.PI / 2; mesh.receiveShadow = true;
+    roll = add(root, new THREE.CylinderGeometry(1, 1, MAT_W, 14), mm); roll.rotation.z = Math.PI / 2; roll.castShadow = true;
+  }
+  const tubeG = new THREE.Group(); root.add(tubeG);
+  for (let i = 0; i < 6; i++) { const seg = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.17, 8, 8, Math.PI / 3), tubeMs[i % 2]); seg.rotation.x = Math.PI / 2; seg.rotation.z = i * Math.PI / 3; seg.position.y = 0.42; tubeG.add(seg); }
+  let sprite = null;
+  if (name) { sprite = nameSprite(name, mine); root.add(sprite); }
+  Object.assign(root.userData, { inner, hips, torso, head, legs, knees, arms, matG, roll, tubeG, sprite, cur: Object.assign({}, POSES[pose || "stand"]), queue: [], pose: pose || "stand", st: null, tubeOn: false, phase: Math.random() * 6, h: 2.1, seed: Math.random() * 10 });
+  applyRig(root, root.userData.cur);
   return root;
 }
-function animateAvatar(a, t, moving, speed) {
-  const u = a.userData;
-  if (u.pose === "stand") {
-    const fast = speed > 5, sw = moving ? Math.sin(t * (fast ? 11 : 7)) * (fast ? 0.8 : 0.5) : 0;
-    u.legs[0].rotation.x = sw; u.legs[1].rotation.x = -sw; u.arms[0].rotation.x = -sw * 0.8; u.arms[1].rotation.x = sw * 0.8;
-    u.inner.position.y = 0.52 + (moving ? Math.abs(Math.sin(t * (fast ? 11 : 7))) * 0.05 : 0);
-  } else if (u.pose === "swim") {
-    u.arms[0].rotation.x = t * 3; u.arms[1].rotation.x = t * 3 + Math.PI;
-    u.legs[0].rotation.x = Math.sin(t * 9) * 0.35; u.legs[1].rotation.x = -Math.sin(t * 9) * 0.35;
-  } else if (u.pose === "tube") {
-    u.legs[0].rotation.x = Math.sin(t * 4) * 0.4; u.legs[1].rotation.x = -Math.sin(t * 4) * 0.4;
-  } else u.head.position.y = 0.98 + Math.sin(t * 1.2 + a.position.x) * 0.012;
+function planMoves(from, to) {
+  const T = (pose, dur, o) => ({ pose, dur, o: o || {} });
+  if (to === "sit") { if (from === "lie") return [T("sit", .6, { matP: 1 })]; if (from === "walk") return [T("kneel", .55, { matP: 1 }), T("sit", .45)]; }
+  if (to === "lie") { if (from === "sit") return [T("lie", .65)]; if (from === "walk") return [T("kneel", .55, { matP: 1 }), T("sit", .35), T("lie", .55)]; }
+  if (to === "stand") {
+    if (from === "sit") return [T("kneel", .55, { matP: 0 }), T("stand", .4)];
+    if (from === "lie") return [T("sit", .5), T("kneel", .55, { matP: 0 }), T("stand", .4)];
+  }
+  if (to === "bench") return [T("bench", .55)];
+  return [T(to, .35)];
+}
+function setAvatarState(av, st, tube, instant) {
+  const u = av.userData, to = st === "walk" ? "stand" : st === "swim" ? (tube ? "tube" : "swim") : st;
+  if (u.st === st && u.tubeOn === !!tube) return;
+  const from = u.st; u.st = st; u.tubeOn = !!tube; u.pose = to;
+  if (instant || from === null) { u.queue = []; u.cur = Object.assign({}, POSES[to]); return; }
+  u.queue = planMoves(from, to).map(m => ({ to: Object.assign({}, POSES[m.pose], m.o), dur: m.dur, t: 0, from: null }));
+}
+const ease = x => x * x * (3 - 2 * x);
+function updateAvatar(av, dt, t, o = {}) {
+  const u = av.userData, cur = u.cur;
+  if (u.queue.length) {
+    const q = u.queue[0]; if (!q.from) q.from = Object.assign({}, cur);
+    q.t += dt; const k = ease(Math.min(1, q.t / q.dur));
+    for (const key of POSE_KEYS) cur[key] = q.from[key] + (q.to[key] - q.from[key]) * k;
+    if (q.t >= q.dur) u.queue.shift();
+  }
+  const v = Object.assign({}, cur), busy = u.queue.length > 0, ph = t + u.seed;
+  if (!busy) {
+    if (u.pose === "stand") {
+      if (o.moving) {
+        const fast = (o.speed || 0) > 5, amp = fast ? .8 : .5;
+        u.phase += dt * Math.max(2.5, o.speed || 3) * 2.5;
+        const s = Math.sin(u.phase);
+        v.thL += s * amp; v.thR -= s * amp;
+        v.knL -= Math.max(0, Math.sin(u.phase + 1.3)) * amp * 1.3; v.knR -= Math.max(0, Math.sin(u.phase + 1.3 + Math.PI)) * amp * 1.3;
+        v.arL -= s * amp * .9; v.arR += s * amp * .9;
+        v.hipY += Math.abs(Math.cos(u.phase)) * .045; v.lean += fast ? .2 : .05;
+      } else { v.nod += Math.sin(ph * .7) * .04; v.arL += Math.sin(ph * 1.1) * .03; v.arR += Math.sin(ph * 1.1 + 1) * .03; }
+    } else if (u.pose === "sit") { v.knL += Math.sin(ph * 1.6) * .08; v.knR += Math.sin(ph * 1.6 + 2) * .08; v.nod += Math.sin(ph * .5) * .06; }
+    else if (u.pose === "bench") { v.knL += Math.sin(ph * 2.2) * .28; v.knR += Math.sin(ph * 2.2 + Math.PI) * .28; v.nod += Math.sin(ph * .5) * .05; }
+    else if (u.pose === "lie") { v.nod += Math.sin(ph * .4) * .05; }
+    else if (u.pose === "swim") {
+      u.phase += dt * (o.moving ? 3.2 : 1.2);
+      v.arL = u.phase; v.arR = u.phase + Math.PI; v.thL += Math.sin(ph * 9) * .3; v.thR -= Math.sin(ph * 9) * .3;
+    } else if (u.pose === "tube") { v.thL += Math.sin(ph * 3) * .35; v.thR -= Math.sin(ph * 3) * .35; }
+    else if (u.pose === "boat" || u.pose === "bike") {
+      if (o.seat === 2) { v.knL += Math.sin(ph * 2) * .3; v.knR += Math.sin(ph * 2 + Math.PI) * .3; v.arL = .3; v.arR = .3; v.azL = v.azR = .5; }
+      else { const c = o.crank || 0; v.thL = POSES[u.pose].thL + Math.sin(c) * .32; v.knL = POSES[u.pose].knL - .1 - Math.cos(c) * .42; v.thR = POSES[u.pose].thR + Math.sin(c + Math.PI) * .32; v.knR = POSES[u.pose].knR - .1 - Math.cos(c + Math.PI) * .42; }
+    }
+  }
+  u.torso.scale.y = 1 + Math.sin(ph * 2.1) * .012;
+  applyRig(av, v);
+}
+function applyRig(av, v) {
+  const u = av.userData;
+  u.inner.rotation.x = v.pitch; u.inner.position.y = v.lift; u.hips.position.y = v.hipY;
+  u.torso.rotation.x = -v.lean; u.head.rotation.x = -v.nod;
+  u.legs[0].rotation.x = v.thL; u.legs[1].rotation.x = v.thR; u.knees[0].rotation.x = v.knL; u.knees[1].rotation.x = v.knR;
+  u.arms[0].rotation.set(v.arL, 0, -v.azL); u.arms[1].rotation.set(v.arR, 0, v.azR);
+  if (u.matG) {
+    const p = clamp(v.matP, 0, 1), back = v.matZ + MAT_L / 2;
+    u.matG.visible = p > .02; u.matG.position.z = back; u.matG.scale.z = Math.max(p, .001);
+    const r = .025 + .12 * (1 - p); u.roll.visible = p > .02 && p < .985; u.roll.scale.set(r, 1, r); u.roll.position.set(0, r + .02, back - MAT_L * p);
+  }
+  u.tubeG.visible = v.tube > .02; u.tubeG.scale.setScalar(Math.max(v.tube, .001));
+  if (u.sprite) u.sprite.position.y = v.label;
+  u.h = v.label;
 }
 
 /* NPCs: walkers, runners, cyclists */
@@ -739,11 +975,11 @@ function makeBike(color) {
 function addNpc(o) {
   const n = Object.assign({ off: 0, toff: 0, offUntil: 0, sayAt: -99, bellAt: -99, nextBell: 4 + Math.random() * 12 }, o);
   if (o.kind === "bike") {
-    const g = new THREE.Group(), bike = makeBike(o.color), rider = makeAvatar({ g: o.g, c: o.c, pose: "boat" });
-    rider.position.set(0, 0.5, 0.18); rider.userData.inner.rotation.x = -0.25;
-    rider.userData.arms.forEach(a => a.rotation.x = 1.15);
-    g.add(bike); g.add(rider); g.userData.h = 2.3; n.obj = g; n.bike = bike; n.rider = rider;
-  } else n.obj = makeAvatar({ g: o.g, c: o.c, pose: "stand" });
+    const g = new THREE.Group(), bike = makeBike(o.color), rider = makeAvatar({ g: o.g, c: o.c, pose: "bike" });
+    setAvatarState(rider, "bike", false, true); rider.position.set(0, 0.84, 0.08);
+    g.add(bike); g.add(rider); g.userData.h = 2.4; n.obj = g; n.bike = bike; n.rider = rider; n.crank = 0;
+    bike.traverse(m => { if (m.isMesh) m.castShadow = true; });
+  } else { n.obj = makeAvatar({ g: o.g, c: o.c, pose: "stand" }); setAvatarState(n.obj, "walk", false, true); }
   scene.add(n.obj); npcs.push(n); return n;
 }
 addNpc({ kind: "walk", g: "f", c: 4, x: -40, dir: 1, speed: 1.4, lane: 28.2, dog: true });
@@ -950,6 +1186,9 @@ function applyEnv() {
   lampLights.forEach(l => l.intensity = lampsOn * 1.4); playerLight.intensity = lampsOn * 0.9;
   bridgeLights.forEach(b => b.m.color.copy(b.base).multiplyScalar(0.35 + T.glow * 0.65));
   envStreak = T.streak * (1 - overcast * 0.3);
+  const cloudCol = new THREE.Color(T.hor).lerp(new THREE.Color(0xffffff), 0.5);
+  clouds.forEach((c, i) => { c.material.color.copy(cloudCol); c.material.opacity = (0.15 + 0.7 * (1 - T.stars)) * (w === "clear" ? 0.75 : 1) * (w === "fog" ? 0.3 : 1); });
+  towerGlow.color.set(T.glow > 0.5 ? 0xffe6b0 : 0xd8d4cc);
   rain.visible = w === "rain"; snow.visible = w === "snow";
   $("timeLabel").textContent = phase; $("clock").textContent = String(k.getHours()).padStart(2, "0") + ":" + String(k.getMinutes()).padStart(2, "0");
   $("weatherLabel").textContent = WEATHER[w];
@@ -963,13 +1202,17 @@ const me = { name: "", g: "m", c: Math.floor(Math.random() * SHIRTS.length), m: 
 let lastInput = { f: 0, r: 0 };
 let myAvatar = null, started = false, anim = null;
 const boatLocal = { x: 0, z: 0, r: 0 };
-let boarded = null; // {id, partner, driver}
+let boarded = null; // {id, driver}
 
 function poseFor() { return me.st === "walk" ? "stand" : me.st === "swim" ? (me.tube ? "tube" : "swim") : me.st === "bench" ? "boat" : me.st; }
 function rebuildMe() {
-  if (myAvatar) scene.remove(myAvatar);
-  myAvatar = makeAvatar({ g: me.g, c: me.c, pose: poseFor(), name: me.name, mine: true, matStyle: me.m });
-  scene.add(myAvatar);
+  const key = [me.name, me.g, me.c, me.m].join("|");
+  if (!myAvatar || myAvatar.userData.key !== key) {
+    if (myAvatar) scene.remove(myAvatar);
+    myAvatar = makeAvatar({ g: me.g, c: me.c, name: me.name, mine: true, matStyle: me.m });
+    myAvatar.userData.key = key; setAvatarState(myAvatar, me.st, me.tube, true);
+    myAvatar.position.set(me.x, me.y, me.z); scene.add(myAvatar);
+  } else setAvatarState(myAvatar, me.st, me.tube);
 }
 
 /* input */
@@ -1025,13 +1268,13 @@ function cleanPresence(p) {
   if (!p || typeof p !== "object" || typeof p.n !== "string") return null;
   const st = ["walk", "sit", "lie", "swim", "boat", "bench"].includes(p.st) ? p.st : "walk";
   const o = {
-    n: p.n.replace(/[\u0000-\u001f​-‏‪-‮]/g, "").slice(0, 10) || "손님",
+    n: p.n.replace(/[\u0000-\u001f\u200b-\u200f\u202a-\u202e]/g, "").slice(0, 10) || "손님",
     g: p.g === "f" ? "f" : "m", c: Number.isInteger(p.c) ? Math.abs(p.c) % SHIRTS.length : 0, m: Number.isInteger(p.m) ? Math.abs(p.m) % MAT_STYLES.length : 0,
     x: num(p.x, BOUND.x0 - 2, BOUND.x1 + 2, 0), z: num(p.z, BOUND.waterZ0 - 2, BOUND.landZ1 + 1, 30), r: num(p.r, -100, 100, 0),
     y: num(p.y, -2, 14, 0), st, tb: p.tb === true, bt: null, say: null
   };
   if (p.say && typeof p.say === "object" && Number.isInteger(p.say.i) && p.say.i >= 0 && p.say.i < MACROS.length && typeof p.say.at === "number") o.say = { i: p.say.i, at: p.say.at };
-  if (p.bt && typeof p.bt === "object" && Number.isInteger(p.bt.id) && p.bt.id >= 0 && p.bt.id < boats.length) o.bt = { id: p.bt.id };
+  if (p.bt && typeof p.bt === "object" && Number.isInteger(p.bt.id) && p.bt.id >= 0 && p.bt.id < boats.length) o.bt = { id: p.bt.id, at: num(p.bt.at, 0, 1e15, 0) };
   if (typeof p.bx === "number" && typeof p.bz === "number") { o.bx = num(p.bx, BOUND.x0 - 5, BOUND.x1 + 5, 0); o.bz = num(p.bz, BOUND.waterZ0 - 5, 0, -5); o.br = num(p.br, -1000, 1000, 0); }
   return o;
 }
@@ -1045,14 +1288,15 @@ function syncPeers(peers) {
     if (peer.kind !== "viewer") continue;
     const p = cleanPresence(peer.presence); if (!p) continue;
     live.add(peer.peer);
-    const key = [p.n, p.g, p.c, p.m, poseOf(p)].join("|"); let cur = others.get(peer.peer);
+    const key = [p.n, p.g, p.c, p.m].join("|"); let cur = others.get(peer.peer);
     if (!cur || cur.key !== key) {
       if (cur) scene.remove(cur.obj);
-      const obj = makeAvatar({ g: p.g, c: p.c, pose: poseOf(p), name: p.n, matStyle: p.m });
+      const obj = makeAvatar({ g: p.g, c: p.c, name: p.n, matStyle: p.m });
+      setAvatarState(obj, p.st, p.tb, true);
       obj.position.set(p.x, 0, p.z); scene.add(obj);
       cur = Object.assign(cur || { x: p.x, z: p.z, r: p.r }, { key, obj });
       others.set(peer.peer, cur);
-    }
+    } else setAvatarState(cur.obj, p.st, p.tb);
     cur.p = p;
     const sayAt = p.say ? p.say.at : 0;
     if (cur.lastSay === undefined) cur.lastSay = sayAt;
@@ -1073,7 +1317,7 @@ function syncPeers(peers) {
 })();
 let lastPub = 0, lastPubKey = "", mySay = null;
 function presenceObj() {
-  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id } : null, say: mySay };
+  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id, at: me.bt.at } : null, say: mySay };
   if (boarded && boarded.driver) { o.bx = +boatLocal.x.toFixed(2); o.bz = +boatLocal.z.toFixed(2); o.br = +boatLocal.r.toFixed(2); }
   else { o.bx = null; o.bz = null; o.br = null; }
   return o;
@@ -1088,45 +1332,49 @@ function publish(force) {
 /* ================= duck boat logic ================= */
 function claimsFor(id) {
   const list = [];
-  for (const [peer, o] of others) if (o.p.bt && o.p.bt.id === id) list.push(peer);
-  if (me.bt && me.bt.id === id && myPeer) list.push(myPeer);
-  return list.sort();
+  for (const [peer, o] of others) if (o.p.bt && o.p.bt.id === id) list.push([o.p.bt.at || 0, peer]);
+  if (me.bt && me.bt.id === id && myPeer) list.push([me.bt.at || 0, myPeer]);
+  list.sort((a, b) => a[0] - b[0] || (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0));
+  return list.map(x => x[1]);
 }
-function boatPairs() { return boats.map(b => { const c = claimsFor(b.id); return c.length >= 2 ? c.slice(0, 2) : null; }); }
+function crewNames(id) { return claimsFor(id).filter(p => p !== myPeer).map(p => (others.get(p) || { p: { n: "누군가" } }).p.n); }
 function evaluateBoat() {
   if (!started) return;
   if (!me.bt) { boarded = null; return; }
   if (!myPeer) return;
   const claims = claimsFor(me.bt.id), idx = claims.indexOf(myPeer);
-  if (idx >= 2) { me.bt = null; toast("이미 두 명이 탄 오리배입니다"); publish(true); refreshActions(); return; }
+  if (idx < 0) return;
+  if (idx >= 3) { me.bt = null; toast("이미 세 명이 탄 오리배입니다"); publish(true); refreshActions(); return; }
   if (claims.length >= 2) {
-    const partner = claims[idx === 0 ? 1 : 0], driver = idx === 0;
+    const driver = idx === 0;
     if (!boarded) {
       const b = boats[me.bt.id]; boatLocal.x = b.x; boatLocal.z = b.z; boatLocal.r = b.r;
-      boarded = { id: me.bt.id, partner, driver };
+      boarded = { id: me.bt.id, driver };
       me.st = "boat"; me.tube = false; rebuildMe(); if (audio.ready) audio.quack();
-      const pn = others.get(partner); toast((pn ? pn.p.n + "님과 " : "") + "오리배에 탔습니다!" + (driver ? " 내가 운전합니다" : ""));
+      const names = crewNames(me.bt.id);
+      toast((names.length ? names.join(", ") + "님과 " : "") + "오리배에 탔습니다!" + (driver ? " 내가 운전합니다" : ""));
       cam.tDist = 9; cam.tPitch = 0.3;
-    } else { boarded.driver = driver; boarded.partner = partner; }
-  } else if (boarded) {
-    leaveBoat(true); // partner got off or left: everyone off
-    return;
-  }
+    } else boarded.driver = driver;
+  } else if (boarded) { leaveBoat(true); return; }
   publish(true); refreshActions();
 }
-function claimBoat(id) {
+function claimBoat(id, squeeze) {
   if (!room || !myPeer) { toast("오리배는 두 명이 모여야 탈 수 있습니다. 지금은 같이 탈 사람이 없어요."); return; }
-  me.bt = { id }; toast("오리배 앞에서 같이 탈 사람을 기다립니다");
+  me.bt = { id, at: Date.now() };
+  toast(squeeze ? "세 명이 타면 오리배가 버틸 수 있을까요…?" : "오리배 앞에서 같이 탈 사람을 기다립니다");
   publish(true); evaluateBoat(); refreshActions();
 }
 function leaveBoat(forced) {
-  const id = boarded ? boarded.id : null;
+  const id = boarded ? boarded.id : null, sunk = id != null && boats[id].doomed;
   me.bt = null; boarded = null;
   if (id != null) {
     const b = boats[id], dHome = Math.hypot(b.x - b.home[0], b.z - b.home[1]);
     me.level = "ground"; me.y = 0;
-    if (dHome < 7) { me.x = b.home[0] + (Math.random() - 0.5) * 3; me.z = 2.4; me.st = "walk"; me.tube = false; rebuildMe(); toast(forced ? "짝꿍이 내려서 나도 선착장에 내렸습니다" : "선착장에 내렸습니다"); }
-    else { me.x = clamp(b.x + (Math.random() < 0.5 ? -1.6 : 1.6), BOUND.x0, BOUND.x1); me.z = b.z; me.st = "swim"; me.tube = false; rebuildMe(); doSplash(me.x, me.z); toast(forced ? "짝꿍이 내리는 바람에 같이 풍덩! 헤엄쳐서 나오세요" : "풍덩! 강 한가운데서 내렸습니다"); }
+    if (!sunk && dHome < 7) { me.x = b.home[0] + (Math.random() - 0.5) * 3; me.z = 2.4; me.st = "walk"; me.tube = false; rebuildMe(); toast(forced ? "짝꿍이 내려서 나도 선착장에 내렸습니다" : "선착장에 내렸습니다"); }
+    else {
+      me.x = clamp(b.x + (Math.random() < 0.5 ? -1.8 : 1.8), BOUND.x0, BOUND.x1); me.z = clamp(b.z + (Math.random() - .5) * 2, BOUND.waterZ0, -3); me.st = "swim"; me.tube = false; rebuildMe(); doSplash(me.x, me.z);
+      toast(sunk ? "꼬르륵… 오리배가 가라앉아 다 같이 풍덩!" : forced ? "짝꿍이 내리는 바람에 같이 풍덩! 헤엄쳐서 나오세요" : "풍덩! 강 한가운데서 내렸습니다");
+    }
     cam.tDist = 7; cam.tPitch = 0.22;
   }
   publish(true); actKey = ""; refreshActions();
@@ -1150,19 +1398,19 @@ function nearBench() {
   });
   return best;
 }
-function nearDock() {
-  if (me.st === "walk") return Math.abs(me.x - DOCK.x) < 9 && me.z < 6;
-  if (me.st === "swim") return boats.some(b => !b.pair && Math.hypot(b.x - me.x, b.z - me.z) < 3.5);
-  return false;
-}
-function freeBoat() {
-  let best = null, bd = 1e9;
+function boatOptions() {
+  const out = { join: null, squeeze: null };
+  if (me.st !== "walk" && me.st !== "swim") return out;
+  const range = me.st === "walk" ? (Math.abs(me.x - DOCK.x) < 9 && me.z < 6 ? 14 : 0) : 3.8;
+  if (!range) return out;
+  let jd = 1e9, sd = 1e9;
   boats.forEach(b => {
-    const c = claimsFor(b.id); if (c.length >= 2) return;
-    const d = Math.hypot(b.x - me.x, b.z - me.z) - (c.length === 1 ? 50 : 0); // join someone who's waiting first
-    if (d < bd) { bd = d; best = b.id; }
+    if (b.doomed) return;
+    const c = claimsFor(b.id).length, d = Math.hypot(b.x - me.x, b.z - me.z); if (d > range) return;
+    if (c <= 1) { const s = d - (c === 1 ? 50 : 0); if (s < jd) { jd = s; out.join = b.id; } }
+    else if (c === 2 && d < sd) { sd = d; out.squeeze = b.id; }
   });
-  return best;
+  return out;
 }
 let actKey = "";
 function refreshActions() {
@@ -1170,8 +1418,9 @@ function refreshActions() {
   const acts = []; let status = "";
   if (anim) { /* mid-animation */ }
   else if (boarded) {
-    const pn = others.get(boarded.partner);
-    status = boarded.driver ? "오리배 운전 중" + (pn ? " · " + pn.p.n + "님과 함께" : "") : (pn ? pn.p.n + "님이 운전 중" : "오리배 탑승 중");
+    const names = crewNames(boarded.id), drv = claimsFor(boarded.id)[0], dn = drv && drv !== myPeer && others.get(drv) ? others.get(drv).p.n : "";
+    status = boarded.driver ? "오리배 운전 중 · " + names.join(", ") + "님과 함께" : (dn ? dn + "님이 운전 중" : "오리배 탑승 중");
+    if (boats[boarded.id].doomed) status = "세 명이라 물이 차오르는 중! 꼬르륵…";
     acts.push(["leave", "내리기", "duck"]);
   } else if (me.bt) {
     status = "같이 탈 사람을 기다리는 중… 한 명이 더 오면 출발합니다";
@@ -1181,7 +1430,9 @@ function refreshActions() {
     if (canSpread()) { acts.push(["sit", "앉기", nearBench() ? "" : "primary"]); acts.push(["lie", "눕기", ""]); }
     else if (me.level === "stairs") status = "대교로 올라가는 계단";
     else if (onPath(me.z) && !nearBench()) status = "길 위에는 돗자리를 펼 수 없습니다";
-    if (nearDock()) acts.push(["boat", "오리배 타기", "duck"]);
+    const bo = boatOptions();
+    if (bo.join != null) acts.push(["boat", "오리배 타기", "duck"]);
+    if (bo.squeeze != null) acts.push(["squeeze", "끼어 타기 (3명)", "duck"]);
   } else if (me.st === "bench") {
     acts.push(["stand", "일어나기", "primary"]);
   } else if (me.st === "sit" || me.st === "lie") {
@@ -1190,7 +1441,9 @@ function refreshActions() {
   } else if (me.st === "swim") {
     status = me.tube ? "튜브 타고 둥둥 · 강가 쪽으로 가면 올라갑니다" : "배영 중 · 강가 쪽으로 헤엄치면 올라갑니다";
     acts.push(["tube", me.tube ? "튜브 빼기" : "튜브 끼기", ""]);
-    if (nearDock()) acts.push(["boat", "오리배 타기", "duck"]);
+    const bo = boatOptions();
+    if (bo.join != null) acts.push(["boat", "오리배 타기", "duck"]);
+    if (bo.squeeze != null) acts.push(["squeeze", "끼어 타기 (3명)", "duck"]);
   }
   const key = JSON.stringify([acts, status]); if (key === actKey) return; actKey = key;
   const row = $("actRow"); row.textContent = "";
@@ -1209,20 +1462,21 @@ $("actRow").addEventListener("click", e => {
     me.st = a; rebuildMe(); cam.tPitch = a === "lie" ? 0.42 : 0.22; cam.tDist = a === "lie" ? 7.5 : 6.5;
   } else if (a === "bench") {
     const seat = nearBench(); if (!seat) { toast("벤치 자리가 다 찼습니다"); return; }
-    me.st = "bench"; me.x = seat.x; me.z = seat.z; me.y = 0.4; me.r = 0; rebuildMe(); cam.tPitch = 0.22; cam.tDist = 6;
+    me.st = "bench"; me.x = seat.x; me.z = seat.z; me.y = 0; me.r = 0; rebuildMe(); cam.tPitch = 0.22; cam.tDist = 6;
   } else if (a === "stand") {
     if (me.st === "bench") { me.z = 24.8; me.y = 0; }
     me.st = "walk"; rebuildMe(); cam.tPitch = 0.26; cam.tDist = 6.5;
   }
   else if (a === "tube") { me.tube = !me.tube; rebuildMe(); }
-  else if (a === "boat") { const id = freeBoat(); if (id == null) toast("남은 오리배가 없습니다"); else claimBoat(id); }
+  else if (a === "boat") { const id = boatOptions().join; if (id == null) toast("남은 오리배가 없습니다"); else claimBoat(id, false); }
+  else if (a === "squeeze") { const id = boatOptions().squeeze; if (id == null) toast("끼어 탈 오리배가 없습니다"); else claimBoat(id, true); }
   else if (a === "cancel") { me.bt = null; }
   else if (a === "leave") { leaveBoat(false); return; }
   publish(true); actKey = ""; refreshActions();
 });
 
 /* mat preview */
-const ghost = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 2.5), new THREE.MeshBasicMaterial({ color: 0x9be3a0, transparent: true, opacity: 0.32, depthWrite: false }));
+const ghost = new THREE.Mesh(new THREE.PlaneGeometry(MAT_W, MAT_L), new THREE.MeshBasicMaterial({ color: 0x9be3a0, transparent: true, opacity: 0.32, depthWrite: false }));
 ghost.rotation.x = -Math.PI / 2; ghost.visible = false; scene.add(ghost);
 
 /* ================= admin weather (db + user) ================= */
@@ -1263,7 +1517,7 @@ $("enterBtn").addEventListener("click", () => {
 $("genderChoices").addEventListener("click", e => { const b = e.target.closest(".choice"); if (!b) return; me.g = b.dataset.g; pressG(); });
 $("joinForm").addEventListener("submit", e => {
   e.preventDefault();
-  const n = $("nameInput").value.replace(/[\u0000-\u001f​-‏‪-‮]/g, "").trim();
+  const n = $("nameInput").value.replace(/[\u0000-\u001f\u200b-\u200f\u202a-\u202e]/g, "").trim();
   if (!n) { $("err").textContent = "이름을 한 글자 이상 적어주세요."; $("nameInput").focus(); return; }
   if (others.size >= MAX_PEOPLE) { $("err").textContent = `지금 ${MAX_PEOPLE}명이 모두 와 있습니다. 조금 뒤에 다시 와 주세요.`; return; }
   me.name = n.slice(0, 10);
@@ -1345,7 +1599,7 @@ function stepPlayer(dt) {
   if (boarded) {
     if (boarded.driver) {
       boatLocal.r -= inp.r * dt * 1.4;
-      const sp = inp.f * 3.2 * dt; boatLocal.x += -Math.sin(boatLocal.r) * sp; boatLocal.z += -Math.cos(boatLocal.r) * sp;
+      const sp = inp.f * 3.2 * dt * (1 - boats[boarded.id].sink * 0.85); boatLocal.x += -Math.sin(boatLocal.r) * sp; boatLocal.z += -Math.cos(boatLocal.r) * sp;
       const bx = clamp(boatLocal.x, BOUND.x0 + 1, BOUND.x1 - 1), bz = clamp(boatLocal.z, BOUND.waterZ0 + 1, -3.4);
       if (bx !== boatLocal.x || bz !== boatLocal.z) { if (Math.abs(inp.f) > 0.2) hitBound(); boatLocal.x = bx; boatLocal.z = bz; }
     }
@@ -1404,13 +1658,13 @@ function stepPlayer(dt) {
 
 /* ================= main loop ================= */
 applyEnv(); setInterval(applyEnv, 30000);
-const clock = new THREE.Clock(); let T = 0, actTimer = 0;
+const clock = new THREE.Clock(); let T = 0, actTimer = 0, plantTimer = 0;
 const tmpV = new THREE.Vector3(), UP = UPV;
 let stepPh = 0, stepSide = false;
 function seatOf(boatIdx, peer) {
-  const b = boats[boatIdx], s = b.pair && b.pair[1] === peer ? 1 : -1;
-  tmpV.set(s * 0.45, 0, 0.25).applyAxisAngle(UP, b.r);
-  return { x: b.x + tmpV.x, z: b.z + tmpV.z, y: b.obj.position.y + 0.2, r: b.r };
+  const b = boats[boatIdx]; let idx = b.crew ? b.crew.indexOf(peer) : 0; if (idx < 0) idx = 0;
+  tmpV.copy(SEATS[idx]); b.obj.localToWorld(tmpV);
+  return { x: tmpV.x, z: tmpV.z, y: tmpV.y, r: b.r, idx };
 }
 function frame() {
   const dt = Math.min(clock.getDelta(), 0.05); T += dt;
@@ -1420,31 +1674,46 @@ function frame() {
   if (started) stepPlayer(dt);
 
   // boats
-  const pairs = boatPairs();
   boats.forEach((b, i) => {
-    const pair = pairs[i]; b.pair = pair;
+    const all = claimsFor(b.id), crew = all.length >= 2 ? all.slice(0, 3) : null; b.crew = crew;
+    if (crew && crew.length >= 3 && !b.doomed) {
+      b.doomed = true; b.sinkT = 0;
+      if (boarded && boarded.id === i) { toast("세 명은 너무 무거워요! 오리배에 물이 차오릅니다"); if (audio.ready) audio.quack(); actKey = ""; }
+    }
+    if (b.doomed) { b.sinkT += dt; if (!all.length) b.doomed = false; }
+    const sinkTo = b.doomed ? clamp(b.sinkT / SINK_TIME, 0, 1) : 0;
+    b.sink += (sinkTo - b.sink) * Math.min(1, dt * (b.doomed ? 4 : 0.5));
     if (boarded && boarded.id === i && boarded.driver) { b.tx = boatLocal.x; b.tz = boatLocal.z; b.tr = boatLocal.r; }
-    else if (pair) { const drv = others.get(pair[0]); if (drv && typeof drv.p.bx === "number") { b.tx = drv.p.bx; b.tz = drv.p.bz; b.tr = drv.p.br; } }
-    else { b.tx = b.home[0]; b.tz = b.home[1]; b.tr = 0; }
-    const k = Math.min(1, dt * (pair ? 8 : 1.2));
+    else if (crew) { const drv = others.get(crew[0]); if (drv && typeof drv.p.bx === "number") { b.tx = drv.p.bx; b.tz = drv.p.bz; b.tr = drv.p.br; } }
+    else if (!b.doomed) { b.tx = b.home[0]; b.tz = b.home[1]; b.tr = 0; }
+    const px = b.x, pz = b.z, k = Math.min(1, dt * (crew ? 8 : 1.2));
     b.x += (b.tx - b.x) * k; b.z += (b.tz - b.z) * k; b.r = lerpAngle(b.r, b.tr, k);
-    b.obj.position.set(b.x, -0.6 + Math.sin(T * 1.6 + i) * 0.05, b.z);
-    b.obj.rotation.set(Math.sin(T * 1.3 + i) * 0.03, b.r, Math.sin(T * 1.1 + i * 2) * 0.03);
-    if (pair) b.obj.userData.wheel.rotation.x += dt * 4;
+    const vel = Math.hypot(b.x - px, b.z - pz) / Math.max(dt, 1e-3);
+    if (crew && vel > 0.05) b.crank += dt * (2 + vel * 2.2);
+    const bob = Math.sin(T * 1.6 + i) * 0.05 * (1 - b.sink);
+    b.obj.position.set(b.x, -0.6 - b.sink * 1.5 + bob, b.z);
+    b.obj.rotation.set(Math.sin(T * 1.3 + i) * 0.03 + b.sink * 0.16, b.r, Math.sin(T * 1.1 + i * 2) * 0.03 + b.sink * 0.2);
+    const ud = b.obj.userData; ud.crank.rotation.x = -b.crank; ud.wheel.rotation.x = -b.crank * 1.3;
+    ud.fill.visible = b.sink > 0.02; ud.fill.position.y = 0.52 + b.sink * 0.36;
+    b.obj.updateMatrixWorld();
   });
+  if (boarded && boats[boarded.id].doomed && boats[boarded.id].sinkT > SINK_TIME + 0.3) leaveBoat(true);
 
   // me
   if (myAvatar) {
-    if (boarded) { const s = seatOf(boarded.id, myPeer); me.x = s.x; me.z = s.z; me.r = s.r; myAvatar.position.set(s.x, s.y, s.z); myAvatar.rotation.y = s.r; }
+    let mySeat = -1;
+    if (boarded) { const s = seatOf(boarded.id, myPeer); mySeat = s.idx; me.x = s.x; me.z = s.z; me.r = s.r; myAvatar.position.set(s.x, s.y, s.z); myAvatar.rotation.y = s.r; }
     else {
       const baseY = me.st === "swim" ? (me.tube ? -0.95 : -0.85) + Math.sin(T * 2) * 0.04 : me.y;
-      myAvatar.position.set(me.x, anim ? me.y : baseY, me.z);
-      myAvatar.rotation.y = me.st === "sit" || me.st === "lie" || me.st === "bench" ? 0 : me.r;
+      tmpV.set(me.x, anim ? me.y : baseY, me.z);
+      if (anim || tmpV.distanceTo(myAvatar.position) > 6) myAvatar.position.copy(tmpV); else myAvatar.position.lerp(tmpV, 1 - Math.exp(-dt * 16));
+      const tr = me.st === "sit" || me.st === "lie" || me.st === "bench" ? 0 : me.r;
+      myAvatar.rotation.y = lerpAngle(myAvatar.rotation.y, tr, 1 - Math.exp(-dt * 14));
     }
-    animateAvatar(myAvatar, T, me.moving, me.speed);
+    updateAvatar(myAvatar, dt, T, { moving: me.moving, speed: me.speed, crank: boarded ? boats[boarded.id].crank + (mySeat === 1 ? Math.PI / 2 : 0) : 0, seat: mySeat });
     const showGhost = me.st === "walk" && !anim && !me.moving && !me.bt && canSpread();
     ghost.visible = showGhost;
-    if (showGhost) { ghost.position.set(me.x, me.y + 0.05, me.z + 0.1); ghost.material.color.set(matConflict(me.x, me.z) ? 0xff8a7a : 0x9be3a0); }
+    if (showGhost) { ghost.position.set(me.x, me.y + 0.05, me.z + POSES.sit.matZ); ghost.material.color.set(matConflict(me.x, me.z) ? 0xff8a7a : 0x9be3a0); }
     playerLight.position.set(me.x + 1.5, me.y + 4, me.z + 3);
     // footsteps and strokes
     if (!anim && me.moving && (me.st === "walk" || me.st === "swim")) {
@@ -1462,8 +1731,8 @@ function frame() {
 
   // others
   for (const [peer, o] of others) {
-    const p = o.p; let tx = p.x, tz = p.z, tr = p.r, ty = 0, onBoat = false;
-    if (p.st === "boat" && p.bt) { const b = boats[p.bt.id]; if (b.pair && b.pair.includes(peer)) { const s = seatOf(p.bt.id, peer); tx = s.x; tz = s.z; tr = s.r; ty = s.y; onBoat = true; } }
+    const p = o.p; let tx = p.x, tz = p.z, tr = p.r, ty = 0, onBoat = false, seat = -1, crank = 0;
+    if (p.st === "boat" && p.bt) { const b = boats[p.bt.id]; if (b.crew && b.crew.includes(peer)) { const s = seatOf(p.bt.id, peer); tx = s.x; tz = s.z; tr = s.r; ty = s.y; onBoat = true; seat = s.idx; crank = b.crank + (seat === 1 ? Math.PI / 2 : 0); } }
     if (p.st === "sit" || p.st === "lie" || p.st === "bench") tr = 0;
     if (!onBoat) ty = p.y;
     if (p.st === "swim") ty = (p.tb ? -0.95 : -0.85) + Math.sin(T * 2 + p.x) * 0.04;
@@ -1471,7 +1740,7 @@ function frame() {
     const moving = Math.hypot(tx - o.x, tz - o.z) > 0.03;
     o.x += (tx - o.x) * k; o.z += (tz - o.z) * k; o.r = lerpAngle(o.r, tr, k);
     o.obj.position.set(o.x, ty, o.z); o.obj.rotation.y = o.r;
-    animateAvatar(o.obj, T, moving, 3.6);
+    updateAvatar(o.obj, dt, T, { moving, speed: 3.6, seat, crank });
   }
 
   // NPCs
@@ -1483,13 +1752,13 @@ function frame() {
     n.obj.position.set(n.x, 0, z); n.obj.rotation.y = n.dir > 0 ? -Math.PI / 2 : Math.PI / 2;
     if (n.kind === "bike") {
       n.bike.userData.wheels.forEach(w => w.rotation.x -= dt * n.speed / 0.32);
-      const pd = T * n.speed * 1.4; n.rider.userData.legs[0].rotation.x = Math.PI / 2 - 0.5 + Math.sin(pd) * 0.45; n.rider.userData.legs[1].rotation.x = Math.PI / 2 - 0.5 - Math.sin(pd) * 0.45;
+      n.crank += dt * n.speed * 1.3; updateAvatar(n.rider, dt, T, { crank: n.crank });
       // bell: when someone is ahead in the bike lane, or now and then
       const ahead = (ox, oz) => { const dx = (ox - n.x) * n.dir; return dx > 0 && dx < 11 && Math.abs(oz - z) < 1.6; };
       let ring = T > n.nextBell;
       if (!ring && T - n.bellAt > 6) ring = (started && me.level === "ground" && ahead(me.x, me.z)) || [...others.values()].some(o => ahead(o.x, o.z));
       if (ring) { n.bellAt = T; n.nextBell = T + 10 + Math.random() * 18; if (audio.ready) { const d = Math.hypot(n.x - camP.x, z - camP.z); audio.bell(Math.pow(clamp(1 - d / 45, 0, 1), 2)); } }
-    } else animateAvatar(n.obj, T, true, n.kind === "run" ? 6 : 3);
+    } else updateAvatar(n.obj, dt, T, { moving: true, speed: n.kind === "run" ? 6.5 : n.speed + 1.2 });
     if (n.dog) {
       dog.position.set(n.x + n.dir * 1.7, 0, z - 0.7); dog.rotation.y = n.obj.rotation.y;
       const ds = Math.sin(T * 10) * 0.5; dog.userData.legs.forEach((l, i) => l.rotation.x = (i % 3 === 0 ? ds : -ds)); dog.userData.tail.rotation.z = Math.sin(T * 14) * 0.6;
@@ -1547,7 +1816,7 @@ function frame() {
     const idle = performance.now() - cam.dragAt > 900;
     if (boarded && idle) cam.tYaw = lerpAngle(cam.tYaw, boats[boarded.id].r, Math.min(1, dt * 1.5));
     cam.yaw = lerpAngle(cam.yaw, cam.tYaw, k); cam.pitch += (cam.tPitch - cam.pitch) * k; cam.dist += (cam.tDist - cam.dist) * k;
-    const head = boarded ? 0.8 : me.st === "swim" ? -0.5 : me.st === "lie" ? 0.6 : me.st === "bench" ? 1.6 : 1.25;
+    const head = boarded ? 0.8 : me.st === "swim" ? -0.5 : me.st === "lie" ? 0.6 : me.st === "bench" ? 1.45 : 1.25;
     const fk = 1 - Math.exp(-dt * 10), fy = (boarded ? 0 : anim ? me.y : me.y) + head;
     cam.tx += (me.x - cam.tx) * fk; cam.ty += (fy - cam.ty) * fk; cam.tz += (me.z - cam.tz) * fk;
     const cp = Math.cos(cam.pitch);
@@ -1560,7 +1829,16 @@ function frame() {
     camera.lookAt(cam.tx - Math.sin(cam.yaw) * 2.5, cam.ty + 0.35, cam.tz - Math.cos(cam.yaw) * 2.5);
     publish(false);
     actTimer += dt; if (actTimer > 0.2) { actTimer = 0; refreshActions(); }
+    plantTimer += dt;
+    if (plantTimer > 0.5) {
+      plantTimer = 0; const rects = [];
+      const addAv = av => { if (av && av.userData.cur.matP > 0.05) { const r = av.rotation.y; rects.push({ x: av.position.x - Math.sin(r) * av.userData.cur.matZ, z: av.position.z + Math.cos(r) * av.userData.cur.matZ }); } };
+      addAv(myAvatar); others.forEach(o => addAv(o.obj));
+      hidePlantsUnderMats(rects);
+    }
   }
+  sunTarget.position.set(cam.tx, 0, cam.tz); sun.position.copy(skyU.sunDir.value).multiplyScalar(150).add(sunTarget.position);
+  if (sun.position.y < sunTarget.position.y + 12) sun.position.y = sunTarget.position.y + 12;
   waterU.camPos.value.copy(camera.position); sky.position.copy(camera.position);
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
