@@ -132,3 +132,4 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 }
 @media (max-width:380px){.exitbtn{width:40px;height:40px}.place .dim{display:none}}
 @media (max-height:480px){:root{--joy:104px}.toast-wrap{top:calc(62px + env(safe-area-inset-top,0px))}.act{padding:9px 14px}}
+.card .note{margin:6px 0 0;font-size:12px;line-height:1.5;opacity:.7}

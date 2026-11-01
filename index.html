@@ -144,6 +144,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 }
 @media (max-width:380px){.exitbtn{width:40px;height:40px}.place .dim{display:none}}
 @media (max-height:480px){:root{--joy:104px}.toast-wrap{top:calc(62px + env(safe-area-inset-top,0px))}.act{padding:9px 14px}}
+.card .note{margin:6px 0 0;font-size:12px;line-height:1.5;opacity:.7}
 </style>
 
 </head>
@@ -236,6 +237,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
           <svg viewBox="0 0 48 48"><path d="M11 20c0-9 6-13 13-13s13 4 13 13v14H11z" fill="#4a3226"/><circle cx="24" cy="21" r="11" fill="#f2c9a0"/><path d="M13 19c1-7 6-10 11-10s10 3 11 10c-4-3-8-4-11-6-3 2-7 3-11 6z" fill="#4a3226"/><rect x="15" y="31" width="18" height="13" rx="7" fill="#e9a46b"/></svg>여자</button>
       </div>
     </div>
+    <p class="note">용돈은 이 기기·브라우저에 저장돼요. 다른 기기나 시크릿 창에서는 따로 시작해요.</p>
     <p class="err" id="err"></p>
     <button class="go" type="submit">한강으로 가기</button>
   </form>
@@ -1398,6 +1400,30 @@ for (const k in PRODUCTS) {
   const t = new THREE.CanvasTexture(c); t.anisotropy = 4; PRODUCT_TEX[k] = t;
 }
 // shelf faces, fridge doors and freezer tops filled with these packages
+// cigarette wall behind the counter (display only, invented brands)
+function cigWall() {
+  const BR = [["RIVER", "#1d4f91", "#fff"], ["MINT ONE", "#2bb39a", "#fff"], ["SOFT 3", "#f2f2f2", "#c8102e"], ["NOVA", "#222", "#e8c15a"],
+    ["BLUE 1", "#3b7dd8", "#fff"], ["CLASSIC", "#b3122c", "#fff"], ["ICE", "#bfe6f5", "#1d4f91"], ["GOLD", "#c9a54a", "#2a1f0a"]];
+  return canvasTex(1024, 448, (x, w, h) => {
+    x.fillStyle = "#2a2d31"; x.fillRect(0, 0, w, h);
+    const rows = 5, rh = (h - 60) / rows, pw = 38, ph = rh - 22, n = Math.floor((w - 20) / (pw + 6));
+    for (let r = 0; r < rows; r++) {
+      const y0 = 10 + r * rh;
+      for (let i = 0; i < n; i++) {
+        const [nm, bg, fg] = BR[(Math.floor(i / 3) + r * 3) % BR.length], px = 12 + i * (pw + 6), py = y0 + 4;
+        x.fillStyle = bg; x.fillRect(px, py, pw, ph);
+        x.fillStyle = "#fff"; x.fillRect(px, py + ph * .58, pw, ph * .42);
+        x.fillStyle = "#555"; x.fillRect(px + 3, py + ph * .64, pw - 6, ph * .3);
+        x.save(); x.translate(px + pw / 2, py + ph * .3); x.font = "bold 9px sans-serif"; x.fillStyle = fg; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(nm, 0, 0); x.restore();
+        x.fillStyle = "rgba(255,255,255,.18)"; x.fillRect(px, py, 5, ph);
+      }
+      x.fillStyle = "#b9bec4"; x.fillRect(0, y0 + rh - 16, w, 6);
+    }
+    x.fillStyle = "#d8322f"; rr(x, w / 2 - 210, h - 46, 420, 38, 8); x.fill();
+    label(x, "19세 미만 청소년에게 판매하지 않습니다", w / 2, h - 27, 22, "#fff");
+  }, 1, 1);
+}
+
 function packShelf(keys, w, h, rows, seed, opts = {}) {
   const c = document.createElement("canvas"); c.width = w; c.height = h; const x = c.getContext("2d"), r = rand(seed);
   x.fillStyle = opts.bg || "#e9ecef"; x.fillRect(0, 0, w, h);
@@ -1543,7 +1569,7 @@ function makeHeld(kind) {
     for (let i = 0; i < 8; i++) { const ch = add(new THREE.SphereGeometry(.07, 8, 6), new THREE.MeshLambertMaterial({ color: 0xc4632a, emissive: 0x7a2e08, emissiveIntensity: .5 }), hcx - .35 + (i % 4) * .23, 1.06, hcz - .1 + Math.floor(i / 4) * .2); ch.scale.y = .7; }
     add(new THREE.PlaneGeometry(.9, .18), lit(0xffffff, canvasTex(192, 40, (x, w2, h2) => { x.fillStyle = "#d8322f"; x.fillRect(0, 0, w2, h2); x.fillStyle = "#fff"; x.font = "bold 24px 'Gowun Dodum', sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("따끈한 치킨", w2 / 2, h2 / 2); }, 1, 1)), hcx, 1.6, hc.z0 - .01).rotation.y = Math.PI;
     box(4.8, 2.2, .32, mat(0xf7f7f5), 3.5, 1.4, 4.24);
-    add(new THREE.PlaneGeometry(4.6, 2.0), lit(0xffffff, shelfTex(91, 6)), 3.5, 1.4, 4.075).rotation.y = Math.PI;
+    add(new THREE.PlaneGeometry(4.6, 2.0), lit(0xffffff, cigWall()), 3.5, 1.4, 4.075).rotation.y = Math.PI;
   }
   // stack of red baskets by the door
   for (let i = 0; i < 4; i++) { const b = makeBasket(); b.position.set(FIX.basket.x, .12 + i * .06, FIX.basket.z); b.children.forEach(m => m.castShadow = false); G.add(b); }

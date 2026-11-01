@@ -125,7 +125,7 @@ function makeHeld(kind) {
     for (let i = 0; i < 8; i++) { const ch = add(new THREE.SphereGeometry(.07, 8, 6), new THREE.MeshLambertMaterial({ color: 0xc4632a, emissive: 0x7a2e08, emissiveIntensity: .5 }), hcx - .35 + (i % 4) * .23, 1.06, hcz - .1 + Math.floor(i / 4) * .2); ch.scale.y = .7; }
     add(new THREE.PlaneGeometry(.9, .18), lit(0xffffff, canvasTex(192, 40, (x, w2, h2) => { x.fillStyle = "#d8322f"; x.fillRect(0, 0, w2, h2); x.fillStyle = "#fff"; x.font = "bold 24px 'Gowun Dodum', sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("따끈한 치킨", w2 / 2, h2 / 2); }, 1, 1)), hcx, 1.6, hc.z0 - .01).rotation.y = Math.PI;
     box(4.8, 2.2, .32, mat(0xf7f7f5), 3.5, 1.4, 4.24);
-    add(new THREE.PlaneGeometry(4.6, 2.0), lit(0xffffff, shelfTex(91, 6)), 3.5, 1.4, 4.075).rotation.y = Math.PI;
+    add(new THREE.PlaneGeometry(4.6, 2.0), lit(0xffffff, cigWall()), 3.5, 1.4, 4.075).rotation.y = Math.PI;
   }
   // stack of red baskets by the door
   for (let i = 0; i < 4; i++) { const b = makeBasket(); b.position.set(FIX.basket.x, .12 + i * .06, FIX.basket.z); b.children.forEach(m => m.castShadow = false); G.add(b); }

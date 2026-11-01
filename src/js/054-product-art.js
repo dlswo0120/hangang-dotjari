@@ -122,6 +122,30 @@ for (const k in PRODUCTS) {
   const t = new THREE.CanvasTexture(c); t.anisotropy = 4; PRODUCT_TEX[k] = t;
 }
 // shelf faces, fridge doors and freezer tops filled with these packages
+// cigarette wall behind the counter (display only, invented brands)
+function cigWall() {
+  const BR = [["RIVER", "#1d4f91", "#fff"], ["MINT ONE", "#2bb39a", "#fff"], ["SOFT 3", "#f2f2f2", "#c8102e"], ["NOVA", "#222", "#e8c15a"],
+    ["BLUE 1", "#3b7dd8", "#fff"], ["CLASSIC", "#b3122c", "#fff"], ["ICE", "#bfe6f5", "#1d4f91"], ["GOLD", "#c9a54a", "#2a1f0a"]];
+  return canvasTex(1024, 448, (x, w, h) => {
+    x.fillStyle = "#2a2d31"; x.fillRect(0, 0, w, h);
+    const rows = 5, rh = (h - 60) / rows, pw = 38, ph = rh - 22, n = Math.floor((w - 20) / (pw + 6));
+    for (let r = 0; r < rows; r++) {
+      const y0 = 10 + r * rh;
+      for (let i = 0; i < n; i++) {
+        const [nm, bg, fg] = BR[(Math.floor(i / 3) + r * 3) % BR.length], px = 12 + i * (pw + 6), py = y0 + 4;
+        x.fillStyle = bg; x.fillRect(px, py, pw, ph);
+        x.fillStyle = "#fff"; x.fillRect(px, py + ph * .58, pw, ph * .42);
+        x.fillStyle = "#555"; x.fillRect(px + 3, py + ph * .64, pw - 6, ph * .3);
+        x.save(); x.translate(px + pw / 2, py + ph * .3); x.font = "bold 9px sans-serif"; x.fillStyle = fg; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(nm, 0, 0); x.restore();
+        x.fillStyle = "rgba(255,255,255,.18)"; x.fillRect(px, py, 5, ph);
+      }
+      x.fillStyle = "#b9bec4"; x.fillRect(0, y0 + rh - 16, w, 6);
+    }
+    x.fillStyle = "#d8322f"; rr(x, w / 2 - 210, h - 46, 420, 38, 8); x.fill();
+    label(x, "19세 미만 청소년에게 판매하지 않습니다", w / 2, h - 27, 22, "#fff");
+  }, 1, 1);
+}
+
 function packShelf(keys, w, h, rows, seed, opts = {}) {
   const c = document.createElement("canvas"); c.width = w; c.height = h; const x = c.getContext("2d"), r = rand(seed);
   x.fillStyle = opts.bg || "#e9ecef"; x.fillRect(0, 0, w, h);
