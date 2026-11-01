@@ -68,7 +68,7 @@ function frame() {
       myAvatar.rotation.y = lerpAngle(myAvatar.rotation.y, tr, 1 - Math.exp(-dt * 14));
     }
     const myEat = me.eat ? (Date.now() - me.eat) / 1000 : -1;
-    updateAvatar(myAvatar, dt, T, { moving: me.moving, speed: me.speed, crank: boarded ? boats[boarded.id].crank + (mySeat === 1 ? Math.PI / 2 : 0) : 0, seat: mySeat, hold: me.hold, eatT: myEat, basket: me.basket ? me.basket.length : -1 });
+    updateAvatar(myAvatar, dt, T, { moving: me.moving, speed: me.speed, crank: boarded ? boats[boarded.id].crank + (mySeat === 1 ? Math.PI / 2 : 0) : 0, seat: mySeat, hold: me.hold, eatT: myEat, basket: me.basket ? me.basket.length : -1, cheer: cheerOf("me") });
     eatingFx(myAvatar, "me", myEat, 0, me.hold);
     if (me.eat && myEat >= eatTime(me.hold)) { toast(me.hold === "ramen" ? "잘 먹었습니다! 국물까지 싹 비웠어요" : `${PRODUCTS[me.hold] ? PRODUCTS[me.hold].name : "간식"} 맛있게 먹었어요!`); me.hold = false; me.eat = 0; publish(true); actKey = ""; }
     const showGhost = me.st === "walk" && !anim && !me.moving && !me.bt && canSpread();
@@ -101,7 +101,7 @@ function frame() {
     o.x += (tx - o.x) * k; o.z += (tz - o.z) * k; o.r = lerpAngle(o.r, tr, k);
     o.obj.position.set(o.x, ty, o.z); o.obj.rotation.y = o.r;
     const oEat = p.hi && p.ea ? (Date.now() - p.ea) / 1000 : -1, oE = oEat >= 0 && oEat < eatTime(p.hi) ? oEat : -1;
-    updateAvatar(o.obj, dt, T, { moving, speed: 3.6, seat, crank, hold: p.hi, eatT: oE, basket: p.bk });
+    updateAvatar(o.obj, dt, T, { moving, speed: 3.6, seat, crank, hold: p.hi, eatT: oE, basket: p.bk, cheer: cheerOf(peer) });
     eatingFx(o.obj, peer, oE, Math.hypot(o.x - cam.tx, o.z - cam.tz), p.hi);
   }
 
@@ -169,11 +169,12 @@ function frame() {
   if (started) {
     const chip = $("ramenChip");
     if (me.rm) { const left = ramenLeft(); chip.hidden = false; chip.textContent = left > 0 ? "라면 끓는 중 " + fmt(Math.ceil(left)) : "라면 완성! 기계로 가서 들어 주세요"; }
-    else if (me.eat) { chip.hidden = false; chip.textContent = (me.hold === "ramen" ? "라면" : PRODUCTS[me.hold] ? PRODUCTS[me.hold].name : "간식") + " 냠냠 먹는 중"; }
+    else if (me.eat) { chip.hidden = false; chip.textContent = (me.hold === "ramen" ? "라면" : PRODUCTS[me.hold] ? PRODUCTS[me.hold].name : "간식") + (PRODUCTS[me.hold] && PRODUCTS[me.hold].cat === "drink" ? " 꿀꺽꿀꺽 마시는 중" : " 냠냠 먹는 중"); }
     else chip.hidden = true;
   }
 
   updateStore(dt);
+  updateExtras(dt);
   // bubbles follow their owners
   for (let i = bubbles.length - 1; i >= 0; i--) {
     const b = bubbles[i], o = b.getObj();

@@ -197,6 +197,7 @@ function updateAvatar(av, dt, t, o = {}) {
       v.nod += .22 - lift * .12; v.lean += .12; by = .36; bz = -.3;
       if (u.bowl.userData.soup) u.bowl.userData.soup.position.y = .12 - Math.min(1, e / EAT_TIME) * .07;
     } else if (u.bowl.userData.soup) u.bowl.userData.soup.position.y = .12;
+    if (o.cheer > 0 && !(o.eatT >= 0)) { const c = o.cheer; v.arL += (2.25 - v.arL) * c; v.arR += (2.25 - v.arR) * c; v.azL = v.azR = -.18; by += .5 * c; bz -= .12 * c; v.nod -= .15 * c; }
     const left = o.eatT >= 0 && holdKind !== "ramen" ? 1 - Math.min(1, o.eatT / eatTime(holdKind)) * .6 : 1;
     u.bowl.scale.setScalar(left);
     u.bowl.position.set(0, by, bz);

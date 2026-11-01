@@ -133,3 +133,11 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 @media (max-width:380px){.exitbtn{width:40px;height:40px}.place .dim{display:none}}
 @media (max-height:480px){:root{--joy:104px}.toast-wrap{top:calc(62px + env(safe-area-inset-top,0px))}.act{padding:9px 14px}}
 .card .note{word-break:keep-all;margin:6px 0 0;font-size:12px;line-height:1.5;opacity:.7}
+.fwtest{margin-top:8px;width:100%;border-radius:12px;padding:10px;font-size:13px;border:1px solid var(--line);background:rgba(255,255,255,.07)}
+.paper-in{width:100%;box-sizing:border-box;border-radius:14px;padding:13px 14px;font-size:16px;border:1px solid var(--line);background:rgba(255,255,255,.08);color:inherit;font-family:inherit}
+.modal-btns .paper-go{background:#f2b46b;color:#2a1d0f}
+body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mung #keys,body.mung #bagBtn{opacity:0!important;pointer-events:none!important;transition:opacity 1.6s}
+#hudLeft,#hudRight,#actions,#joy,#keys,#bagBtn{transition:opacity .4s}
+.mung-hint{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:6;padding:9px 16px;border-radius:999px;background:rgba(10,14,20,.45);color:rgba(255,255,255,.85);font-size:13px;pointer-events:none;white-space:nowrap;opacity:0}
+.mung-hint.show{animation:mungHint 6s ease forwards}
+@keyframes mungHint{0%{opacity:0}12%{opacity:1}70%{opacity:1}100%{opacity:0}}

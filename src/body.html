@@ -26,6 +26,7 @@
       <button data-w="clear">맑음</button><button data-w="cloudy">흐림</button><button data-w="rain">비</button><button data-w="snow">눈</button><button data-w="fog">안개</button>
     </div>
     <p id="weatherNote">날씨는 관리자가 정합니다. 시간대는 한국 시간에 맞춰 자동으로 바뀝니다.</p>
+    <button class="fwtest" id="fwTest" hidden>불꽃놀이 미리보기 (나만 보기)</button>
     <h3>소리</h3>
     <label class="slider" for="volWater">물소리<input type="range" id="volWater" min="0" max="100" value="70"></label>
     <label class="slider" for="volNature">자연<input type="range" id="volNature" min="0" max="100" value="55"></label>
@@ -92,6 +93,17 @@
     <button class="go" type="submit">한강으로 가기</button>
   </form>
 </div>
+
+<div class="modal" id="paperModal" hidden role="dialog" aria-modal="true" aria-labelledby="paperTitle">
+  <form class="card" id="paperForm" novalidate>
+    <h2 id="paperTitle">종이배에 한마디</h2>
+    <p>이름 없이 강물에 흘려보내요. 잠시 모두에게 보였다가 사라집니다.</p>
+    <input id="paperText" class="paper-in" maxlength="30" autocomplete="off" placeholder="오늘 하고 싶었던 말">
+    <div class="modal-btns"><button type="button" id="paperCancel">그만두기</button><button type="submit" class="leave paper-go">띄우기</button></div>
+  </form>
+</div>
+
+<div class="mung-hint" id="mungHint" hidden>물멍 중 · 화면을 누르면 돌아와요</div>
 
 <div class="modal" id="leaveModal" hidden role="dialog" aria-modal="true" aria-labelledby="leaveTitle">
   <div class="card">

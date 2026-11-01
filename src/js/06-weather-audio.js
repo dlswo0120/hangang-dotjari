@@ -144,6 +144,19 @@ audio.crunch = function (v) {
     s.connect(hp); hp.connect(g); g.connect(this.sfx); s.start(t0, Math.random() * 3); s.stop(t0 + .06); }
 };
 audio.gulp = function (v) { const t = this.ac.currentTime; [0, .22].forEach(d => this.tone(this.sfx, "sine", 180, 420, .12, .2 * v + .001, t + d)); };
+audio.clink = function (v) {
+  const t = this.ac.currentTime;
+  [[2380, .5], [3170, .38], [4460, .22], [5820, .12]].forEach(([f, a]) => { this.tone(this.sfx, "sine", f, f * .996, 1.1, a * .3 * v + .001, t); this.tone(this.sfx, "sine", f * 1.013, f * 1.01, .8, a * .2 * v + .001, t + .09); });
+};
+audio.boom = function (v, delay) {
+  const ac = this.ac, t = ac.currentTime + (delay || 0);
+  const s = ac.createBufferSource(); s.buffer = this.brown; const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.setValueAtTime(900, t); lp.frequency.exponentialRampToValueAtTime(90, t + 1.2);
+  const g = ac.createGain(); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.9 * v + .001, t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + 1.6);
+  s.connect(lp); lp.connect(g); g.connect(this.nature); s.start(t, Math.random() * 2); s.stop(t + 1.7);
+  for (let i = 0; i < 14; i++) { const c = ac.createBufferSource(); c.buffer = this.pink; const hp = ac.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 3000; const cg = ac.createGain(), t0 = t + .35 + Math.random() * 1.1;
+    cg.gain.setValueAtTime(.0001, t0); cg.gain.exponentialRampToValueAtTime(.25 * v + .001, t0 + .004); cg.gain.exponentialRampToValueAtTime(.0001, t0 + .04);
+    c.connect(hp); hp.connect(cg); cg.connect(this.nature); c.start(t0, Math.random() * 3); c.stop(t0 + .05); }
+};
 audio.schedule = function () {
   const every = (fn, lo, hi) => { const go = () => { try { fn(); } catch (e) {} setTimeout(go, (lo + Math.random() * (hi - lo)) * 1000); }; setTimeout(go, (lo * 0.4 + Math.random() * lo) * 1000); };
   every(() => this.lapOnce(), 1.2, 3.6);

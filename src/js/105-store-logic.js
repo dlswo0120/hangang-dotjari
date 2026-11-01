@@ -133,7 +133,7 @@ function openBag() {
   $("basketSec").hidden = !me.basket;
   (me.basket || []).forEach((k, i) => bl.appendChild(bagRow(PRODUCTS[k].name + " · " + won(PRODUCTS[k].price), "빼기", "drop", i, k)));
   if (me.basket && !me.basket.length) bl.appendChild(Object.assign(document.createElement("p"), { className: "empty", textContent: "아직 담은 물건이 없어요" }));
-  wallet.bag.forEach((k, i) => gl.appendChild(bagRow(PRODUCTS[k].name, "먹기", "eat", i, k)));
+  wallet.bag.forEach((k, i) => gl.appendChild(PRODUCTS[k].cook ? bagRow(PRODUCTS[k].name, "라면 기계에서 끓여요", "none", i, k) : bagRow(PRODUCTS[k].name, PRODUCTS[k].cat === "drink" ? "꺼내기" : "먹기", "eat", i, k)));
   if (!wallet.bag.length) gl.appendChild(Object.assign(document.createElement("p"), { className: "empty", textContent: "산 물건이 없어요. 한강 편의점에 들러 보세요" }));
   $("bagModal").hidden = false;
 }
@@ -141,7 +141,7 @@ function bagRow(label, btnText, act, i, k) {
   const r = document.createElement("div"); r.className = "row";
   const s = document.createElement("span"); s.textContent = label;
   if (k && PRODUCT_URL[k]) { const im = document.createElement("img"); im.src = PRODUCT_URL[k]; im.alt = ""; im.className = "thumb"; r.appendChild(im); }
-  const b = document.createElement("button"); b.textContent = btnText; b.dataset.act = act; b.dataset.i = i;
+  const b = document.createElement("button"); b.textContent = btnText; b.dataset.act = act; b.dataset.i = i; if (act === "none") b.disabled = true;
   r.append(s, b); return r;
 }
 $("bagModal").addEventListener("click", e => {
@@ -151,8 +151,11 @@ $("bagModal").addEventListener("click", e => {
   if (b.dataset.act === "eat") {
     if (me.hold) { toast("들고 있는 걸 먼저 다 먹어 주세요"); return; }
     if (me.st === "swim" || me.st === "lie" || boarded) { toast("지금은 먹을 수 없어요"); return; }
+    if (!PRODUCTS[wallet.bag[i]] || PRODUCTS[wallet.bag[i]].cook) return;
     const k = wallet.bag.splice(i, 1)[0]; saveWallet();
-    me.hold = k; me.eat = Date.now(); u_lastBite.me = -1; $("bagModal").hidden = true;
+    const drink = PRODUCTS[k].cat === "drink";
+    me.hold = k; me.eat = drink ? 0 : Date.now(); u_lastBite.me = -1; $("bagModal").hidden = true;
+    if (drink) toast(PRODUCTS[k].name + "를 꺼냈어요. 옆 사람도 음료가 있으면 '짠' 해 보세요");
     publish(true); actKey = ""; refreshActions();
   }
 });
