@@ -106,6 +106,30 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .btn{border:1px solid var(--line);background:var(--glass-strong);border-radius:999px;padding:10px 18px;font-size:14px}
 .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
 @media (prefers-reduced-motion:reduce){.toast{animation:none}}
+/* 한강 편의점: shop and bag */
+.bagbtn{position:fixed;z-index:6;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(30px + var(--joy) + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:6px;padding:9px 14px;font-size:14px;font-variant-numeric:tabular-nums}
+.bagbtn.desk{bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+.bagbtn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linejoin:round}
+.modal .card.shop{text-align:left;width:min(440px,100%);max-height:min(82vh,640px);overflow:auto;gap:14px}
+.shop-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.shop-head h2{font-size:22px}
+.x{border:1px solid var(--line);background:rgba(255,255,255,.07);border-radius:999px;padding:8px 14px;font-size:13px}
+.shop-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.item{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto auto;column-gap:10px;row-gap:4px;align-items:center;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:14px;padding:12px}
+.item .swatch{grid-row:1/3;width:52px;height:65px;object-fit:contain;border-radius:8px;background:rgba(255,255,255,.08)!important}
+.item b{font-weight:400;font-size:15px;min-width:0}
+.item .price{color:var(--accent);font-variant-numeric:tabular-nums;font-size:14px}
+.item button{grid-column:1/3;border:0;border-radius:10px;padding:9px;background:#1fae96;color:#fff;font-size:14px}
+.shop-foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--ink-soft);border-top:1px solid var(--line);padding-top:12px;font-variant-numeric:tabular-nums}
+.card.shop h3{margin:6px 0 8px;font-size:12px;letter-spacing:.08em;color:var(--ink-soft);font-weight:400}
+.card.shop .money{margin:0;font-size:18px;color:var(--accent);font-variant-numeric:tabular-nums}
+.list{display:flex;flex-direction:column;gap:6px}
+.list .row{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:12px;padding:8px 8px 8px 12px;font-size:14px}
+.list .row .thumb{width:30px;height:38px;object-fit:contain;flex:none;margin-left:-4px}
+.list .row span{flex:1;min-width:0}
+.list .row button{border:0;border-radius:9px;padding:7px 12px;background:rgba(255,255,255,.12);font-size:13px;flex:none}
+.list .empty{margin:0;font-size:13px;color:var(--ink-soft)}
+@media (max-width:380px){.shop-grid{grid-template-columns:1fr}}
 /* leave dialog and goodbye screen */
 .modal{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:rgba(8,10,14,.55);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px}
 .modal .card{gap:16px;text-align:center;width:min(340px,100%)}
@@ -171,7 +195,23 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
   <div class="pill status" id="status" hidden></div>
   <div class="act-row" id="actRow"></div>
 </div>
+<button class="pill bagbtn" id="bagBtn" hidden aria-label="내 가방"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1.2 11.2a1.5 1.5 0 0 1-1.5 1.3H7.7a1.5 1.5 0 0 1-1.5-1.3z"/><path d="M9 10V7a3 3 0 0 1 6 0v3"/></svg><span id="bagMoneyBtn">0원</span></button>
 <div class="toast-wrap" id="toasts" aria-live="polite"></div>
+<div class="modal" id="shopModal" hidden role="dialog" aria-modal="true" aria-labelledby="shopTitle">
+  <div class="card shop">
+    <div class="shop-head"><h2 id="shopTitle">과자 진열대</h2><button class="x" id="shopClose" aria-label="닫기">닫기</button></div>
+    <div class="shop-grid" id="shopGrid"></div>
+    <div class="shop-foot"><span id="shopSum">장바구니 0개 · 0원</span><span id="shopWallet">내 돈 0원</span></div>
+  </div>
+</div>
+<div class="modal" id="bagModal" hidden role="dialog" aria-modal="true" aria-labelledby="bagTitle">
+  <div class="card shop">
+    <div class="shop-head"><h2 id="bagTitle">내 가방</h2><button class="x" id="bagClose" aria-label="닫기">닫기</button></div>
+    <p class="money" id="bagMoney">내 돈 0원</p>
+    <section id="basketSec"><h3>장바구니 · 계산 전</h3><div class="list" id="basketList"></div></section>
+    <section><h3>산 물건 · 언제든 꺼내 먹을 수 있어요</h3><div class="list" id="bagList"></div></section>
+  </div>
+</div>
 
 <div class="gate" id="gate1">
   <div class="gate-hero">
@@ -553,6 +593,9 @@ const steps = new THREE.Mesh(new THREE.BoxGeometry(700, 0.5, 1.4), mat(0xb6b0a2)
 const pathM = new THREE.Mesh(new THREE.PlaneGeometry(700, 4.2), mat(0xffffff, { map: pathTex })); pathM.rotation.x = -Math.PI / 2; pathM.position.set(40, 0.03, 29.2); pathM.receiveShadow = true; scene.add(pathM);
 const bike = new THREE.Mesh(new THREE.PlaneGeometry(700, 2.6), mat(0xffffff, { map: laneTex })); bike.rotation.x = -Math.PI / 2; bike.position.set(40, 0.031, 32.4); bike.receiveShadow = true; scene.add(bike);
 for (let x = -300; x < 380; x += 6) { const d = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 0.14), new THREE.MeshBasicMaterial({ color: 0xe8d38a })); d.rotation.x = -Math.PI / 2; d.position.set(x, 0.035, 32.4); scene.add(d); }
+// 한강 편의점 footprint (the building itself is in 035-store-world.js)
+const STORE = { x: 60, z: 19.5, hw: 6, hd: 4.5 };
+const underRoof = (x, z) => (Math.abs(x - STORE.x) < STORE.hw + .3 && Math.abs(z - STORE.z) < STORE.hd + .3) || (x > 24.3 && x < 35.7 && z > 22.7 && z < 24.3);
 // grass tufts and little flowers near where people sit (hidden under picnic mats)
 const PLANTS = [], ZERO_M = new THREE.Matrix4().makeScale(0, 0, 0);
 function hidePlantsUnderMats(rects) {
@@ -570,7 +613,9 @@ function hidePlantsUnderMats(rects) {
   for (let i = 0; i < N; i++) {
     const back = R() < .12; o.position.set(-150 + R() * 365, 0, back ? 34.6 + R() * 4 : 3.4 + R() * 23.2);
     o.rotation.set((R() - .5) * .5, R() * 6, (R() - .5) * .5); const k = .5 + R() * .7; o.scale.set(k, k, k); o.updateMatrix();
-    tufts.setMatrixAt(i, o.matrix); tufts.setColorAt(i, c.setHSL(.24 + R() * .05, .4, .26 + R() * .1));
+    tufts.setColorAt(i, c.setHSL(.24 + R() * .05, .4, .26 + R() * .1));
+    if (underRoof(o.position.x, o.position.z)) { tufts.setMatrixAt(i, ZERO_M); continue; }
+    tufts.setMatrixAt(i, o.matrix);
     PLANTS.push({ mesh: tufts, i, x: o.position.x, z: o.position.z, m: o.matrix.clone(), hidden: false });
   }
   scene.add(tufts);
@@ -578,7 +623,9 @@ function hidePlantsUnderMats(rects) {
   const fc = [0xfff6e0, 0xffe066, 0xffb3c7, 0xc9b6ff];
   for (let i = 0; i < FN; i++) {
     let cx = -145 + R() * 355, cz = 4 + R() * 21; o.position.set(cx + (R() - .5) * 2, 0.12, cz + (R() - .5) * 2); o.rotation.set(0, 0, 0); o.scale.set(1, .7, 1); o.updateMatrix();
-    fl.setMatrixAt(i, o.matrix); fl.setColorAt(i, c.set(fc[i % 4]));
+    fl.setColorAt(i, c.set(fc[i % 4]));
+    if (underRoof(o.position.x, o.position.z)) { fl.setMatrixAt(i, ZERO_M); continue; }
+    fl.setMatrixAt(i, o.matrix);
     PLANTS.push({ mesh: fl, i, x: o.position.x, z: o.position.z, m: o.matrix.clone(), hidden: false });
   }
   scene.add(fl);
@@ -1116,15 +1163,26 @@ function updateAvatar(av, dt, t, o = {}) {
       else { const c = o.crank || 0; v.thL = POSES[u.pose].thL + Math.sin(c) * .32; v.knL = POSES[u.pose].knL - .1 - Math.cos(c) * .42; v.thR = POSES[u.pose].thR + Math.sin(c + Math.PI) * .32; v.knR = POSES[u.pose].knR - .1 - Math.cos(c + Math.PI) * .42; }
     }
   }
-  // carrying and eating ramen
-  const holding = !!o.hold && u.pose !== "lie" && u.pose !== "swim" && u.pose !== "tube";
-  if (holding && !u.bowl) {
-    u.bowl = makeBowl(); u.torso.add(u.bowl);
-    const ch = new THREE.Group(), stick = new THREE.CylinderGeometry(.006, .006, .26, 4), wood = mat(0xd8b479);
-    [-.012, .012].forEach(x => { const c = new THREE.Mesh(stick, wood); c.position.set(x, -.3, -.1); c.rotation.x = Math.PI / 2.3; ch.add(c); });
-    u.arms[1].add(ch); u.chop = ch;
+  // carrying and eating: the ramen bowl or a snack from the store
+  const holdKind = o.hold === true ? "ramen" : (o.hold || null);
+  const holding = !!holdKind && u.pose !== "lie" && u.pose !== "swim" && u.pose !== "tube";
+  if (holding && (!u.bowl || u.heldKind !== holdKind)) {
+    if (u.bowl) u.torso.remove(u.bowl);
+    u.bowl = makeHeld(holdKind); u.heldKind = holdKind; u.torso.add(u.bowl);
+    if (!u.chop) {
+      const ch = new THREE.Group(), stick = new THREE.CylinderGeometry(.006, .006, .26, 4), wood = mat(0xd8b479);
+      [-.012, .012].forEach(x => { const c = new THREE.Mesh(stick, wood); c.position.set(x, -.3, -.1); c.rotation.x = Math.PI / 2.3; ch.add(c); });
+      u.arms[1].add(ch); u.chop = ch;
+    }
   }
-  if (u.bowl) { u.bowl.visible = holding; u.chop.visible = holding && o.eatT >= 0; }
+  if (u.bowl) { u.bowl.visible = holding; u.chop.visible = holding && o.eatT >= 0 && (holdKind === "ramen" || holdKind === "gangjeong" || holdKind === "chicken"); }
+  const bk = typeof o.basket === "number" ? o.basket : -1;
+  if (bk >= 0) {
+    if (!u.basketM) { u.basketM = makeBasket(); u.arms[0].add(u.basketM); u.basketM.position.set(0, -.4, 0); }
+    u.basketM.visible = true; setBasketCount(u.basketM, bk);
+    if (!holding) { v.arL = .15 + Math.sin(ph * 3) * .04; v.azL = .22; }
+    u.basketM.rotation.x = -v.arL;
+  } else if (u.basketM) u.basketM.visible = false;
   if (holding) {
     v.arL = 1.05; v.arR = 1.05; v.azL = -.28; v.azR = -.28;
     let by = .2, bz = -.34;
@@ -1134,6 +1192,8 @@ function updateAvatar(av, dt, t, o = {}) {
       v.nod += .22 - lift * .12; v.lean += .12; by = .36; bz = -.3;
       if (u.bowl.userData.soup) u.bowl.userData.soup.position.y = .12 - Math.min(1, e / EAT_TIME) * .07;
     } else if (u.bowl.userData.soup) u.bowl.userData.soup.position.y = .12;
+    const left = o.eatT >= 0 && holdKind !== "ramen" ? 1 - Math.min(1, o.eatT / eatTime(holdKind)) * .6 : 1;
+    u.bowl.scale.setScalar(left);
     u.bowl.position.set(0, by, bz);
   }
   u.torso.scale.y = 1 + Math.sin(ph * 2.1) * .012;
@@ -1214,6 +1274,301 @@ function showBubble(getObj, text, dur, key) {
   const s = bubbleSprite(text); scene.add(s); bubbles.push({ getObj, s, until: T + dur, dur, key });
 }
 
+/* ================= 한강 편의점 product packages (our own brands, drawn in code) ================= */
+// Each product gets a small package illustration. The same picture is used on shelves,
+// in the shop panel and on the item a character is holding.
+const PRODUCTS = {
+  chips: { name: "감자칩", price: 1500, cat: "snack", color: "#f2c230", eat: 7 },
+  shrimp: { name: "새우맛 과자", price: 1700, cat: "snack", color: "#e8613c", eat: 7 },
+  choco: { name: "초코쿠키", price: 1200, cat: "snack", color: "#7a4a2d", eat: 6 },
+  jelly: { name: "곰젤리", price: 1000, cat: "snack", color: "#e94d8a", eat: 6 },
+  water: { name: "생수", price: 900, cat: "drink", color: "#7cc4ef", eat: 5 },
+  banana: { name: "바나나우유", price: 1700, cat: "drink", color: "#f6dc5c", eat: 5 },
+  cider: { name: "사이다", price: 1500, cat: "drink", color: "#4fbf6a", eat: 5 },
+  coffee: { name: "캔커피", price: 1400, cat: "drink", color: "#6b4a3a", eat: 5 },
+  icebar: { name: "아이스바", price: 2500, cat: "ice", color: "#8fd3ff", eat: 7 },
+  cone: { name: "콘 아이스크림", price: 3000, cat: "ice", color: "#f7c6d9", eat: 8 },
+  mochi: { name: "찹쌀떡 아이스", price: 3500, cat: "ice", color: "#f3efe4", eat: 7 },
+  gangjeong: { name: "닭강정 컵", price: 6500, cat: "chicken", color: "#c4632a", eat: 10 },
+  chicken: { name: "순살치킨", price: 8000, cat: "chicken", color: "#d9893a", eat: 11 }
+};
+const CATS = {
+  snack: { title: "과자 진열대", verb: "과자 고르기", items: ["chips", "shrimp", "choco", "jelly"] },
+  drink: { title: "음료 냉장고", verb: "음료 고르기", items: ["water", "banana", "cider", "coffee"] },
+  ice: { title: "아이스크림 냉동고", verb: "아이스크림 고르기", items: ["icebar", "cone", "mochi"] },
+  chicken: { title: "따끈한 치킨", verb: "치킨 고르기", items: ["gangjeong", "chicken"] }
+};
+const won = n => n.toLocaleString("ko-KR") + "원";
+const PRODUCT_IMG = {}, PRODUCT_TEX = {}, PRODUCT_URL = {};
+function rr(x, a, b, w, h, r) { x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); }
+function label(x, text, cx, cy, size, col, weight = "bold", font = "'Gowun Dodum', sans-serif") { x.font = `${weight} ${size}px ${font}`; x.fillStyle = col; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(text, cx, cy); }
+function shine(x, a, b, w, h) { const g = x.createLinearGradient(a, 0, a + w, 0); g.addColorStop(0, "rgba(255,255,255,0)"); g.addColorStop(.35, "rgba(255,255,255,.28)"); g.addColorStop(.5, "rgba(255,255,255,0)"); x.fillStyle = g; x.fillRect(a, b, w, h); }
+function bag(x, w, h, c1, c2) { // crimped snack bag
+  const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, c1); g.addColorStop(1, c2); x.fillStyle = g; rr(x, 8, 10, w - 16, h - 20, 14); x.fill();
+  x.fillStyle = "rgba(0,0,0,.12)"; for (let i = 12; i < w - 12; i += 6) { x.fillRect(i, 10, 3, 9); x.fillRect(i, h - 19, 3, 9); }
+}
+const ART = {
+  chips(x, w, h) {
+    bag(x, w, h, "#ffd23f", "#f2a81d");
+    label(x, "한강칩", w / 2, 36, 22, "#c0262d"); label(x, "오리지널", w / 2, 56, 12, "#7a3b10");
+    for (let i = 0; i < 6; i++) { x.save(); x.translate(30 + (i % 3) * 34, 92 + Math.floor(i / 3) * 26); x.rotate(i * .7); x.fillStyle = "#fff0b8"; x.beginPath(); x.ellipse(0, 0, 17, 11, 0, 0, 7); x.fill(); x.strokeStyle = "#e6b84a"; x.lineWidth = 2; x.stroke(); x.fillStyle = "#d9a441"; x.fillRect(-4, -2, 3, 3); x.restore(); }
+    label(x, "감자칩", w / 2, h - 32, 15, "#7a3b10");
+  },
+  shrimp(x, w, h) {
+    bag(x, w, h, "#ff6b3d", "#d83b1f");
+    label(x, "새우랑", w / 2, 36, 22, "#fff6d6");
+    x.strokeStyle = "#ffcf9e"; x.lineCap = "round";
+    for (let i = 0; i < 5; i++) { x.lineWidth = 9; x.beginPath(); x.moveTo(26 + i * 18, 70 + (i % 2) * 8); x.lineTo(34 + i * 18, 112 - (i % 2) * 6); x.stroke(); }
+    x.save(); x.translate(w / 2, 96); x.strokeStyle = "#ff9a5c"; x.lineWidth = 12; x.beginPath(); x.arc(0, 0, 20, Math.PI * .2, Math.PI * 1.4); x.stroke(); x.fillStyle = "#3a1a0a"; x.beginPath(); x.arc(13, -12, 3, 0, 7); x.fill(); x.restore();
+    label(x, "새우맛 과자", w / 2, h - 32, 14, "#fff6d6");
+  },
+  choco(x, w, h) {
+    const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "#7a4a2d"); g.addColorStop(1, "#4b2a17"); x.fillStyle = g; rr(x, 10, 14, w - 20, h - 26, 6); x.fill();
+    x.fillStyle = "#f4e3c8"; x.fillRect(10, 26, w - 20, 26); label(x, "초코쿠키", w / 2, 40, 18, "#5a3018");
+    for (let i = 0; i < 3; i++) { const cx = 34 + i * 30, cy = 92 + (i % 2) * 14; x.fillStyle = "#c8915a"; x.beginPath(); x.arc(cx, cy, 16, 0, 7); x.fill(); x.fillStyle = "#3a1d0f"; for (let k = 0; k < 5; k++) x.fillRect(cx - 9 + (k * 7) % 16, cy - 8 + (k * 5) % 14, 4, 4); }
+    label(x, "바삭 초코칩", w / 2, h - 28, 13, "#f4e3c8");
+  },
+  jelly(x, w, h) {
+    bag(x, w, h, "#ff8cc0", "#e94d8a");
+    label(x, "곰젤리", w / 2, 36, 22, "#ffffff");
+    const cols = ["#ff4d4d", "#ffd23f", "#59c46b", "#ff9a3d", "#8a6cf0"];
+    for (let i = 0; i < 5; i++) { const cx = 28 + (i % 3) * 36, cy = 84 + Math.floor(i / 3) * 34; x.fillStyle = cols[i]; x.beginPath(); x.arc(cx, cy, 11, 0, 7); x.arc(cx - 8, cy - 10, 5, 0, 7); x.arc(cx + 8, cy - 10, 5, 0, 7); x.fill(); x.beginPath(); x.ellipse(cx, cy + 14, 11, 9, 0, 0, 7); x.fill(); }
+    label(x, "새콤달콤", w / 2, h - 32, 13, "#ffffff");
+  },
+  water(x, w, h) {
+    x.fillStyle = "rgba(200,232,248,.9)"; rr(x, 34, 22, w - 68, h - 34, 16); x.fill(); x.fillStyle = "#2f6fd8"; x.fillRect(48, 6, w - 96, 18);
+    x.fillStyle = "#ffffff"; x.fillRect(34, 70, w - 68, 44); label(x, "한강수", w / 2, 84, 17, "#2f6fd8"); label(x, "생수 500ml", w / 2, 104, 11, "#2f6fd8");
+    x.fillStyle = "#7cc4ef"; x.beginPath(); x.moveTo(w / 2, 40); x.quadraticCurveTo(w / 2 + 12, 58, w / 2, 62); x.quadraticCurveTo(w / 2 - 12, 58, w / 2, 40); x.fill();
+    shine(x, 34, 22, w - 68, h - 34);
+  },
+  banana(x, w, h) {
+    x.fillStyle = "#f6dc5c"; rr(x, 22, 30, w - 44, h - 40, 8); x.fill(); x.fillStyle = "#e9c63a"; x.beginPath(); x.moveTo(22, 34); x.lineTo(w / 2, 8); x.lineTo(w - 22, 34); x.fill();
+    x.fillStyle = "#ffffff"; x.fillRect(22, 52, w - 44, 30); label(x, "바나나", w / 2, 62, 16, "#c58b00"); label(x, "우유", w / 2, 76, 12, "#c58b00");
+    x.strokeStyle = "#ffcf1f"; x.lineWidth = 12; x.lineCap = "round"; x.beginPath(); x.arc(w / 2, 92, 22, Math.PI * .15, Math.PI * .85); x.stroke(); x.fillStyle = "#6b4a1a"; x.fillRect(w / 2 + 18, 100, 5, 5);
+  },
+  cider(x, w, h) {
+    x.fillStyle = "rgba(80,200,110,.85)"; rr(x, 36, 30, w - 72, h - 40, 14); x.fill(); x.fillRect(52, 12, w - 104, 22); x.fillStyle = "#1e8a4c"; x.fillRect(48, 4, w - 96, 10);
+    x.fillStyle = "#ffffff"; x.fillRect(36, 70, w - 72, 40); label(x, "시원 사이다", w / 2, 90, 13, "#1e8a4c");
+    x.fillStyle = "rgba(255,255,255,.7)"; for (let i = 0; i < 9; i++) { x.beginPath(); x.arc(44 + (i * 13) % 40, 120 + (i * 7) % 24, 2 + i % 3, 0, 7); x.fill(); }
+    shine(x, 36, 30, w - 72, h - 40);
+  },
+  coffee(x, w, h) {
+    const g = x.createLinearGradient(0, 0, w, 0); g.addColorStop(0, "#5a3d2e"); g.addColorStop(.5, "#8a6450"); g.addColorStop(1, "#4a3022"); x.fillStyle = g; rr(x, 34, 18, w - 68, h - 28, 10); x.fill();
+    x.fillStyle = "#d8d8d8"; x.fillRect(34, 18, w - 68, 10); x.fillRect(34, h - 20, w - 68, 8);
+    label(x, "한강", w / 2, 52, 14, "#f4e3c8"); label(x, "캔커피", w / 2, 72, 16, "#ffffff");
+    x.fillStyle = "#2b170e"; x.beginPath(); x.ellipse(w / 2, 108, 12, 17, .3, 0, 7); x.fill(); x.strokeStyle = "#8a6450"; x.lineWidth = 2; x.beginPath(); x.moveTo(w / 2 - 4, 94); x.quadraticCurveTo(w / 2 + 4, 108, w / 2 - 2, 122); x.stroke();
+  },
+  icebar(x, w, h) {
+    const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "#8fd3ff"); g.addColorStop(1, "#3b8fd8"); x.fillStyle = g; rr(x, 14, 30, w - 28, h - 60, 10); x.fill();
+    x.fillStyle = "rgba(255,255,255,.9)"; for (let i = 18; i < w - 18; i += 8) { x.beginPath(); x.arc(i, 30, 4, 0, 7); x.arc(i, h - 30, 4, 0, 7); x.fill(); }
+    label(x, "쿨바", w / 2, 52, 22, "#ffffff");
+    x.fillStyle = "#d9f3ff"; rr(x, w / 2 - 16, 68, 32, 46, 12); x.fill(); x.fillStyle = "#e6cfa3"; x.fillRect(w / 2 - 4, 112, 8, 16);
+    label(x, "소다맛", w / 2, h - 44, 12, "#ffffff");
+  },
+  cone(x, w, h) {
+    x.fillStyle = "#f7c6d9"; x.beginPath(); x.moveTo(18, 12); x.lineTo(w - 18, 12); x.lineTo(w / 2 + 14, h - 8); x.lineTo(w / 2 - 14, h - 8); x.fill();
+    label(x, "콘콘", w / 2, 32, 20, "#c0265a");
+    x.fillStyle = "#d9a35e"; x.beginPath(); x.moveTo(w / 2 - 18, 80); x.lineTo(w / 2 + 18, 80); x.lineTo(w / 2, 126); x.fill();
+    x.strokeStyle = "#b07a3a"; x.lineWidth = 2; for (let i = 0; i < 4; i++) { x.beginPath(); x.moveTo(w / 2 - 16 + i * 6, 82); x.lineTo(w / 2 + 2 + i * 4, 112); x.stroke(); }
+    x.fillStyle = "#fff4f8"; x.beginPath(); x.arc(w / 2, 72, 20, 0, 7); x.fill(); x.fillStyle = "#e94d8a"; x.beginPath(); x.arc(w / 2 + 6, 64, 5, 0, 7); x.fill();
+  },
+  mochi(x, w, h) {
+    x.fillStyle = "#fbf6ea"; rr(x, 10, 22, w - 20, h - 34, 8); x.fill(); x.fillStyle = "#c0262d"; x.fillRect(10, 22, w - 20, 26);
+    label(x, "찹쌀떡 아이스", w / 2, 36, 14, "#ffffff");
+    [[w / 2 - 20, 92], [w / 2 + 20, 92]].forEach(([cx, cy]) => { x.fillStyle = "#ffffff"; x.beginPath(); x.ellipse(cx, cy, 19, 16, 0, 0, 7); x.fill(); x.strokeStyle = "#e7e0cf"; x.lineWidth = 2; x.stroke(); x.fillStyle = "#f2d6dd"; x.beginPath(); x.ellipse(cx - 5, cy - 4, 6, 4, 0, 0, 7); x.fill(); });
+    label(x, "2개입", w / 2, h - 26, 12, "#c0262d");
+  },
+  gangjeong(x, w, h) {
+    x.fillStyle = "#ffffff"; x.beginPath(); x.moveTo(18, 40); x.lineTo(w - 18, 40); x.lineTo(w - 30, h - 8); x.lineTo(30, h - 8); x.fill();
+    x.fillStyle = "#d8322f"; x.fillRect(22, 92, w - 44, 22); label(x, "닭강정", w / 2, 103, 14, "#ffffff");
+    for (let i = 0; i < 7; i++) { const cx = 28 + (i * 17) % 76, cy = 24 + (i % 3) * 9; const g = x.createRadialGradient(cx - 3, cy - 3, 2, cx, cy, 12); g.addColorStop(0, "#f0a24a"); g.addColorStop(1, "#a8401a"); x.fillStyle = g; x.beginPath(); x.arc(cx, cy, 11, 0, 7); x.fill(); }
+    x.fillStyle = "#f7e7c0"; for (let i = 0; i < 10; i++) x.fillRect(26 + (i * 11) % 78, 18 + (i * 7) % 26, 2, 2);
+  },
+  chicken(x, w, h) {
+    x.fillStyle = "#ffffff"; rr(x, 12, 44, w - 24, h - 52, 6); x.fill(); x.fillStyle = "#d8322f"; for (let i = 12; i < w - 12; i += 16) x.fillRect(i, 44, 8, h - 52);
+    x.fillStyle = "#ffffff"; x.fillRect(20, 96, w - 40, 26); label(x, "순살치킨", w / 2, 109, 15, "#d8322f");
+    for (let i = 0; i < 6; i++) { const cx = 26 + (i * 19) % 80, cy = 30 + (i % 2) * 12; const g = x.createRadialGradient(cx - 4, cy - 4, 2, cx, cy, 15); g.addColorStop(0, "#f3c27a"); g.addColorStop(1, "#b9682a"); x.fillStyle = g; x.beginPath(); x.ellipse(cx, cy, 15, 12, i, 0, 7); x.fill(); }
+  }
+};
+for (const k in PRODUCTS) {
+  const c = document.createElement("canvas"); c.width = 128; c.height = 160; const x = c.getContext("2d");
+  (ART[k] || ART.chips)(x, 128, 160);
+  PRODUCT_IMG[k] = c;
+  try { PRODUCT_URL[k] = c.toDataURL("image/png"); } catch (e) { PRODUCT_URL[k] = ""; }
+  const t = new THREE.CanvasTexture(c); t.anisotropy = 4; PRODUCT_TEX[k] = t;
+}
+// shelf faces, fridge doors and freezer tops filled with these packages
+function packShelf(keys, w, h, rows, seed, opts = {}) {
+  const c = document.createElement("canvas"); c.width = w; c.height = h; const x = c.getContext("2d"), r = rand(seed);
+  x.fillStyle = opts.bg || "#e9ecef"; x.fillRect(0, 0, w, h);
+  const rh = h / rows;
+  for (let row = 0; row < rows; row++) {
+    const ih = rh * .78, iw = ih * .8; let px = 6, kk = Math.floor(r() * keys.length);
+    while (px + iw < w - 4) {
+      const k = keys[kk % keys.length]; kk++;
+      const facings = 2 + Math.floor(r() * 2);
+      for (let f = 0; f < facings && px + iw < w - 4; f++) { x.drawImage(PRODUCT_IMG[k], px, row * rh + rh - 10 - ih, iw, ih); px += iw - 2; }
+      if (opts.tags) { x.fillStyle = "#fffbe6"; x.fillRect(px - iw * facings + iw * .3, row * rh + rh - 9, iw * .7, 7); x.fillStyle = "#d8322f"; x.font = "bold 7px sans-serif"; x.textAlign = "left"; x.fillText(won(PRODUCTS[k].price), px - iw * facings + iw * .32, row * rh + rh - 3.5); }
+      px += 6;
+    }
+    x.fillStyle = opts.rail || "#ffe066"; x.fillRect(0, row * rh + rh - 10, w, 3); x.fillStyle = "#c9ced4"; x.fillRect(0, row * rh + rh - 3, w, 3);
+  }
+  if (opts.frames) { x.strokeStyle = "#8a959f"; x.lineWidth = 6; for (let i = 0; i <= opts.frames; i++) { x.beginPath(); x.moveTo(i * w / opts.frames, 0); x.lineTo(i * w / opts.frames, h); x.stroke(); } x.strokeRect(0, 0, w, h); x.fillStyle = "rgba(200,230,255,.12)"; x.fillRect(0, 0, w, h); }
+  const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
+}
+/* ================= 한강 편의점: building, shelves, clerk ================= */
+// STORE is declared in 02-world.js so grass tufts can stay out of the building.
+// Interior layout uses local coordinates (lx, lz) around STORE.x / STORE.z; the door faces the walking path (+z).
+// fixture boxes in local coordinates, also used for "what am I standing next to"
+const FIX = {
+  gondolaA: { x0: -4.2, x1: 1.0, z0: -1.0, z1: -0.2 },
+  gondolaB: { x0: -4.2, x1: 1.0, z0: -2.9, z1: -2.1 },
+  fridge: { x0: -5.8, x1: 2.0, z0: -4.4, z1: -3.7 },
+  freezer: { x0: 3.2, x1: 5.2, z0: -3.6, z1: -2.6 },
+  counter: { x0: 0.9, x1: 5.8, z0: 2.2, z1: 2.9 },
+  counterSide: { x0: 0.9, x1: 1.3, z0: 2.9, z1: 4.4 },
+  hotcase: { x0: 4.5, x1: 5.6, z0: 2.2, z1: 2.9 },
+  basket: { x: -5.3, z: 3.6 }
+};
+const STORE_DOOR = { lx: -3.5, half: 1.1 };
+const storeObj = { doorL: null, doorR: null, clerk: null, open: 0 };
+function makeBasket() {
+  const g = new THREE.Group(), red = mat(0xd8322f), wall = (w, h, d, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), red); m.position.set(x, y, z); m.castShadow = true; g.add(m); };
+  wall(.34, .02, .22, 0, -.1, 0); wall(.34, .14, .015, 0, -.03, .11); wall(.34, .14, .015, 0, -.03, -.11); wall(.015, .14, .22, .17, -.03, 0); wall(.015, .14, .22, -.17, -.03, 0);
+  const h = new THREE.Mesh(new THREE.TorusGeometry(.12, .012, 6, 16, Math.PI), red); h.position.y = .04; g.add(h);
+  const items = new THREE.Group(); g.add(items); g.userData.items = items; g.userData.count = -1;
+  return g;
+}
+function setBasketCount(b, n) {
+  if (b.userData.count === n) return; b.userData.count = n;
+  const it = b.userData.items; while (it.children.length) it.remove(it.children[0]);
+  const cols = [0xf2c230, 0x4fbf6a, 0xe94d8a, 0x7cc4ef, 0xe8613c, 0xf6dc5c];
+  for (let i = 0; i < Math.min(n, 6); i++) { const m = new THREE.Mesh(new THREE.BoxGeometry(.09, .09 + (i % 3) * .03, .07), mat(cols[i % cols.length])); m.position.set(-.1 + (i % 3) * .1, -.03 + Math.floor(i / 3) * .05, (i % 2 ? .04 : -.04)); it.add(m); }
+}
+// what someone holds while eating: the ramen bowl, or a snack from the store
+function makeHeld(kind) {
+  if (kind === "ramen") return makeBowl();
+  const P = PRODUCTS[kind] || PRODUCTS.chips, g = new THREE.Group(), col = new THREE.Color(P.color);
+  const add = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; };
+  const art = new THREE.MeshLambertMaterial({ map: PRODUCT_TEX[kind] }), side = mat(col);
+  if (P.cat === "snack") { const b = add(new THREE.BoxGeometry(.16, .2, .05), [side, side, side, side, art, art], 0, .12, 0); b.rotation.y = Math.PI; }
+  else if (P.cat === "drink") {
+    if (kind === "banana") { const b = add(new THREE.BoxGeometry(.1, .14, .1), [art, art, side, side, art, art], 0, .09, 0); b.rotation.y = Math.PI; add(new THREE.CylinderGeometry(.015, .015, .04, 8), mat(0xffffff), .02, .18, 0); }
+    else { const c = add(new THREE.CylinderGeometry(.045, .045, .18, 16), [art, side, side], 0, .1, 0); c.rotation.y = Math.PI / 2; add(new THREE.CylinderGeometry(.02, .02, .03, 8), mat(kind === "coffee" ? 0xd8d8d8 : 0x2f6fd8), 0, .205, 0); }
+  } else if (P.cat === "ice") {
+    if (kind === "cone") { const c = add(new THREE.ConeGeometry(.055, .16, 12), mat(0xd9a35e), 0, .1, 0); c.rotation.x = Math.PI; add(new THREE.SphereGeometry(.065, 12, 8), mat(0xfff4f8), 0, .2, 0); add(new THREE.SphereGeometry(.02, 8, 6), mat(0xe94d8a), .03, .25, -.02); }
+    else if (kind === "mochi") { add(new THREE.SphereGeometry(.06, 12, 8), mat(0xffffff), -.04, .12, 0); add(new THREE.SphereGeometry(.06, 12, 8), mat(0xffffff), .04, .12, 0); }
+    else { add(new THREE.BoxGeometry(.07, .15, .03), mat(0xd9f3ff), 0, .16, 0); add(new THREE.BoxGeometry(.015, .08, .01), mat(0xe6cfa3), 0, .05, 0); }
+  } else {
+    add(new THREE.CylinderGeometry(.11, .085, .14, 16, 1, true), mat(0xffffff, { side: THREE.DoubleSide }), 0, .08, 0);
+    add(new THREE.CylinderGeometry(.112, .112, .03, 16, 1, true), mat(0xd8322f, { side: THREE.DoubleSide }), 0, .12, 0);
+    for (let i = 0; i < 6; i++) add(new THREE.SphereGeometry(.035, 8, 6), mat(col), Math.cos(i) * .05, .15 + (i % 2) * .02, Math.sin(i) * .05);
+  }
+  return g;
+}
+{
+  const S = STORE, G = new THREE.Group(); G.position.set(S.x, 0, S.z); scene.add(G);
+  const add = (geo, m, x, y, z, parent = G) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); parent.add(o); return o; };
+  const box = (w, h, d, m, x, y, z, parent) => add(new THREE.BoxGeometry(w, h, d), m, x, y, z, parent);
+  const lit = (c, map) => new THREE.MeshLambertMaterial({ color: c, map: map || null, emissive: 0xffffff, emissiveIntensity: .18, emissiveMap: map || null });
+  // floor, walls, roof
+  const tileTex = canvasTex(128, 128, (x, w, h) => { x.fillStyle = "#f4f4f1"; x.fillRect(0, 0, w, h); x.strokeStyle = "#d6d6d0"; x.lineWidth = 4; x.strokeRect(0, 0, w, h); for (let i = 0; i < 80; i++) { x.fillStyle = "rgba(190,190,185,.25)"; x.fillRect(R() * w, R() * h, 2, 2); } }, 12, 9);
+  const floor = add(new THREE.PlaneGeometry(S.hw * 2, S.hd * 2), lit(0xffffff, tileTex), 0, .03, 0); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true;
+  const wallM = mat(0xf1efe9), trimM = mat(0x1f6f63);
+  box(12, 3.2, .2, wallM, 0, 1.6, -4.5); box(.2, 3.2, 9, wallM, -6, 1.6, 0); box(.2, 3.2, 9, wallM, 6, 1.6, 0);
+  box(5, 3.2, .2, wallM, 3.5, 1.6, 4.5);
+  const glassM = new THREE.MeshPhongMaterial({ color: 0xcfe8f0, transparent: true, opacity: .22, shininess: 90, depthWrite: false, side: THREE.DoubleSide });
+  add(new THREE.PlaneGeometry(1.4, 2.55), glassM, -5.3, 1.3, 4.5); add(new THREE.PlaneGeometry(3.4, 2.55), glassM, -.7, 1.3, 4.5);
+  box(2.2, .6, .2, wallM, STORE_DOOR.lx, 2.9, 4.5);
+  [-6, -4.6, -2.4, 1.0].forEach(x => box(.08, 2.6, .12, trimM, x, 1.3, 4.52)); box(7, .08, .12, trimM, -2.5, 2.6, 4.52); box(7, .1, .14, trimM, -2.5, .05, 4.52);
+  const doorM = new THREE.MeshPhongMaterial({ color: 0xd8f0f6, transparent: true, opacity: .3, depthWrite: false, side: THREE.DoubleSide });
+  const mkDoor = () => { const d = new THREE.Group(); add(new THREE.PlaneGeometry(1.1, 2.5), doorM, 0, 1.27, 0, d); box(1.1, .06, .06, trimM, 0, 2.5, 0, d); box(.06, 2.5, .06, trimM, .52, 1.27, 0, d); box(.06, 2.5, .06, trimM, -.52, 1.27, 0, d); G.add(d); d.position.set(0, 0, 4.58); return d; };
+  storeObj.doorL = mkDoor(); storeObj.doorR = mkDoor();
+  const roof = box(12.6, .25, 9.6, mat(0xdcdad4), 0, 3.32, 0); roof.receiveShadow = false;
+  const ceil = add(new THREE.PlaneGeometry(12, 9), lit(0xfafaf8), 0, 3.18, 0); ceil.rotation.x = Math.PI / 2;
+  const panelM = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  [[-3.5, -2], [-3.5, 1.5], [1, -2], [1, 1.5], [4, -1]].forEach(([x, z]) => { const p = add(new THREE.PlaneGeometry(1.4, .4), panelM, x, 3.16, z); p.rotation.x = Math.PI / 2; });
+  // sign band across the front, our own colours
+  const signTex = canvasTex(1024, 64, (x, w, h) => {
+    x.fillStyle = "#1fae96"; x.fillRect(0, 0, w, h); x.fillStyle = "#ff7a59"; x.fillRect(0, h - 12, w, 12); x.fillStyle = "#ffd25e"; x.fillRect(0, h - 16, w, 4);
+    x.fillStyle = "#ffffff"; x.font = "bold 40px 'Gowun Dodum', sans-serif"; x.textBaseline = "middle"; x.textAlign = "left"; x.fillText("한강 편의점", 330, 27);
+    x.beginPath(); x.arc(880, 27, 22, 0, 7); x.fill(); x.fillStyle = "#1fae96"; x.font = "bold 20px 'Gowun Dodum', sans-serif"; x.textAlign = "center"; x.fillText("24시", 880, 28);
+  }, 1, 1);
+  const bandM = mat(0x1fae96);
+  box(12.6, .7, .26, [bandM, bandM, bandM, bandM, lit(0xffffff, signTex), bandM], 0, 3.0, 4.88);
+  const sideTex = canvasTex(256, 64, (x, w, h) => { x.fillStyle = "#1fae96"; x.fillRect(0, 0, w, h); x.fillStyle = "#fff"; x.font = "bold 30px 'Gowun Dodum', sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("한강 편의점", w / 2, h / 2 - 3); x.fillStyle = "#ff7a59"; x.fillRect(0, h - 8, w, 8); }, 1, 1);
+  const side = add(new THREE.PlaneGeometry(2.6, .65), lit(0xffffff, sideTex), 6.12, 2.75, 3.2); side.rotation.y = Math.PI / 2;
+  // shelves packed with colourful packages
+  const shelfTex = (seed, rows) => canvasTex(512, 256, (x, w, h) => {
+    const rr = rand(seed); x.fillStyle = "#e9ecef"; x.fillRect(0, 0, w, h);
+    const rh = h / rows;
+    for (let r = 0; r < rows; r++) {
+      let px = 4; while (px < w - 10) { const pw = 18 + rr() * 26, ph = rh * (.5 + rr() * .35); x.fillStyle = `hsl(${rr() * 360 | 0},${60 + rr() * 30 | 0}%,${45 + rr() * 20 | 0}%)`; x.fillRect(px, r * rh + rh - 8 - ph, pw, ph); x.fillStyle = "rgba(255,255,255,.35)"; x.fillRect(px + 3, r * rh + rh - 6 - ph, pw - 6, 4); px += pw + 3; }
+      x.fillStyle = "#ffe066"; x.fillRect(0, r * rh + rh - 8, w, 6); x.fillStyle = "#c9ced4"; x.fillRect(0, r * rh + rh - 2, w, 2);
+    }
+  }, 1, 1);
+  const gondolaM = mat(0xf7f7f5);
+  [["gondolaA", 11], ["gondolaB", 23]].forEach(([k, seed]) => {
+    const f = FIX[k], w = f.x1 - f.x0, d = f.z1 - f.z0, cx = (f.x0 + f.x1) / 2, cz = (f.z0 + f.z1) / 2;
+    box(w, 1.45, d, gondolaM, cx, .725, cz);
+    [1, -1].forEach(sd => { const p = add(new THREE.PlaneGeometry(w - .1, 1.3), lit(0xffffff, packShelf(CATS.snack.items, 1024, 256, 4, seed + sd, { tags: true })), cx, .75, cz + sd * (d / 2 + .005)); if (sd < 0) p.rotation.y = Math.PI; });
+    const head = add(new THREE.PlaneGeometry(1.4, .3), lit(0xffffff, canvasTex(256, 56, (x, w2, h2) => { x.fillStyle = "#ff7a59"; x.fillRect(0, 0, w2, h2); x.fillStyle = "#fff"; x.font = "bold 30px 'Gowun Dodum', sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("과자 · 스낵", w2 / 2, h2 / 2); }, 1, 1)), cx, 1.75, cz + d / 2 + .01);
+  });
+  // drink fridges along the back wall
+  const fridgeTex = canvasTex(1024, 256, (x, w, h) => {
+    const rr = rand(77); x.fillStyle = "#1d2228"; x.fillRect(0, 0, w, h);
+    for (let r = 0; r < 4; r++) for (let px = 10; px < w - 20; px += 22) { const c = ["#7cc4ef", "#f6dc5c", "#4fbf6a", "#6b4a3a", "#e8613c", "#f7f7f7"][rr() * 6 | 0]; x.fillStyle = c; x.fillRect(px, 20 + r * 60, 14, 40); x.fillRect(px + 4, 12 + r * 60, 6, 8); }
+    x.strokeStyle = "#8a959f"; x.lineWidth = 6; for (let i = 0; i <= 8; i++) { x.beginPath(); x.moveTo(i * w / 8, 0); x.lineTo(i * w / 8, h); x.stroke(); } x.strokeRect(0, 0, w, h);
+  }, 1, 1);
+  { const f = FIX.fridge, w = f.x1 - f.x0, cx = (f.x0 + f.x1) / 2, cz = (f.z0 + f.z1) / 2;
+    box(w, 2.2, f.z1 - f.z0, mat(0x3a4048), cx, 1.1, cz);
+    add(new THREE.PlaneGeometry(w - .1, 1.9), lit(0xffffff, packShelf(CATS.drink.items, 1536, 384, 5, 77, { bg: "#1d2228", rail: "#8a959f", frames: 8, tags: true })), cx, 1.1, f.z1 + .005);
+    add(new THREE.PlaneGeometry(1.6, .32), lit(0xffffff, canvasTex(256, 52, (x, w2, h2) => { x.fillStyle = "#2f7fd8"; x.fillRect(0, 0, w2, h2); x.fillStyle = "#fff"; x.font = "bold 30px 'Gowun Dodum', sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("시원한 음료", w2 / 2, h2 / 2); }, 1, 1)), cx, 2.5, f.z1 - .3); }
+  // ice cream chest freezer
+  { const f = FIX.freezer, w = f.x1 - f.x0, d = f.z1 - f.z0, cx = (f.x0 + f.x1) / 2, cz = (f.z0 + f.z1) / 2;
+    box(w, .85, d, mat(0xffffff), cx, .425, cz);
+    const top = add(new THREE.PlaneGeometry(w - .12, d - .12), lit(0xffffff, packShelf(CATS.ice.items, 512, 256, 2, 5, { bg: "#cfe8f6", rail: "#b9dcef" })), cx, .86, cz); top.rotation.x = -Math.PI / 2;
+    const sign = add(new THREE.PlaneGeometry(1.5, .32), lit(0xffffff, canvasTex(256, 52, (x, w2, h2) => { x.fillStyle = "#ff8fb1"; x.fillRect(0, 0, w2, h2); x.fillStyle = "#fff"; x.font = "bold 30px 'Gowun Dodum', sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("아이스크림", w2 / 2, h2 / 2); }, 1, 1)), cx, 1.9, -4.38); }
+  // counter, POS, hot case, shelf behind the clerk
+  { const c = FIX.counter, cs = FIX.counterSide;
+    box(c.x1 - c.x0, .95, c.z1 - c.z0, mat(0xe4ddd0), (c.x0 + c.x1) / 2, .475, (c.z0 + c.z1) / 2);
+    box(c.x1 - c.x0 + .06, .05, c.z1 - c.z0 + .06, mat(0x2a9d8f), (c.x0 + c.x1) / 2, .97, (c.z0 + c.z1) / 2);
+    box(cs.x1 - cs.x0, .95, cs.z1 - cs.z0, mat(0xe4ddd0), (cs.x0 + cs.x1) / 2, .475, (cs.z0 + cs.z1) / 2);
+    const pos = box(.42, .3, .06, mat(0x22262b), 3.1, 1.25, 2.75); pos.rotation.x = -.35;
+    add(new THREE.PlaneGeometry(.36, .24), new THREE.MeshBasicMaterial({ color: 0x7fd3ff }), 3.1, 1.25, 2.715).rotation.set(-.35, Math.PI, 0);
+    box(.18, .05, .12, mat(0x22262b), 2.5, 1.02, 2.45);
+    const hc = FIX.hotcase, hcx = (hc.x0 + hc.x1) / 2, hcz = (hc.z0 + hc.z1) / 2;
+    box(hc.x1 - hc.x0, .5, .5, new THREE.MeshPhongMaterial({ color: 0xffd8a0, transparent: true, opacity: .35, depthWrite: false }), hcx, 1.25, hcz);
+    [["gangjeong", -.25], ["chicken", .25]].forEach(([k, ox]) => { const pic = add(new THREE.PlaneGeometry(.26, .32), lit(0xffffff, PRODUCT_TEX[k]), hcx + ox, 1.2, hcz + .05); pic.rotation.y = Math.PI; });
+    for (let i = 0; i < 8; i++) { const ch = add(new THREE.SphereGeometry(.07, 8, 6), new THREE.MeshLambertMaterial({ color: 0xc4632a, emissive: 0x7a2e08, emissiveIntensity: .5 }), hcx - .35 + (i % 4) * .23, 1.06, hcz - .1 + Math.floor(i / 4) * .2); ch.scale.y = .7; }
+    add(new THREE.PlaneGeometry(.9, .18), lit(0xffffff, canvasTex(192, 40, (x, w2, h2) => { x.fillStyle = "#d8322f"; x.fillRect(0, 0, w2, h2); x.fillStyle = "#fff"; x.font = "bold 24px 'Gowun Dodum', sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("따끈한 치킨", w2 / 2, h2 / 2); }, 1, 1)), hcx, 1.6, hc.z0 - .01).rotation.y = Math.PI;
+    box(4.8, 2.2, .32, mat(0xf7f7f5), 3.5, 1.4, 4.24);
+    add(new THREE.PlaneGeometry(4.6, 2.0), lit(0xffffff, shelfTex(91, 6)), 3.5, 1.4, 4.075).rotation.y = Math.PI;
+  }
+  // stack of red baskets by the door
+  for (let i = 0; i < 4; i++) { const b = makeBasket(); b.position.set(FIX.basket.x, .12 + i * .06, FIX.basket.z); b.children.forEach(m => m.castShadow = false); G.add(b); }
+  // a parasol table outside
+  { const t = new THREE.Group(), pole = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, 2.4, 8), mat(0xeeeeee)); pole.position.y = 1.2; t.add(pole);
+    const um = new THREE.Mesh(new THREE.ConeGeometry(1.3, .45, 12, 1, true), mat(0x1fae96, { side: THREE.DoubleSide })); um.position.y = 2.35; t.add(um);
+    const top = new THREE.Mesh(new THREE.CylinderGeometry(.45, .45, .04, 20), mat(0xf4f4f4)); top.position.y = .55; t.add(top);
+    t.traverse(m => { if (m.isMesh) m.castShadow = true; }); t.position.set(S.x + 4.5, 0, S.z + 6.2); scene.add(t);
+    OBST.push({ x: S.x + 4.5, z: S.z + 6.2, r: .5 }); }
+  // the clerk: blue vest, mask and glasses, scanner in hand
+  const clerk = makeAvatar({ g: "m", c: 1, name: "점원" }); setAvatarState(clerk, "walk", false, true);
+  const u = clerk.userData;
+  add(new THREE.SphereGeometry(1, 14, 10), mat(0xf4f6f8), 0, -.16, -.3, u.head).scale.set(.2, .13, .14);
+  [-1, 1].forEach(k => { const r = add(new THREE.TorusGeometry(.065, .012, 6, 16), mat(0x222222), k * .15, -.03, -.43, u.head); });
+  add(new THREE.BoxGeometry(.06, .12, .1), mat(0x3a3d42), 0, -.33, -.06, u.arms[1]);
+  clerk.position.set(S.x + 3.1, 0, S.z + 3.55); scene.add(clerk); storeObj.clerk = clerk;
+  G.traverse(m => { if (m.isMesh && m.castShadow === false && m.geometry && m.geometry.type === "BoxGeometry") m.receiveShadow = true; });
+  // walls and fixtures block walking (world coordinates)
+  const wb = (x0, x1, z0, z1) => OBST.push({ x0: S.x + x0, x1: S.x + x1, z0: S.z + z0, z1: S.z + z1 });
+  wb(-6.1, 6.1, -4.6, -4.4); wb(-6.1, -5.9, -4.6, 4.6); wb(5.9, 6.1, -4.6, 4.6);
+  wb(-6.1, STORE_DOOR.lx - STORE_DOOR.half, 4.4, 4.6); wb(STORE_DOOR.lx + STORE_DOOR.half, 6.1, 4.4, 4.6);
+  ["gondolaA", "gondolaB", "fridge", "freezer", "counter", "counterSide"].forEach(k => { const f = FIX[k]; wb(f.x0, f.x1, f.z0, f.z1); });
+  wb(1.1, 5.9, 3.9, 4.4);
+  OBST.push({ x: S.x + FIX.basket.x, z: S.z + FIX.basket.z, r: .25 });
+}
 /* ================= weather particles ================= */
 const RAIN_N = 1400, rainPos = new Float32Array(RAIN_N * 6);
 for (let i = 0; i < RAIN_N; i++) { const x = (Math.random() - .5) * 70, y = Math.random() * 30, z = (Math.random() - .5) * 70; rainPos.set([x, y, z, x, y - 0.7, z], i * 6); }
@@ -1350,6 +1705,16 @@ audio.slurp = function (v) {
   s.connect(bp); bp.connect(g); g.connect(this.sfx); s.start(t, Math.random() * 3); s.stop(t + .55);
 };
 audio.chomp = function (v) { const t = this.ac.currentTime; [0, .17].forEach(d => this.tone(this.sfx, "triangle", 210, 120, .07, .16 * v + .001, t + d)); };
+audio.chime = function () { const t = this.ac.currentTime; this.tone(this.sfx, "sine", 1046, 1046, .5, .12, t); this.tone(this.sfx, "sine", 784, 784, .7, .12, t + .28); };
+audio.beep = function () { this.tone(this.sfx, "square", 2400, 2400, .07, .05); };
+audio.alarm = function () { const t = this.ac.currentTime; for (let i = 0; i < 4; i++) this.tone(this.sfx, "square", 1800, 1800, .12, .06, t + i * .18); };
+audio.crunch = function (v) {
+  const ac = this.ac, t = ac.currentTime;
+  for (let i = 0; i < 3; i++) { const s = ac.createBufferSource(); s.buffer = this.pink; const hp = ac.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 2200; const g = ac.createGain(), t0 = t + i * .07;
+    g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.7 * v + .001, t0 + .005); g.gain.exponentialRampToValueAtTime(.0001, t0 + .05);
+    s.connect(hp); hp.connect(g); g.connect(this.sfx); s.start(t0, Math.random() * 3); s.stop(t0 + .06); }
+};
+audio.gulp = function (v) { const t = this.ac.currentTime; [0, .22].forEach(d => this.tone(this.sfx, "sine", 180, 420, .12, .2 * v + .001, t + d)); };
 audio.schedule = function () {
   const every = (fn, lo, hi) => { const go = () => { try { fn(); } catch (e) {} setTimeout(go, (lo + Math.random() * (hi - lo)) * 1000); }; setTimeout(go, (lo * 0.4 + Math.random() * lo) * 1000); };
   every(() => this.lapOnce(), 1.2, 3.6);
@@ -1404,7 +1769,7 @@ function applyEnv() {
 /* ================= player ================= */
 const me = { name: "", g: "m", c: Math.floor(Math.random() * SHIRTS.length), m: Math.floor(Math.random() * MAT_STYLES.length),
   x: 6, z: 30.5, y: 0, r: 0, st: "walk", tube: false, bt: null, moving: false, speed: 0, level: "ground", moveYaw: 0,
-  rm: null, hold: false, eat: 0, seat: null };
+  rm: null, hold: false, eat: 0, seat: null, basket: null, q: 0 };
 let lastInput = { f: 0, r: 0 };
 let myAvatar = null, started = false, anim = null;
 const boatLocal = { x: 0, z: 0, r: 0 };
@@ -1478,7 +1843,9 @@ function cleanPresence(p) {
     g: p.g === "f" ? "f" : "m", c: Number.isInteger(p.c) ? Math.abs(p.c) % SHIRTS.length : 0, m: Number.isInteger(p.m) ? Math.abs(p.m) % MAT_STYLES.length : 0,
     x: num(p.x, WORLD.x0, WORLD.x1, 0), z: num(p.z, WORLD.z0, WORLD.z1, 30), r: num(p.r, -100, 100, 0),
     y: num(p.y, -2, 14, 0), st, tb: p.tb === true, bt: null, say: null,
-    rm: null, hr: p.hr === 1, ea: num(p.ea, 0, 1e15, 0)
+    rm: null, hr: p.hr === 1, ea: num(p.ea, 0, 1e15, 0),
+    hi: typeof p.hi === "string" && (p.hi === "ramen" || PRODUCTS[p.hi]) ? p.hi : (p.hr === 1 ? "ramen" : null),
+    q: num(p.q, 0, 1e15, 0), bk: Number.isInteger(p.bk) ? clamp(p.bk, -1, 30) : -1
   };
   if (p.rm && typeof p.rm === "object" && Number.isInteger(p.rm.m) && p.rm.m >= 0 && p.rm.m < 3) o.rm = { m: p.rm.m, at: num(p.rm.at, 0, 1e15, 0) };
   if (p.say && typeof p.say === "object" && Number.isInteger(p.say.i) && p.say.i >= 0 && p.say.i < MACROS.length && typeof p.say.at === "number") o.say = { i: p.say.i, at: p.say.at };
@@ -1525,7 +1892,7 @@ function syncPeers(peers) {
 })();
 let lastPub = 0, lastPubKey = "", mySay = null;
 function presenceObj() {
-  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id, at: me.bt.at } : null, say: mySay, rm: me.rm, hr: me.hold ? 1 : 0, ea: me.eat || 0 };
+  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id, at: me.bt.at } : null, say: mySay, rm: me.rm, hr: me.hold ? 1 : 0, hi: me.hold || null, ea: me.eat || 0, q: me.q || 0, bk: me.basket ? me.basket.length : -1 };
   if (boarded && boarded.driver) { o.bx = +boatLocal.x.toFixed(2); o.bz = +boatLocal.z.toFixed(2); o.br = +boatLocal.r.toFixed(2); }
   else { o.bx = null; o.bz = null; o.br = null; }
   return o;
@@ -1595,7 +1962,7 @@ function matConflict(x, z) {
   for (const o of others.values()) if ((o.p.st === "sit" || o.p.st === "lie") && Math.hypot(o.p.x - x, o.p.z - z) < 3.2) return o.p.n;
   return null;
 }
-function canSpread() { return (me.level === "ground" && onGrass(me.x, me.z)) || me.level === "bridge"; }
+function canSpread() { return (me.level === "ground" && onGrass(me.x, me.z) && !underRoof(me.x, me.z)) || me.level === "bridge"; }
 BENCHES.forEach(b => { if (b.x > BOUND.x0 && b.x < BOUND.x1) [-0.6, 0.6].forEach(k => SEAT_SPOTS.push({ x: b.x + k, z: b.z - 0.05, r: 0, kind: "bench" })); });
 function nearBench() {
   if (me.level !== "ground") return null;
@@ -1685,6 +2052,7 @@ function refreshActions() {
     if (bo.join != null) acts.push(["boat", "오리배 타기", "duck"]);
     if (bo.squeeze != null) acts.push(["squeeze", "끼어 타기 (3명)", "duck"]);
   }
+  status = storeActions(acts, status);
   const key = JSON.stringify([acts, status]); if (key === actKey) return; actKey = key;
   const row = $("actRow"); row.textContent = "";
   acts.forEach(([id, label, cls]) => { const b = document.createElement("button"); b.className = "act " + cls; b.textContent = label; b.dataset.act = id; row.appendChild(b); });
@@ -1692,6 +2060,7 @@ function refreshActions() {
 }
 $("actRow").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return; const a = b.dataset.act;
+  if (storeClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
   if (a === "sit" || a === "lie") {
     if (me.st === "walk") {
       if (!canSpread()) { toast("잔디나 대교 위에서만 돗자리를 펼 수 있습니다"); return; }
@@ -1713,12 +2082,12 @@ $("actRow").addEventListener("click", e => {
     me.rm = { m: nm.i, at: Date.now() }; MACHINES[nm.i].doneShown = false; if (audio.ready) audio.click();
     toast("라면을 올렸어요. 1분 30초 뒤에 완성됩니다");
   } else if (a === "pickup") {
-    me.rm = null; me.hold = true; me.eat = 0; toast("뜨끈한 라면을 들었어요! 앉거나 서서 먹어 보세요");
+    me.rm = null; me.hold = "ramen"; me.eat = 0; toast("뜨끈한 라면을 들었어요! 앉거나 서서 먹어 보세요");
   } else if (a === "eat") {
     if (!me.hold) return; me.eat = Date.now(); u_lastBite.me = -1;
   }
   else if (a === "tube") { me.tube = !me.tube; rebuildMe(); }
-  else if (a === "boat") { if (me.hold) { toast("라면을 든 채로는 오리배를 탈 수 없어요"); return; } const id = boatOptions().join; if (id == null) toast("남은 오리배가 없습니다"); else claimBoat(id, false); }
+  else if (a === "boat") { if (me.hold) { toast("먹을 걸 든 채로는 오리배를 탈 수 없어요"); return; } const id = boatOptions().join; if (id == null) toast("남은 오리배가 없습니다"); else claimBoat(id, false); }
   else if (a === "squeeze") { const id = boatOptions().squeeze; if (id == null) toast("끼어 탈 오리배가 없습니다"); else claimBoat(id, true); }
   else if (a === "cancel") { me.bt = null; }
   else if (a === "leave") { leaveBoat(false); return; }
@@ -1751,6 +2120,201 @@ $("weatherSeg").addEventListener("click", async e => {
   try { await weatherRef.set({ w, at: Date.now() }); } catch (err) { weather = prev; applyEnv(); toast("날씨를 바꾸지 못했습니다. 편집 권한이 있는지 확인해 주세요"); }
 });
 
+/* ================= 한강 편의점: wallet, basket, queue, checkout ================= */
+// Money lives in this browser only (localStorage): a daily allowance, so coming back tomorrow buys the chicken.
+const WALLET_KEY = "hangang-wallet", ALLOWANCE = 4000, BASKET_MAX = 10, BAG_MAX = 20, SCAN_STEP = .55;
+const wallet = (() => {
+  let w = null; try { w = JSON.parse(localStorage.getItem(WALLET_KEY) || "null"); } catch (e) {}
+  if (!w || typeof w.money !== "number" || !isFinite(w.money)) w = { money: 0, day: "", bag: [] };
+  w.money = clamp(Math.floor(w.money), 0, 1e7); w.bag = Array.isArray(w.bag) ? w.bag.filter(k => PRODUCTS[k]).slice(0, BAG_MAX) : [];
+  return w;
+})();
+function saveWallet() { try { localStorage.setItem(WALLET_KEY, JSON.stringify(wallet)); } catch (e) {} updateBagBtn(); }
+function giveAllowance() {
+  const k = kst(), day = k.getFullYear() + "-" + (k.getMonth() + 1) + "-" + k.getDate();
+  if (wallet.day === day) return false;
+  wallet.day = day; wallet.money += ALLOWANCE; saveWallet(); return true;
+}
+function insideStore(x, z, m = 0) { return Math.abs(x - STORE.x) < STORE.hw - m && Math.abs(z - STORE.z) < STORE.hd - m; }
+function basketTotal() { return me.basket ? me.basket.reduce((s, k) => s + PRODUCTS[k].price, 0) : 0; }
+function boxDist(lx, lz, f) { const dx = Math.max(f.x0 - lx, 0, lx - f.x1), dz = Math.max(f.z0 - lz, 0, lz - f.z1); return Math.hypot(dx, dz); }
+function storeZone() {
+  const lx = me.x - STORE.x, lz = me.z - STORE.z;
+  if (Math.hypot(lx - FIX.basket.x, lz - FIX.basket.z) < 1.5) return "basket";
+  if (boxDist(lx, lz, FIX.hotcase) < 1.0 && lz < FIX.counter.z0) return "chicken";
+  if (boxDist(lx, lz, FIX.freezer) < 1.0) return "ice";
+  if (boxDist(lx, lz, FIX.fridge) < 1.0) return "drink";
+  if (boxDist(lx, lz, FIX.gondolaA) < .9 || boxDist(lx, lz, FIX.gondolaB) < .9) return "snack";
+  if (lx > -2.6 && lx < 5.8 && lz > .5 && lz < FIX.counter.z0) return "queue";
+  return null;
+}
+// the checkout line: earliest to join goes first, everyone walks themselves to their own spot
+function queueList() {
+  const l = [];
+  for (const [peer, o] of others) if (o.p.q > 0 && insideStore(o.p.x, o.p.z, -1)) l.push([o.p.q, peer]);
+  if (me.q) l.push([me.q, myPeer || "~me"]);
+  l.sort((a, b) => a[0] - b[0] || (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0));
+  return l.map(x => x[1]);
+}
+function myQueueIndex() { return queueList().indexOf(myPeer || "~me"); }
+const QSPOT = i => { const k = Math.min(i, 8); return [STORE.x + 3.1 - k * 1.0, STORE.z + 1.35]; };
+function queueArrived() { const i = myQueueIndex(); if (i < 0) return false; const [qx, qz] = QSPOT(i); return Math.hypot(qx - me.x, qz - me.z) < .25; }
+function queueWalk(dt) {
+  const i = myQueueIndex(); if (i < 0) { me.moving = false; return; }
+  const [qx, qz] = QSPOT(i), dx = qx - me.x, dz = qz - me.z, d = Math.hypot(dx, dz);
+  // look toward the counter from the shop floor so the clerk does not block the view
+  if (performance.now() - cam.dragAt > 1500) { cam.tYaw = lerpAngle(cam.tYaw, Math.PI, Math.min(1, dt * 2.5)); cam.tPitch += (.3 - cam.tPitch) * Math.min(1, dt * 2); }
+  if (d < .05) { me.moving = false; me.speed = 0; me.r = lerpAngle(me.r, Math.PI, Math.min(1, dt * 8)); return; }
+  const step = Math.min(d, 2.4 * dt); me.x += dx / d * step; me.z += dz / d * step; me.moving = true; me.speed = 2.4;
+  me.r = lerpAngle(me.r, yawFrom(dx, dz), Math.min(1, dt * 10));
+}
+// leaving with unpaid things sets off the gate
+let gateWarnAt = 0, wasInStore = false;
+function storeGate(nx, nz) {
+  if (insideStore(me.x, me.z) && !insideStore(nx, nz) && me.basket && me.basket.length) {
+    const n = performance.now();
+    if (n - gateWarnAt > 2500) { gateWarnAt = n; toast("계산하지 않은 물건이 있어요! 계산대에서 계산해 주세요"); if (audio.ready) audio.alarm(); clerkSay("손님, 계산 먼저 부탁드려요~"); }
+    return [me.x, me.z];
+  }
+  return [nx, nz];
+}
+function clerkSay(text) { if (storeObj.clerk) showBubble(() => storeObj.clerk, text, 2.4, "clerk"); }
+let payState = null;
+function startPay() {
+  if (!me.basket || !me.basket.length) return;
+  const total = basketTotal();
+  if (total > wallet.money) { toast(`${won(total - wallet.money)}이 모자라요. 장바구니에서 몇 개 빼 주세요`); openBag(); return; }
+  payState = { t: 0, n: me.basket.length, total, beeps: 0 }; clerkSay("계산 도와드릴게요~");
+}
+function finishPay() {
+  const total = payState.total; payState = null;
+  wallet.money -= total; wallet.bag = wallet.bag.concat(me.basket).slice(-BAG_MAX); saveWallet();
+  me.basket = null; me.q = 0;
+  toast(`결제 완료! ${won(total)} · 남은 돈 ${won(wallet.money)} · 산 물건은 가방에 넣었어요`);
+  clerkSay("감사합니다~ 또 오세요!"); if (audio.ready) audio.ding();
+  publish(true); actKey = ""; refreshActions();
+}
+// action buttons and clicks (wired from 10-actions.js)
+function storeActions(acts, status) {
+  if (!started || boarded || anim || me.st !== "walk") return status;
+  if (me.q) {
+    acts.length = 0;
+    if (payState) return `삑, 삑… 계산 중 (${Math.min(payState.n, payState.beeps)}/${payState.n})`;
+    const i = myQueueIndex();
+    if (i === 0 && queueArrived()) acts.push(["pay", "계산하기 · " + won(basketTotal()), "primary"]);
+    acts.push(["unqueue", "줄에서 나가기", ""]);
+    return i <= 0 ? "내 차례예요! 계산하기를 눌러 주세요" : `계산 대기 중 · 앞에 ${i}명`;
+  }
+  if (!insideStore(me.x, me.z)) return status;
+  const z = storeZone();
+  if (!me.basket) {
+    if (z === "basket") acts.unshift(["basket", "장바구니 들기", "primary"]);
+    else if (z && CATS[z]) status = "입구에서 장바구니를 먼저 들어 주세요";
+    else status = status || "어서오세요, 한강 편의점입니다";
+  } else {
+    if (z && CATS[z]) acts.unshift(["shop:" + z, CATS[z].verb, "primary"]);
+    if (z === "queue" && me.basket.length) acts.unshift(["queue", "계산 줄 서기", "primary"]);
+    acts.push(["basketview", "장바구니 " + me.basket.length + "개", ""]);
+    if (!status) status = me.basket.length ? `장바구니 ${won(basketTotal())} · 내 돈 ${won(wallet.money)}` : "진열대 앞에서 물건을 골라 보세요";
+  }
+  return status;
+}
+function storeClick(a) {
+  if (a === "basket") { me.basket = []; toast("장바구니를 들었어요"); return true; }
+  if (a.startsWith("shop:")) { openShop(a.slice(5)); return true; }
+  if (a === "basketview") { openBag(); return true; }
+  if (a === "queue") { me.q = Date.now(); toast("계산 줄에 섰어요"); return true; }
+  if (a === "unqueue") { me.q = 0; payState = null; return true; }
+  if (a === "pay") { startPay(); return true; }
+  return false;
+}
+// shop and bag panels
+function openShop(cat) {
+  const C = CATS[cat]; if (!C) return;
+  $("shopTitle").textContent = C.title; const grid = $("shopGrid"); grid.textContent = "";
+  C.items.forEach(k => {
+    const P = PRODUCTS[k], cell = document.createElement("div"); cell.className = "item";
+    const dot = document.createElement("img"); dot.className = "swatch"; dot.alt = ""; dot.src = PRODUCT_URL[k]; dot.style.background = P.color;
+    const nm = document.createElement("b"); nm.textContent = P.name;
+    const pr = document.createElement("span"); pr.className = "price"; pr.textContent = won(P.price);
+    const btn = document.createElement("button"); btn.textContent = "담기"; btn.dataset.k = k;
+    cell.append(dot, nm, pr, btn); grid.appendChild(cell);
+  });
+  refreshShopFoot(); $("shopModal").hidden = false;
+}
+function refreshShopFoot() { $("shopSum").textContent = `장바구니 ${me.basket ? me.basket.length : 0}개 · ${won(basketTotal())}`; $("shopWallet").textContent = "내 돈 " + won(wallet.money); }
+$("shopGrid").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b || !me.basket) return;
+  if (me.basket.length >= BASKET_MAX) { toast("장바구니가 가득 찼어요"); return; }
+  me.basket.push(b.dataset.k); refreshShopFoot(); if (audio.ready) audio.click();
+  toast(PRODUCTS[b.dataset.k].name + "을(를) 담았어요"); publish(true); actKey = "";
+});
+function openBag() {
+  $("bagMoney").textContent = "내 돈 " + won(wallet.money);
+  const bl = $("basketList"), gl = $("bagList"); bl.textContent = ""; gl.textContent = "";
+  $("basketSec").hidden = !me.basket;
+  (me.basket || []).forEach((k, i) => bl.appendChild(bagRow(PRODUCTS[k].name + " · " + won(PRODUCTS[k].price), "빼기", "drop", i, k)));
+  if (me.basket && !me.basket.length) bl.appendChild(Object.assign(document.createElement("p"), { className: "empty", textContent: "아직 담은 물건이 없어요" }));
+  wallet.bag.forEach((k, i) => gl.appendChild(bagRow(PRODUCTS[k].name, "먹기", "eat", i, k)));
+  if (!wallet.bag.length) gl.appendChild(Object.assign(document.createElement("p"), { className: "empty", textContent: "산 물건이 없어요. 한강 편의점에 들러 보세요" }));
+  $("bagModal").hidden = false;
+}
+function bagRow(label, btnText, act, i, k) {
+  const r = document.createElement("div"); r.className = "row";
+  const s = document.createElement("span"); s.textContent = label;
+  if (k && PRODUCT_URL[k]) { const im = document.createElement("img"); im.src = PRODUCT_URL[k]; im.alt = ""; im.className = "thumb"; r.appendChild(im); }
+  const b = document.createElement("button"); b.textContent = btnText; b.dataset.act = act; b.dataset.i = i;
+  r.append(s, b); return r;
+}
+$("bagModal").addEventListener("click", e => {
+  if (e.target === $("bagModal")) { $("bagModal").hidden = true; return; }
+  const b = e.target.closest("button[data-act]"); if (!b) return; const i = +b.dataset.i;
+  if (b.dataset.act === "drop" && me.basket) { me.basket.splice(i, 1); publish(true); actKey = ""; openBag(); return; }
+  if (b.dataset.act === "eat") {
+    if (me.hold) { toast("들고 있는 걸 먼저 다 먹어 주세요"); return; }
+    if (me.st === "swim" || me.st === "lie" || boarded) { toast("지금은 먹을 수 없어요"); return; }
+    const k = wallet.bag.splice(i, 1)[0]; saveWallet();
+    me.hold = k; me.eat = Date.now(); u_lastBite.me = -1; $("bagModal").hidden = true;
+    publish(true); actKey = ""; refreshActions();
+  }
+});
+$("shopClose").addEventListener("click", () => { $("shopModal").hidden = true; actKey = ""; refreshActions(); });
+$("shopModal").addEventListener("click", e => { if (e.target === $("shopModal")) $("shopModal").hidden = true; });
+$("bagClose").addEventListener("click", () => { $("bagModal").hidden = true; });
+$("bagBtn").addEventListener("click", openBag);
+addEventListener("keydown", e => { if (e.key === "Escape") { $("shopModal").hidden = true; $("bagModal").hidden = true; } });
+function updateBagBtn() { $("bagMoneyBtn").textContent = won(wallet.money); }
+function storeOnJoin() {
+  const got = giveAllowance(); updateBagBtn(); $("bagBtn").hidden = false; $("bagBtn").classList.toggle("desk", !touchy);
+  if (got) setTimeout(() => toast(`오늘의 용돈 ${won(ALLOWANCE)}을 받았어요! 내 돈 ${won(wallet.money)}`), 1600);
+}
+// per-frame: door, entry chime, clerk, checkout scanning
+function updateStore(dt) {
+  const S = STORE, dxw = S.x + STORE_DOOR.lx, dzw = S.z + S.hd;
+  let near = 99;
+  const chk = (x, z) => { near = Math.min(near, Math.hypot(x - dxw, z - dzw)); };
+  if (started) chk(me.x, me.z); others.forEach(o => chk(o.x, o.z));
+  storeObj.open += ((near < 2.6 ? 1 : 0) - storeObj.open) * Math.min(1, dt * 5);
+  storeObj.doorL.position.x = STORE_DOOR.lx - .55 - storeObj.open * 1.0; storeObj.doorR.position.x = STORE_DOOR.lx + .55 + storeObj.open * 1.0;
+  const inNow = started && insideStore(me.x, me.z);
+  if (inNow && !wasInStore) { if (audio.ready) audio.chime(); clerkSay("어서오세요~ 한강 편의점입니다"); camSaved = cam.tDist; cam.tDist = Math.min(cam.tDist, 3.6); actKey = ""; }
+  if (!inNow && wasInStore) { if (me.basket) { me.basket = null; toast("장바구니를 제자리에 두었어요"); publish(true); } me.q = 0; if (camSaved) cam.tDist = camSaved; camSaved = 0; actKey = ""; }
+  wasInStore = inNow;
+  const clerk = storeObj.clerk;
+  updateAvatar(clerk, dt, T, {});
+  if (payState) {
+    payState.t += dt; const b = Math.floor(payState.t / SCAN_STEP);
+    if (b > payState.beeps && payState.beeps < payState.n) { payState.beeps = b; if (audio.ready) audio.beep(); actKey = ""; }
+    const a = clerk.userData.arms[1]; a.rotation.x = 1.1 + Math.sin(payState.t * 11) * .25; a.rotation.z = .25;
+    if (payState.t > payState.n * SCAN_STEP + .7) finishPay();
+  }
+}
+let camSaved = 0;
+// camera stays inside the store when you are inside
+function storeCam(px, py, pz) {
+  if (!started || !insideStore(me.x, me.z)) return [px, py, pz];
+  return [clamp(px, STORE.x - STORE.hw + .35, STORE.x + STORE.hw - .35), Math.min(py, 2.85), clamp(pz, STORE.z - STORE.hd + .35, STORE.z + STORE.hd - .35)];
+}
 /* ================= UI glue ================= */
 function toast(text) {
   const t = document.createElement("div"); t.className = "pill toast"; t.textContent = text;
@@ -1777,7 +2341,7 @@ $("joinForm").addEventListener("submit", e => {
   cam.tx = me.x; cam.tz = me.z; cam.yaw = cam.tYaw = 0; cam.tPitch = 0.26; cam.tDist = 6.5; cam.init = false;
   $("gate2").hidden = true; $("hudLeft").hidden = false; $("hudRight").hidden = false; $("actions").hidden = false;
   if (touchy) $("joy").hidden = false; else { $("keys").hidden = false; setTimeout(() => { $("keys").hidden = true; }, 15000); }
-  publish(true); refreshActions(); $("count").textContent = String(others.size + 1);
+  publish(true); refreshActions(); $("count").textContent = String(others.size + 1); storeOnJoin();
   toast(touchy ? "패드로 걸어가서 마음에 드는 잔디에 돗자리를 펴세요" : "WASD로 걸어가서 마음에 드는 잔디에 돗자리를 펴세요");
 });
 $("exitBtn").addEventListener("click", () => { $("leaveModal").hidden = false; $("stayBtn").focus(); });
@@ -1786,11 +2350,11 @@ $("leaveModal").addEventListener("click", e => { if (e.target === $("leaveModal"
 addEventListener("keydown", e => { if (e.key === "Escape" && !$("leaveModal").hidden) $("leaveModal").hidden = true; });
 $("leaveBtn").addEventListener("click", async () => {
   $("leaveModal").hidden = true;
-  started = false; me.bt = null; boarded = null; me.rm = null; me.hold = false; me.eat = 0;
+  started = false; me.bt = null; boarded = null; me.rm = null; me.hold = false; me.eat = 0; me.basket = null; me.q = 0; payState = null;
   try { if (room) { await room.presence({ n: null, st: null, bt: null, rm: null }); if (typeof room.leave === "function") await room.leave(); } } catch (e) {}
   room = null;
   if (myAvatar) { scene.remove(myAvatar); myAvatar = null; }
-  ["hudLeft", "hudRight", "actions", "joy", "keys", "settings", "chatPanel"].forEach(id => $(id).hidden = true);
+  ["hudLeft", "hudRight", "actions", "joy", "keys", "settings", "chatPanel", "bagBtn", "shopModal", "bagModal"].forEach(id => $(id).hidden = true);
   try { if (audio.ready) { audio.setMuted(true); audio.ac.suspend(); } } catch (e) {}
   try { window.close(); } catch (e) {}
   setTimeout(() => { $("byeGate").hidden = false; }, 250);
@@ -1883,6 +2447,7 @@ function stepPlayer(dt) {
     return;
   }
   if (me.st === "sit" || me.st === "lie" || me.st === "bench" || me.st === "stool") { me.moving = false; return; }
+  if (me.q && me.st === "walk") { queueWalk(dt); return; }
   if (!me.moving) { me.speed = 0; return; }
   dx /= Math.max(mag, 1); dz /= Math.max(mag, 1);
   const base = me.st === "swim" ? (me.tube ? 1.4 : 1.8) : inp.run ? 7 : 3.6;
@@ -1909,8 +2474,9 @@ function stepPlayer(dt) {
   } else if (me.st === "walk") {
     if (nx < BOUND.x0 || nx > BOUND.x1 || nz > BOUND.landZ1) { hitBound(); nx = clamp(nx, BOUND.x0, BOUND.x1); nz = Math.min(nz, BOUND.landZ1); }
     [nx, nz] = pushOut(nx, nz, .35);
+    [nx, nz] = storeGate(nx, nz);
     if (nz < BOUND.landZ0 && !onDock(nx, nz)) {
-      if (me.hold) dropRamen("앗, 라면이 한강에 빠졌어요…");
+      if (me.hold) dropRamen(me.hold === "ramen" ? "앗, 라면이 한강에 빠졌어요…" : "앗, 들고 있던 간식이 한강에 빠졌어요…");
       const dockSide = Math.abs(nx - DOCK.x) < 8.5;
       const tz = dockSide ? -4 : -2.2, tx = dockSide && Math.abs(nx - DOCK.x) < 8.5 ? nx : nx;
       anim = { t: 0, dur: 0.6, from: [me.x, me.z, me.y || 0], to: [tx, tz, -0.85], hop: 0.9, then: () => {
@@ -1942,13 +2508,19 @@ const clock = new THREE.Clock(); let T = 0, actTimer = 0, plantTimer = 0;
 const tmpV = new THREE.Vector3(), UP = UPV;
 let stepPh = 0, stepSide = false;
 const u_lastBite = {};
-function eatingFx(av, key, e, dist) {
+function eatTime(k) { return k === "ramen" || k === true ? EAT_TIME : (PRODUCTS[k] ? PRODUCTS[k].eat : 7); }
+const EAT_WORDS = { ramen: ["후루릅~", "짭짭"], snack: ["바삭바삭", "와삭와삭"], drink: ["꿀꺽꿀꺽", "캬~"], ice: ["냠냠", "시원해~"], chicken: ["바삭!", "냠냠 쫄깃"] };
+function eatingFx(av, key, e, dist, kind) {
   if (e < 0) { u_lastBite[key] = -1; return; }
   const bite = Math.floor(e * .9);
   if (bite === u_lastBite[key]) return; u_lastBite[key] = bite;
-  const slurp = bite % 2 === 0;
-  showBubble(() => av, slurp ? "후루릅~" : "짭짭", 1.1, "eat-" + key);
-  if (audio.ready && dist < 14) { const v = clamp(1 - dist / 14, 0, 1); slurp ? audio.slurp(v) : audio.chomp(v); }
+  const cat = kind === "ramen" || kind === true || !PRODUCTS[kind] ? "ramen" : PRODUCTS[kind].cat, first = bite % 2 === 0;
+  showBubble(() => av, EAT_WORDS[cat][first ? 0 : 1], 1.1, "eat-" + key);
+  if (audio.ready && dist < 14) {
+    const v = clamp(1 - dist / 14, 0, 1);
+    if (cat === "ramen") first ? audio.slurp(v) : audio.chomp(v);
+    else if (cat === "drink") audio.gulp(v); else if (cat === "ice") audio.chomp(v * .6); else audio.crunch(v);
+  }
 }
 function seatOf(boatIdx, peer) {
   const b = boats[boatIdx]; let idx = b.crew ? b.crew.indexOf(peer) : 0; if (idx < 0) idx = 0;
@@ -2000,9 +2572,9 @@ function frame() {
       myAvatar.rotation.y = lerpAngle(myAvatar.rotation.y, tr, 1 - Math.exp(-dt * 14));
     }
     const myEat = me.eat ? (Date.now() - me.eat) / 1000 : -1;
-    updateAvatar(myAvatar, dt, T, { moving: me.moving, speed: me.speed, crank: boarded ? boats[boarded.id].crank + (mySeat === 1 ? Math.PI / 2 : 0) : 0, seat: mySeat, hold: me.hold, eatT: myEat });
-    eatingFx(myAvatar, "me", myEat, 0);
-    if (me.eat && myEat >= EAT_TIME) { me.hold = false; me.eat = 0; toast("잘 먹었습니다! 국물까지 싹 비웠어요"); publish(true); actKey = ""; }
+    updateAvatar(myAvatar, dt, T, { moving: me.moving, speed: me.speed, crank: boarded ? boats[boarded.id].crank + (mySeat === 1 ? Math.PI / 2 : 0) : 0, seat: mySeat, hold: me.hold, eatT: myEat, basket: me.basket ? me.basket.length : -1 });
+    eatingFx(myAvatar, "me", myEat, 0, me.hold);
+    if (me.eat && myEat >= eatTime(me.hold)) { toast(me.hold === "ramen" ? "잘 먹었습니다! 국물까지 싹 비웠어요" : `${PRODUCTS[me.hold] ? PRODUCTS[me.hold].name : "간식"} 맛있게 먹었어요!`); me.hold = false; me.eat = 0; publish(true); actKey = ""; }
     const showGhost = me.st === "walk" && !anim && !me.moving && !me.bt && canSpread();
     ghost.visible = showGhost;
     if (showGhost) { ghost.position.set(me.x, me.y + 0.05, me.z + POSES.sit.matZ); ghost.material.color.set(matConflict(me.x, me.z) ? 0xff8a7a : 0x9be3a0); }
@@ -2032,9 +2604,9 @@ function frame() {
     const moving = Math.hypot(tx - o.x, tz - o.z) > 0.03;
     o.x += (tx - o.x) * k; o.z += (tz - o.z) * k; o.r = lerpAngle(o.r, tr, k);
     o.obj.position.set(o.x, ty, o.z); o.obj.rotation.y = o.r;
-    const oEat = p.hr && p.ea ? (Date.now() - p.ea) / 1000 : -1;
-    updateAvatar(o.obj, dt, T, { moving, speed: 3.6, seat, crank, hold: p.hr, eatT: oEat >= 0 && oEat < EAT_TIME ? oEat : -1 });
-    eatingFx(o.obj, peer, oEat >= 0 && oEat < EAT_TIME ? oEat : -1, Math.hypot(o.x - cam.tx, o.z - cam.tz));
+    const oEat = p.hi && p.ea ? (Date.now() - p.ea) / 1000 : -1, oE = oEat >= 0 && oEat < eatTime(p.hi) ? oEat : -1;
+    updateAvatar(o.obj, dt, T, { moving, speed: 3.6, seat, crank, hold: p.hi, eatT: oE, basket: p.bk });
+    eatingFx(o.obj, peer, oE, Math.hypot(o.x - cam.tx, o.z - cam.tz), p.hi);
   }
 
   // NPCs
@@ -2101,10 +2673,11 @@ function frame() {
   if (started) {
     const chip = $("ramenChip");
     if (me.rm) { const left = ramenLeft(); chip.hidden = false; chip.textContent = left > 0 ? "라면 끓는 중 " + fmt(Math.ceil(left)) : "라면 완성! 기계로 가서 들어 주세요"; }
-    else if (me.eat) { chip.hidden = false; chip.textContent = "후루릅… 냠냠 먹는 중"; }
+    else if (me.eat) { chip.hidden = false; chip.textContent = (me.hold === "ramen" ? "라면" : PRODUCTS[me.hold] ? PRODUCTS[me.hold].name : "간식") + " 냠냠 먹는 중"; }
     else chip.hidden = true;
   }
 
+  updateStore(dt);
   // bubbles follow their owners
   for (let i = bubbles.length - 1; i >= 0; i--) {
     const b = bubbles[i], o = b.getObj();
@@ -2148,7 +2721,7 @@ function frame() {
     let py = cam.ty + Math.sin(cam.pitch) * cam.dist;
     const floor = (me.level === "bridge" && inDeck(px, pz) ? BR.y : pz > BOUND.landZ0 ? 0 : -0.6) + 0.4;
     if (py < floor) py = floor;
-    camPos.set(px, py, pz);
+    camPos.set(...storeCam(px, py, pz));
     if (!cam.init) { camera.position.copy(camPos); cam.init = true; } else camera.position.lerp(camPos, 1 - Math.exp(-dt * 14));
     camera.lookAt(cam.tx - Math.sin(cam.yaw) * 2.5, cam.ty + 0.35, cam.tz - Math.cos(cam.yaw) * 2.5);
     publish(false);

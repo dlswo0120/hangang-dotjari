@@ -1,0 +1,57 @@
+"""한강 돗자리 빌드 스크립트.
+
+src/ 아래로 나눠 둔 파일들을 하나로 합쳐 두 가지 결과물을 만듭니다.
+  - index.html               : Vercel·깃허브 페이지에 올라가는 공개판 (Supabase 연결 포함)
+  - dist/claude-artifact.html : claude.ai 아티팩트용 (claude.ai 자체 접속 기능 사용)
+
+사용법:  python3 tools/build.py
+"""
+import pathlib, re, sys
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+SRC = ROOT / "src"
+THREE = '<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>'
+
+
+def read(p):
+    return (SRC / p).read_text(encoding="utf-8")
+
+
+def page_body():
+    """claude.ai에 올리던 형태 그대로의 본문 (doctype 없이)."""
+    js_files = sorted((SRC / "js").glob("*.js"))
+    js = "".join(f.read_text(encoding="utf-8") for f in js_files)
+    return (read("head.html") + "<style>\n" + read("style.css") + "</style>\n" + read("body.html")
+            + THREE + "\n<script>\n(() => {\n" + js + "})();\n</script>\n")
+
+
+PUBLIC_HEAD = """<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="말없이 같이 앉아 강을 보는 곳, 한강 돗자리">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}[hidden]{display:none!important}</style>
+"""
+ARTIFACT_HEAD = """<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style></head><body>"""
+
+
+def build():
+    body = page_body()
+    if re.search("[​-‏‪-‮]", body):
+        sys.exit("숨은 특수문자가 들어 있습니다. \\u 이스케이프로 바꿔 주세요.")
+    # public: Supabase glue goes right before three.js
+    glue = read("public/supabase-glue.html")
+    i = body.index('<canvas id="scene"')
+    top, rest = body[:i], body[i:]
+    assert rest.count(THREE) == 1
+    public = PUBLIC_HEAD + top + "</head>\n<body>\n" + rest.replace(THREE, glue + THREE) + "\n</body>\n</html>\n"
+    (ROOT / "index.html").write_text(public, encoding="utf-8")
+    (ROOT / "dist").mkdir(exist_ok=True)
+    (ROOT / "dist" / "claude-artifact.html").write_text(ARTIFACT_HEAD + body + "</body></html>", encoding="utf-8")
+    print("index.html", len(public.encode()), "bytes / dist/claude-artifact.html", len(body.encode()), "bytes")
+    return body
+
+
+if __name__ == "__main__":
+    build()

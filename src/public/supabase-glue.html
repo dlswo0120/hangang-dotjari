@@ -1,0 +1,179 @@
+<script>
+/* ===================== 여기만 바꾸세요 =====================
+   Supabase 대시보드 > Project Settings > API 에서 복사해 붙여넣습니다.
+   anon public 키는 원래 공개용이라 이 파일에 넣어도 괜찮습니다.
+   (service_role 키는 절대 넣지 마세요) */
+window.HANGANG_CONFIG = {
+  supabaseUrl: "https://plzsnyvrubuetsnxurfr.supabase.co",
+  supabaseAnonKey: "sb_publishable_WFtymiPrXSqZnU-w7qXLpQ__jtYIrU7",
+  roomName: "hangang-dotjari"
+};
+/* ============================================================ */
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js"></script>
+<script>
+/* ============================================================
+   한강 돗자리 · 공개 배포용 연결 코드
+   claude.ai 안에서 쓰던 기능(접속자 동기화, 날씨, 사진 저장)을
+   Supabase Realtime으로 바꿔 줍니다.
+   ============================================================ */
+(() => {
+  const CFG = window.HANGANG_CONFIG || {};
+  const ADMIN_KEY = "hangang-admin-code";
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+    del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  };
+
+  // 사진 저장은 설정이 없어도 동작
+  const downloads = {
+    async save({ filename, data }) {
+      const blob = data instanceof Blob ? data : new Blob([data]);
+      const url = URL.createObjectURL(blob), a = document.createElement("a");
+      a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      return { saved: true };
+    }
+  };
+
+  const ready = !!(CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase && window.supabase.createClient);
+  if (!ready) {
+    console.warn("[한강 돗자리] Supabase 설정이 없어 혼자 보기 모드로 실행합니다.");
+    window.claude = { use: async name => (name === "downloads" ? downloads : null) };
+    return;
+  }
+
+  const sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, { realtime: { params: { eventsPerSecond: 20 } } });
+  const myId = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+  const channel = sb.channel(CFG.roomName || "hangang-dotjari", { config: { presence: { key: myId }, broadcast: { self: false } } });
+
+  /* ---------- room: 접속자 상태 ---------- */
+  const states = new Map();       // 다른 사람 id -> 상태
+  let members = new Set();        // 지금 접속 중인 id
+  let mine = {};
+  const peerListeners = [];
+  let emitQueued = false, subscribed = false;
+  function emitPeers() {
+    emitQueued = false;
+    const peers = [{ peer: myId, by: null, isMe: true, sameTab: true, kind: "viewer", guest: false, presence: mine, updatedAt: Date.now() }];
+    members.forEach(id => { if (id !== myId && states.has(id)) peers.push({ peer: id, by: null, isMe: false, sameTab: false, kind: "viewer", guest: false, presence: states.get(id), updatedAt: Date.now() }); });
+    peerListeners.forEach(f => { try { f({ peers, joined: [], left: [], updated: [] }); } catch (e) { console.error(e); } });
+  }
+  const schedule = () => { if (!emitQueued) { emitQueued = true; requestAnimationFrame(emitPeers); } };
+
+  let lastSend = 0, sendTimer = null;
+  function sendState() {
+    if (!subscribed || !Object.keys(mine).length) return;
+    lastSend = performance.now();
+    channel.send({ type: "broadcast", event: "s", payload: { id: myId, s: mine } });
+  }
+  function queueSend(force) {
+    const wait = 200 - (performance.now() - lastSend);
+    if (force || wait <= 0) { clearTimeout(sendTimer); sendTimer = null; sendState(); }
+    else if (!sendTimer) sendTimer = setTimeout(() => { sendTimer = null; sendState(); }, wait);
+  }
+
+  channel.on("presence", { event: "sync" }, () => {
+    members = new Set(Object.keys(channel.presenceState()));
+    for (const id of [...states.keys()]) if (!members.has(id)) states.delete(id);
+    schedule();
+  });
+  channel.on("presence", { event: "join" }, ({ key }) => { if (key !== myId) queueSend(true); });
+  channel.on("broadcast", { event: "s" }, ({ payload }) => {
+    if (!payload || typeof payload.id !== "string" || payload.id === myId || !payload.s || typeof payload.s !== "object") return;
+    states.set(payload.id, payload.s); members.add(payload.id); schedule();
+  });
+
+  const weatherListeners = [];
+  channel.on("broadcast", { event: "weather" }, ({ payload }) => {
+    if (payload && typeof payload.w === "string") weatherListeners.forEach(f => f(payload.w));
+  });
+
+  channel.subscribe(async status => {
+    if (status === "SUBSCRIBED") { subscribed = true; await channel.track({ at: Date.now() }); queueSend(true); schedule(); }
+  });
+  addEventListener("pagehide", () => { try { channel.untrack(); sb.removeChannel(channel); } catch (e) {} });
+
+  const room = {
+    async presence(patch) {
+      // 앉기·눕기 같은 상태 변화와 말풍선은 바로 보내고, 걷는 위치는 0.2초마다 묶어서 보냄
+      const urgent = ("st" in patch && patch.st !== mine.st) || (patch.say && (!mine.say || patch.say.at !== mine.say.at)) || ("bt" in patch && JSON.stringify(patch.bt ?? null) !== JSON.stringify(mine.bt ?? null));
+      for (const k in patch) { if (patch[k] === null) delete mine[k]; else mine[k] = patch[k]; }
+      queueSend(urgent);
+      schedule();
+    },
+    onPeers(handler) { peerListeners.push(handler); setTimeout(emitPeers, 0); return () => { const i = peerListeners.indexOf(handler); if (i >= 0) peerListeners.splice(i, 1); }; },
+    peers() { return []; },
+    connected() { return subscribed; },
+    async leave() { subscribed = false; try { await channel.untrack(); } catch (e) {} try { sb.removeChannel(channel); } catch (e) {} }
+  };
+
+  /* ---------- db: 날씨 하나만 다룸 ---------- */
+  const db = {
+    doc(path) {
+      if (path !== "live/weather") throw new Error("unsupported path");
+      return {
+        onSnapshot(next) {
+          const deliver = w => next({ exists: true, data: () => ({ w }) });
+          const load = async () => {
+            const { data, error } = await sb.from("world").select("weather").eq("id", 1).maybeSingle();
+            if (!error && data && data.weather) deliver(data.weather);
+          };
+          load(); const t = setInterval(load, 60000);
+          weatherListeners.push(deliver);
+          return () => clearInterval(t);
+        },
+        async set({ w }) {
+          const code = store.get(ADMIN_KEY) || "";
+          const { data, error } = await sb.rpc("set_weather", { p_code: code, p_weather: w });
+          if (error || data !== true) throw new Error("not_permitted");
+          channel.send({ type: "broadcast", event: "weather", payload: { w } });
+        }
+      };
+    }
+  };
+
+  /* ---------- user: 관리자 여부 ---------- */
+  const user = { async canEdit() { return !!store.get(ADMIN_KEY); }, async isOwner() { return !!store.get(ADMIN_KEY); } };
+
+  window.claude = {
+    use: async name => name === "room" ? room : name === "db" ? db : name === "user" ? user : name === "downloads" ? downloads : null
+  };
+
+  /* ---------- 관리자 로그인: 주소 뒤에 #admin ---------- */
+  function adminBox() {
+    if (document.getElementById("adminBox")) return;
+    const wrap = document.createElement("div");
+    wrap.id = "adminBox";
+    wrap.style.cssText = "position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:rgba(8,10,14,.7);padding:16px";
+    const loggedIn = !!store.get(ADMIN_KEY);
+    wrap.innerHTML = `
+      <form style="background:#1b2330;border:1px solid rgba(244,239,230,.16);border-radius:20px;padding:22px;width:min(340px,100%);display:flex;flex-direction:column;gap:12px;color:#f4efe6;font-family:inherit">
+        <b style="font-size:18px">관리자</b>
+        <span style="font-size:13px;opacity:.7">${loggedIn ? "이 기기는 관리자로 로그인되어 있습니다." : "비밀번호를 넣으면 이 기기에서 날씨를 바꿀 수 있습니다."}</span>
+        ${loggedIn ? "" : '<input type="password" id="adminCode" autocomplete="current-password" placeholder="관리자 비밀번호" style="background:rgba(255,255,255,.07);border:1px solid rgba(244,239,230,.16);border-radius:12px;padding:12px;color:#f4efe6;font:inherit;font-size:16px">'}
+        <span id="adminMsg" style="font-size:13px;color:#ffb4a2;min-height:1em"></span>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" id="adminClose" style="border:1px solid rgba(244,239,230,.16);background:none;color:inherit;border-radius:999px;padding:10px 16px;font:inherit;cursor:pointer">닫기</button>
+          <button type="submit" style="border:0;background:#f1b26b;color:#2a1a0b;border-radius:999px;padding:10px 16px;font:inherit;cursor:pointer">${loggedIn ? "로그아웃" : "로그인"}</button>
+        </div>
+      </form>`;
+    document.body.appendChild(wrap);
+    const close = () => { wrap.remove(); history.replaceState(null, "", location.pathname + location.search); };
+    wrap.querySelector("#adminClose").onclick = close;
+    wrap.querySelector("form").onsubmit = async e => {
+      e.preventDefault();
+      if (loggedIn) { store.del(ADMIN_KEY); location.replace(location.pathname + location.search); return; }
+      const code = wrap.querySelector("#adminCode").value;
+      const { data, error } = await sb.rpc("check_admin", { p_code: code });
+      if (error) { wrap.querySelector("#adminMsg").textContent = "서버에 연결하지 못했습니다. 설정을 확인해 주세요."; return; }
+      if (data !== true) { wrap.querySelector("#adminMsg").textContent = "비밀번호가 맞지 않습니다."; return; }
+      store.set(ADMIN_KEY, code); location.replace(location.pathname + location.search);
+    };
+  }
+  const checkHash = () => { if (location.hash === "#admin") (document.readyState === "loading" ? addEventListener("DOMContentLoaded", adminBox) : adminBox()); };
+  checkHash(); addEventListener("hashchange", checkHash);
+})();
+
+</script>

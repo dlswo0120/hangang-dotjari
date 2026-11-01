@@ -1,0 +1,120 @@
+
+<canvas id="scene" aria-label="한강 풍경"></canvas>
+
+<div class="topbar">
+<div class="hud-left" id="hudLeft" hidden>
+  <button class="pill exitbtn" id="exitBtn" aria-label="나가기"><svg viewBox="0 0 24 24"><path d="M14 4h4.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H14"/><path d="M10 8l-4 4 4 4M6 12h10"/></svg></button>
+  <div class="pill place">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M2 15c2.5 0 2.5-1.6 5-1.6S9.5 15 12 15s2.5-1.6 5-1.6 2.5 1.6 5 1.6"/><path d="M2 19c2.5 0 2.5-1.6 5-1.6S9.5 19 12 19s2.5-1.6 5-1.6 2.5 1.6 5 1.6"/><path d="M4 11V8l8-4 8 4v3"/></svg>
+    <span><span class="wide">한강 <span class="dim">·</span> </span><span id="timeLabel">밤</span> <span class="dim" id="clock">00:00</span><span class="wx"> <span class="dim">·</span> <span id="weatherLabel">맑음</span></span></span>
+  </div>
+</div>
+<div class="hud-right" id="hudRight" hidden>
+  <div class="pill tools">
+    <div class="count" title="지금 같이 있는 사람">
+      <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c.6-3.4 3-5 6-5s5.4 1.6 6 5"/><path d="M16 5.5a3 3 0 0 1 0 5.6M18 14.4c1.6.7 2.6 2.3 3 4.6"/></svg>
+      <span><span id="count">1</span><span class="of" style="opacity:.55">/30</span></span>
+    </div>
+    <button class="tool" id="soundBtn" aria-label="소리 끄기"><svg viewBox="0 0 24 24" id="soundIcon"><path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg></button>
+    <button class="tool" id="setBtn" aria-label="설정" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
+    <button class="tool" id="chatBtn" aria-label="말하기" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M4 6.5h16v9.5H10l-4 3.5v-3.5H4z"/><path d="M8 10.5h8M8 13h5"/></svg></button>
+    <button class="tool" id="camBtn" aria-label="사진 찍기"><svg viewBox="0 0 24 24"><path d="M4 8.5h3l1.6-2.5h6.8L17 8.5h3v10H4z"/><circle cx="12" cy="13" r="3.4"/></svg></button>
+  </div>
+  <div class="panel" id="settings" hidden>
+    <h3>날씨<span class="badge" id="adminBadge" hidden>관리자</span></h3>
+    <div class="seg" id="weatherSeg" hidden>
+      <button data-w="clear">맑음</button><button data-w="cloudy">흐림</button><button data-w="rain">비</button><button data-w="snow">눈</button><button data-w="fog">안개</button>
+    </div>
+    <p id="weatherNote">날씨는 관리자가 정합니다. 시간대는 한국 시간에 맞춰 자동으로 바뀝니다.</p>
+    <h3>소리</h3>
+    <label class="slider" for="volWater">물소리<input type="range" id="volWater" min="0" max="100" value="70"></label>
+    <label class="slider" for="volNature">자연<input type="range" id="volNature" min="0" max="100" value="55"></label>
+    <label class="slider" for="volAnimal">동물<input type="range" id="volAnimal" min="0" max="100" value="45"></label>
+    <label class="slider" for="volStep">발소리<input type="range" id="volStep" min="0" max="100" value="60"></label>
+  </div>
+  <div class="panel" id="chatPanel" hidden>
+    <h3>말하기</h3>
+    <div class="chat-grid" id="chatGrid"></div>
+  </div>
+</div>
+</div>
+
+<div class="joy" id="joy" hidden aria-label="이동 패드"><div class="joy-knob" id="knob"></div></div>
+<div class="pill keys" id="keys" hidden><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동</span><span><kbd>Shift</kbd> 달리기</span><span><kbd>1</kbd>~<kbd>6</kbd> 말하기</span><span>드래그로 둘러보기</span></div>
+<div class="actions" id="actions" hidden>
+  <div class="pill status ramen" id="ramenChip" hidden></div>
+  <div class="pill status" id="status" hidden></div>
+  <div class="act-row" id="actRow"></div>
+</div>
+<button class="pill bagbtn" id="bagBtn" hidden aria-label="내 가방"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1.2 11.2a1.5 1.5 0 0 1-1.5 1.3H7.7a1.5 1.5 0 0 1-1.5-1.3z"/><path d="M9 10V7a3 3 0 0 1 6 0v3"/></svg><span id="bagMoneyBtn">0원</span></button>
+<div class="toast-wrap" id="toasts" aria-live="polite"></div>
+<div class="modal" id="shopModal" hidden role="dialog" aria-modal="true" aria-labelledby="shopTitle">
+  <div class="card shop">
+    <div class="shop-head"><h2 id="shopTitle">과자 진열대</h2><button class="x" id="shopClose" aria-label="닫기">닫기</button></div>
+    <div class="shop-grid" id="shopGrid"></div>
+    <div class="shop-foot"><span id="shopSum">장바구니 0개 · 0원</span><span id="shopWallet">내 돈 0원</span></div>
+  </div>
+</div>
+<div class="modal" id="bagModal" hidden role="dialog" aria-modal="true" aria-labelledby="bagTitle">
+  <div class="card shop">
+    <div class="shop-head"><h2 id="bagTitle">내 가방</h2><button class="x" id="bagClose" aria-label="닫기">닫기</button></div>
+    <p class="money" id="bagMoney">내 돈 0원</p>
+    <section id="basketSec"><h3>장바구니 · 계산 전</h3><div class="list" id="basketList"></div></section>
+    <section><h3>산 물건 · 언제든 꺼내 먹을 수 있어요</h3><div class="list" id="bagList"></div></section>
+  </div>
+</div>
+
+<div class="gate" id="gate1">
+  <div class="gate-hero">
+    <h1>한강 돗자리</h1>
+    <p>말없이 같이 앉아 강을 보는 곳</p>
+    <button class="enter" id="enterBtn">입장</button>
+    <p class="cap" id="capLine" hidden></p>
+  </div>
+</div>
+<div class="gate" id="gate2" hidden>
+  <form class="card" id="joinForm" novalidate>
+    <h2>나는 누구로 갈까요</h2>
+    <p class="sub">들어가서 마음에 드는 곳까지 걸어가 돗자리를 펴면 됩니다.</p>
+    <label class="field" for="nameInput"><span>이름</span>
+      <input id="nameInput" maxlength="10" autocomplete="nickname" placeholder="강가에서 불릴 이름">
+    </label>
+    <div class="field"><span>캐릭터</span>
+      <div class="choices" id="genderChoices">
+        <button type="button" class="choice" data-g="m" aria-pressed="true">
+          <svg viewBox="0 0 48 48"><circle cx="24" cy="20" r="12" fill="#f2c9a0"/><path d="M12 19c0-8 5-12 12-12s12 4 12 12c-3-4-7-5-12-5s-9 1-12 5z" fill="#2b2420"/><rect x="15" y="31" width="18" height="13" rx="7" fill="#7fa7c9"/></svg>남자</button>
+        <button type="button" class="choice" data-g="f" aria-pressed="false">
+          <svg viewBox="0 0 48 48"><path d="M11 20c0-9 6-13 13-13s13 4 13 13v14H11z" fill="#4a3226"/><circle cx="24" cy="21" r="11" fill="#f2c9a0"/><path d="M13 19c1-7 6-10 11-10s10 3 11 10c-4-3-8-4-11-6-3 2-7 3-11 6z" fill="#4a3226"/><rect x="15" y="31" width="18" height="13" rx="7" fill="#e9a46b"/></svg>여자</button>
+      </div>
+    </div>
+    <p class="err" id="err"></p>
+    <button class="go" type="submit">한강으로 가기</button>
+  </form>
+</div>
+
+<div class="modal" id="leaveModal" hidden role="dialog" aria-modal="true" aria-labelledby="leaveTitle">
+  <div class="card">
+    <h2 id="leaveTitle">정말 떠나시겠어요?</h2>
+    <p>펼쳐 둔 돗자리는 정리해 둘게요.</p>
+    <div class="modal-btns"><button id="stayBtn">머무르기</button><button class="leave" id="leaveBtn">떠나기</button></div>
+  </div>
+</div>
+<div class="gate" id="byeGate" hidden>
+  <div class="gate-hero">
+    <h1>또 놀러 오세요</h1>
+    <p>한강은 늘 여기 있어요. 이제 창을 닫으셔도 됩니다.</p>
+    <button class="enter" id="backBtn">다시 들어가기</button>
+  </div>
+</div>
+
+<div class="shot" id="shot" hidden>
+  <div class="shot-card">
+    <img id="shotImg" alt="방금 찍은 한강 사진">
+    <div class="shot-actions">
+      <p id="shotTip"></p>
+      <button class="btn" id="shotClose">닫기</button>
+      <button class="btn primary" id="shotSave" hidden>저장</button>
+    </div>
+  </div>
+</div>
+
