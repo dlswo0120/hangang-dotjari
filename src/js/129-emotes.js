@@ -5,12 +5,32 @@ const EMOTES = [
   { id: "hurray", name: "만세", icon: "🙌", dur: 2.0, seat: true, say: "만세!" },
   { id: "heart", name: "하트", icon: "💗", dur: 2.6, seat: true, say: "♥" },
   { id: "bow", name: "꾸벅 인사", icon: "🙇", dur: 1.8, seat: false },
-  { id: "chest", name: "가슴 튕기기 춤", icon: "🕺", dur: 4.4, seat: false, dance: true, say: "♪" }
+  { id: "chest", name: "가슴 튕기기 춤", icon: "🕺", dur: 4.4, seat: false, dance: true, say: "♪" },
+  // photo poses (picked from the camera menu, held through the countdown)
+  { id: "pv", name: "브이 볼콕", icon: "✌️", dur: 9, seat: true, photo: "solo" },
+  { id: "pfist", name: "주먹 볼콕", icon: "🤜", dur: 9, seat: true, photo: "solo" },
+  { id: "paerial", name: "항공샷", icon: "🛸", dur: 9, seat: true, photo: "solo", aerial: true },
+  { id: "pheart", name: "하트 반쪽", icon: "🫶", dur: 9, seat: true, photo: "duo" },
+  { id: "pstick", name: "찰싹 붙기", icon: "🤝", dur: 9, seat: true, photo: "duo" },
+  { id: "pv2", name: "같이 브이", icon: "✌️", dur: 9, seat: true, photo: "duo" },
+  { id: "pjump", name: "점프샷", icon: "🦘", dur: 9, seat: false, photo: "group" },
+  { id: "paerial2", name: "단체 항공샷", icon: "🛸", dur: 9, seat: true, photo: "group", aerial: true },
+  { id: "pfight", name: "다 같이 파이팅", icon: "✊", dur: 9, seat: true, photo: "group", say: "화이팅!" }
 ];
+const PHOTO_SHOT_AT = { solo: 3.2, duo: 6.2, group: 6.2 }; // seconds from the start until the shutter
 const CHEST_BPM = 2.25; // beats per second
 
 // pose overrides, blended in and out over the emote's length
-function emotePose(v, i, t, standing) {
+function vSign(u, on) {
+  if (on && !u.vR) {
+    const g = new THREE.Group(), sk = new THREE.MeshLambertMaterial({ color: 0xf2c9a0 });
+    [-.32, .32].forEach(a => { const f = new THREE.Mesh(new THREE.CylinderGeometry(.018, .016, .13, 6), sk); f.position.set(Math.sin(a) * .06, -.06, 0); f.rotation.z = a; g.add(f); });
+    g.position.set(0, -.33, 0); u.arms[1].add(g); u.vR = g;
+  }
+  if (u.vR) u.vR.visible = on;
+}
+function emotePose(v, i, t, standing, u, side) {
+  if (u) vSign(u, false);
   const E = EMOTES[i]; if (!E || t < 0 || t > E.dur) return;
   const env = clamp(Math.min(t / .2, (E.dur - t) / .25), 0, 1), to = (k, val) => { v[k] += (val - v[k]) * env; };
   // arms are short next to the big head, so raises go out to the side where they stay visible
@@ -28,10 +48,18 @@ function emotePose(v, i, t, standing) {
     to("arL", .08); to("azL", .28);
     if (t > E.dur - 1) v.nod -= .15 * env; // finish looking up at the camera
   }
+  // photo poses (the arms are short, so hands go to the side of the big face)
+  else if (E.id === "pv" || E.id === "pv2") { to("arR", .75); to("azR", 1.55); v.roll = (v.roll || 0) + .14 * env; v.nod += .05 * env; if (u) vSign(u, env > .5); }
+  else if (E.id === "pfist") { to("arL", .95); to("arR", .95); to("azL", 1.35); to("azR", 1.35); v.roll = (v.roll || 0) - .1 * env; v.nod += .06 * env; }
+  else if (E.id === "paerial" || E.id === "paerial2") { v.nod -= .55 * env; to("arR", .3); to("azR", 2.3); to("arL", .3); to("azL", 2.3); if (u) vSign(u, env > .5); }
+  else if (E.id === "pheart") { const s = side || 1; v.roll = (v.roll || 0) - .2 * s * env; if (s > 0) { to("arR", .35); to("azR", 2.05); } else { to("arL", .35); to("azL", 2.05); } }
+  else if (E.id === "pstick") { const s = side || 1; v.roll = (v.roll || 0) - .3 * s * env; to("arL", .1); to("arR", .1); to("azL", .2); to("azR", .2); v.nod -= .05 * env; }
+  else if (E.id === "pjump") { to("arL", .25); to("arR", .25); to("azL", 2.45); to("azR", 2.45); const jt = t - (PHOTO_SHOT_AT.group - .45); if (standing && jt > 0 && jt < .9) v.lift += Math.sin(Math.PI * jt / .9) * .45; }
+  else if (E.id === "pfight") { to("arR", 2.0); to("azR", .15); to("arL", .2); to("azL", .2); v.lean -= .05 * env; }
 }
 function activeEmote(em) {
   if (!em || !EMOTES[em.i]) return null;
-  const t = (Date.now() - em.at) / 1000; return t >= 0 && t <= EMOTES[em.i].dur ? { i: em.i, t } : null;
+  const t = (Date.now() - em.at) / 1000; return t >= 0 && t <= EMOTES[em.i].dur ? { i: em.i, t, s: em.s || 1 } : null;
 }
 
 audio.beat = function (v, strong) {
@@ -59,7 +87,7 @@ function emoteSfx(key, a, dist) {
 /* menu inside the 말하기 panel */
 {
   const mk = (E, i) => { const b = document.createElement("button"); b.dataset.e = i; const s = document.createElement("span"); s.textContent = E.icon; s.className = "emo"; b.append(s, E.name); return b; };
-  EMOTES.forEach((E, i) => (E.dance ? $("danceGrid") : $("emoteGrid")).appendChild(mk(E, i)));
+  EMOTES.forEach((E, i) => { if (!E.photo) (E.dance ? $("danceGrid") : $("emoteGrid")).appendChild(mk(E, i)); });
   [$("emoteGrid"), $("danceGrid")].forEach(g => g.addEventListener("click", e => {
     const b = e.target.closest("button"); if (!b) return; playEmote(+b.dataset.e);
     $("chatPanel").hidden = true; $("chatBtn").setAttribute("aria-expanded", "false");

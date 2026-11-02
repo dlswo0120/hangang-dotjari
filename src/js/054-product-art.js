@@ -16,7 +16,10 @@ const PRODUCTS = {
   mochi: { name: "찹쌀떡 아이스", price: 3500, cat: "ice", color: "#f3efe4", eat: 7 },
   gangjeong: { name: "닭강정 컵", price: 6500, cat: "chicken", color: "#c4632a", eat: 10 },
   chicken: { name: "순살치킨", price: 8000, cat: "chicken", color: "#d9893a", eat: 11 },
-  halfchk: { name: "한강통닭 반마리", price: 5000, cat: "chicken", color: "#e0a046", eat: 9 }
+  halfchk: { name: "한강통닭 반마리", price: 5000, cat: "chicken", color: "#e0a046", eat: 9 },
+  sparkler: { name: "스파클러", price: 500, cat: "fire", color: "#ffcf5a", eat: 0, fire: "hand" },
+  fountain: { name: "분수 폭죽", price: 1500, cat: "fire", color: "#e94d8a", eat: 0, fire: "ground" },
+  rocket: { name: "연발 폭죽", price: 3000, cat: "fire", color: "#3b6ea8", eat: 0, fire: "ground" }
 };
 const CATS = {
   snack: { title: "과자 진열대", verb: "과자 고르기", items: ["chips", "shrimp", "choco", "jelly", "rpack"] },
@@ -120,6 +123,25 @@ const ART = {
     x.fillStyle = "#4caf50"; x.fillRect(w / 2 + 8, 92, 8, 4); x.fillStyle = "#ffd23f"; x.beginPath(); x.ellipse(w / 2 - 12, 96, 7, 4, 0, 0, 7); x.fill();
     x.strokeStyle = "rgba(255,255,255,.75)"; x.lineWidth = 2; [-14, 0, 14].forEach(o => { x.beginPath(); x.moveTo(w / 2 + o, 80); x.bezierCurveTo(w / 2 + o - 6, 72, w / 2 + o + 6, 68, w / 2 + o, 60); x.stroke(); });
     label(x, "얼큰한 맛", w / 2, h - 30, 13, "#fff3c4");
+  },
+  sparkler(x, w, h) {
+    const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "#1d2b5a"); g.addColorStop(1, "#3a2a6a"); x.fillStyle = g; rr(x, 14, 8, w - 28, h - 16, 10); x.fill();
+    for (let i = 0; i < 5; i++) { x.strokeStyle = "#c9ccd2"; x.lineWidth = 3; x.beginPath(); x.moveTo(34 + i * 15, 150); x.lineTo(34 + i * 15, 70); x.stroke(); x.fillStyle = "#6b6f78"; x.fillRect(32 + i * 15, 70, 5, 34); }
+    x.fillStyle = "#ffe27a"; for (let i = 0; i < 26; i++) { const a = i / 26 * Math.PI * 2, r = 14 + (i % 3) * 7; x.fillRect(w / 2 + Math.cos(a) * r, 46 + Math.sin(a) * r, 3, 3); }
+    label(x, "스파클러", w / 2, 22, 15, "#ffe9a8");
+  },
+  fountain(x, w, h) {
+    x.fillStyle = "#fff1f6"; rr(x, 10, 8, w - 20, h - 16, 8); x.fill();
+    x.fillStyle = "#e94d8a"; x.beginPath(); x.moveTo(w / 2 - 30, 140); x.lineTo(w / 2 + 30, 140); x.lineTo(w / 2 + 14, 84); x.lineTo(w / 2 - 14, 84); x.fill();
+    x.fillStyle = "#ffd23f"; x.fillRect(w / 2 - 24, 112, 48, 10);
+    const cols = ["#ff5a5a", "#ffd25a", "#5ad1ff", "#7dffa8"]; for (let i = 0; i < 22; i++) { x.fillStyle = cols[i % 4]; const a = -Math.PI / 2 + (i / 21 - .5) * 1.6, r = 20 + (i % 4) * 9; x.fillRect(w / 2 + Math.cos(a) * r, 80 + Math.sin(a) * r, 4, 4); }
+    label(x, "분수 폭죽", w / 2, 26, 15, "#c2185b");
+  },
+  rocket(x, w, h) {
+    x.fillStyle = "#1f3f73"; rr(x, 10, 8, w - 20, h - 16, 8); x.fill();
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) { x.fillStyle = j ? "#ffd23f" : "#ff6b3d"; x.beginPath(); x.arc(38 + i * 26, 96 + j * 26, 11, 0, 7); x.fill(); x.fillStyle = "#2a2a2a"; x.beginPath(); x.arc(38 + i * 26, 96 + j * 26, 4, 0, 7); x.fill(); }
+    x.fillStyle = "#ffe27a"; for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; x.fillRect(w / 2 + Math.cos(a) * 24, 52 + Math.sin(a) * 18, 3, 3); }
+    label(x, "연발 폭죽", w / 2, 26, 15, "#ffffff");
   },
   halfchk(x, w, h) {
     x.fillStyle = "#f6e7c8"; rr(x, 10, 40, w - 20, h - 50, 8); x.fill(); x.strokeStyle = "#c0392b"; x.lineWidth = 5; rr(x, 12, 42, w - 24, h - 54, 7); x.stroke();

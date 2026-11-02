@@ -33,11 +33,11 @@ $("leaveModal").addEventListener("click", e => { if (e.target === $("leaveModal"
 addEventListener("keydown", e => { if (e.key === "Escape" && !$("leaveModal").hidden) $("leaveModal").hidden = true; });
 $("leaveBtn").addEventListener("click", async () => {
   $("leaveModal").hidden = true;
-  started = false; me.bt = null; boarded = null; me.rm = null; me.hold = false; me.eat = 0; me.basket = null; me.q = 0; payState = null; me.ch = 0; me.pb = null; me.mat = false; me.bike = null; me.em = null; if (me.dv && !me.dv.got && Date.now() - me.dv.at < DV_RIDE_IN * 1000) { wallet.money += PRODUCTS[me.dv.k].price + DV_FEE; saveWallet(); } me.dv = null; if (me.st === "bike") me.st = "walk"; exitMung();
+  started = false; me.bt = null; boarded = null; me.rm = null; me.hold = false; me.eat = 0; me.basket = null; me.q = 0; payState = null; me.ch = 0; me.pb = null; me.mat = false; me.bike = null; me.em = null; me.lit = 0; me.tw = 0; me.gf = null; me.ph = null; me.pj = null; if (shoot) shoot.done = true; if (me.dv && !me.dv.got && Date.now() - me.dv.at < DV_RIDE_IN * 1000) { wallet.money += PRODUCTS[me.dv.k].price + DV_FEE; saveWallet(); } me.dv = null; if (me.st === "bike") me.st = "walk"; exitMung();
   try { if (room) { await room.presence({ n: null, st: null, bt: null, rm: null }); if (typeof room.leave === "function") await room.leave(); } } catch (e) {}
   room = null;
   if (myAvatar) { scene.remove(myAvatar); myAvatar = null; }
-  ["hudLeft", "hudRight", "actions", "joy", "keys", "settings", "chatPanel", "bagBtn", "shopModal", "bagModal"].forEach(id => $(id).hidden = true);
+  ["hudLeft", "hudRight", "actions", "joy", "keys", "settings", "chatPanel", "photoPanel", "bagBtn", "shopModal", "bagModal"].forEach(id => $(id).hidden = true);
   try { if (audio.ready) { audio.setMuted(true); audio.ac.suspend(); } } catch (e) {}
   try { window.close(); } catch (e) {}
   setTimeout(() => { $("byeGate").hidden = false; }, 250);
@@ -56,7 +56,7 @@ function sayMacro(i) {
   mySay = { i, at: now }; showBubble(() => myAvatar, MACROS[i], 4, "me"); if (audio.ready) audio.pop(); publish(true);
 }
 $("chatGrid").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; sayMacro(+b.dataset.i); $("chatPanel").hidden = true; $("chatBtn").setAttribute("aria-expanded", "false"); });
-$("chatBtn").addEventListener("click", () => { const s = $("chatPanel"); s.hidden = !s.hidden; $("chatBtn").setAttribute("aria-expanded", String(!s.hidden)); $("settings").hidden = true; });
+$("chatBtn").addEventListener("click", () => { const s = $("chatPanel"); s.hidden = !s.hidden; $("chatBtn").setAttribute("aria-expanded", String(!s.hidden)); $("settings").hidden = true; $("photoPanel").hidden = true; });
 addEventListener("keydown", e => { if (e.target && e.target.closest && e.target.closest("input")) return; if (/^[1-6]$/.test(e.key)) sayMacro(+e.key - 1); });
 $("setBtn").addEventListener("click", () => { const s = $("settings"); s.hidden = !s.hidden; $("setBtn").setAttribute("aria-expanded", String(!s.hidden)); });
 [["volWater", "water"], ["volNature", "nature"], ["volAnimal", "animal"], ["volStep", "sfx"]].forEach(([id, k]) => {
@@ -70,7 +70,7 @@ document.addEventListener("pointerdown", e => {
 /* photo */
 let shotBlob = null, downloads = null;
 (async () => { try { if (window.claude && typeof window.claude.use === "function") downloads = await window.claude.use("downloads"); } catch (e) { downloads = null; } })();
-$("camBtn").addEventListener("click", () => {
+function snapNow() {
   renderer.render(scene, camera);
   const w = canvas.width, h = canvas.height, c = document.createElement("canvas"); c.width = w; c.height = h;
   const x = c.getContext("2d"); x.drawImage(canvas, 0, 0);
@@ -78,12 +78,15 @@ $("camBtn").addEventListener("click", () => {
   x.font = `${Math.round(16 * s)}px 'Gowun Batang', serif`; x.fillStyle = "rgba(255,255,255,.9)"; x.textAlign = "right"; x.textBaseline = "bottom";
   x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = 8 * s;
   x.fillText(`한강 돗자리 · ${me.name} · ${k.getMonth() + 1}월 ${k.getDate()}일 ${phase}`, w - 18 * s, h - 16 * s);
+  deliverShot(c);
+}
+function deliverShot(c) {
   c.toBlob(b => {
     if (!b) return; shotBlob = b; const img = $("shotImg"); if (img.src) URL.revokeObjectURL(img.src); img.src = URL.createObjectURL(b);
     $("shotSave").hidden = !downloads; $("shotTip").textContent = !downloads ? "이미지를 길게 누르거나 우클릭해서 저장할 수 있습니다." : touchy && navigator.canShare ? "저장을 누른 뒤 '이미지 저장'을 고르면 사진 앱에 들어가요" : "";
     $("shot").hidden = false;
   }, "image/png");
-});
+}
 $("shotClose").addEventListener("click", () => { $("shot").hidden = true; });
 $("shotSave").addEventListener("click", async () => {
   if (!downloads || !shotBlob) return; const k = kst(), pad = n => String(n).padStart(2, "0");

@@ -30,6 +30,12 @@ function setBasketCount(b, n) {
 // what someone holds while eating: the ramen bowl, or a snack from the store
 function makeHeld(kind) {
   if (kind === "ramen") return makeBowl();
+  if (kind === "sparkler") { // a wire stick; the glowing tip lights up while it burns
+    const g = new THREE.Group(), wire = new THREE.Mesh(new THREE.CylinderGeometry(.006, .006, .46, 5), mat(0x9aa0a8)); wire.position.y = .25; g.add(wire);
+    const coat = new THREE.Mesh(new THREE.CylinderGeometry(.013, .013, .2, 6), mat(0x55585e)); coat.position.y = .36; g.add(coat);
+    const tip = new THREE.Mesh(new THREE.SphereGeometry(.035, 8, 6), new THREE.MeshBasicMaterial({ color: 0xfff1b0 })); tip.position.y = .47; tip.visible = false; g.add(tip);
+    g.userData.tip = tip; return g;
+  }
   const P = PRODUCTS[kind] || PRODUCTS.chips, g = new THREE.Group(), col = new THREE.Color(P.color);
   const add = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; };
   const art = new THREE.MeshLambertMaterial({ map: PRODUCT_TEX[kind] }), side = mat(col);

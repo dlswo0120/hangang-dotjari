@@ -16,7 +16,11 @@ function cleanPresence(p) {
     q: num(p.q, 0, 1e15, 0), bk: Number.isInteger(p.bk) ? clamp(p.bk, -1, 30) : -1,
     ch: num(p.ch, 0, 1e15, 0), pb: null, mt: p.mt === 1, bl: num(p.bl, 0, 1e15, 0)
   };
-  if (p.em && typeof p.em === "object" && Number.isInteger(p.em.i) && p.em.i >= 0 && p.em.i < EMOTES.length && typeof p.em.at === "number") o.em = { i: p.em.i, at: p.em.at };
+  o.lt = num(p.lt, 0, 1e15, 0); o.tw = num(p.tw, 0, 1e15, 0);
+  if (p.gf && typeof p.gf === "object" && (p.gf.k === "fountain" || p.gf.k === "rocket") && typeof p.gf.at === "number") o.gf = { k: p.gf.k, at: p.gf.at, x: num(p.gf.x, WORLD.x0, WORLD.x1, 0), z: num(p.gf.z, 0, WORLD.z1, 10) };
+  if (p.em && typeof p.em === "object" && Number.isInteger(p.em.i) && p.em.i >= 0 && p.em.i < EMOTES.length && typeof p.em.at === "number") o.em = { i: p.em.i, at: p.em.at, s: p.em.s === -1 ? -1 : 1 };
+  if (p.ph && typeof p.ph === "object" && Number.isInteger(p.ph.i) && EMOTES[p.ph.i] && EMOTES[p.ph.i].photo && typeof p.ph.at === "number") o.ph = { i: p.ph.i, at: p.ph.at, yaw: num(p.ph.yaw, -10, 10, 0) };
+  if (p.pj && typeof p.pj === "object" && typeof p.pj.p === "string" && typeof p.pj.at === "number") o.pj = { p: p.pj.p.slice(0, 80), at: p.pj.at };
   if (p.dv && typeof p.dv === "object" && typeof p.dv.k === "string" && PRODUCTS[p.dv.k] && typeof p.dv.at === "number") o.dv = { k: p.dv.k, at: p.dv.at };
   if (p.pb && typeof p.pb === "object" && typeof p.pb.t === "string" && typeof p.pb.at === "number") o.pb = { t: cleanWords(p.pb.t), at: p.pb.at, x: num(p.pb.x, WORLD.x0, WORLD.x1, 0) };
   if (p.rm && typeof p.rm === "object" && Number.isInteger(p.rm.m) && p.rm.m >= 0 && p.rm.m < 3) o.rm = { m: p.rm.m, at: num(p.rm.at, 0, 1e15, 0) };
@@ -64,7 +68,7 @@ function syncPeers(peers) {
 })();
 let lastPub = 0, lastPubKey = "", mySay = null;
 function presenceObj() {
-  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id, at: me.bt.at } : null, say: mySay, rm: me.rm, hr: me.hold ? 1 : 0, hi: me.hold || null, ea: me.eat || 0, q: me.q || 0, bk: me.basket ? me.basket.length : -1, ch: me.ch || 0, pb: me.pb || null, mt: me.mat ? 1 : 0, bl: me.bl || 0, dv: me.dv ? { k: me.dv.k, at: me.dv.at } : null, em: me.em || null };
+  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id, at: me.bt.at } : null, say: mySay, rm: me.rm, hr: me.hold ? 1 : 0, hi: me.hold || null, ea: me.eat || 0, q: me.q || 0, bk: me.basket ? me.basket.length : -1, ch: me.ch || 0, pb: me.pb || null, mt: me.mat ? 1 : 0, bl: me.bl || 0, dv: me.dv ? { k: me.dv.k, at: me.dv.at } : null, em: me.em || null, lt: me.lit || 0, tw: me.tw || 0, gf: me.gf || null, ph: me.ph || null, pj: me.pj || null };
   if (boarded && boarded.driver) { o.bx = +boatLocal.x.toFixed(2); o.bz = +boatLocal.z.toFixed(2); o.br = +boatLocal.r.toFixed(2); }
   else { o.bx = null; o.bz = null; o.br = null; }
   return o;

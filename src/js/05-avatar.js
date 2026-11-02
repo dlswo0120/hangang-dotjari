@@ -200,16 +200,20 @@ function updateAvatar(av, dt, t, o = {}) {
     if (o.cheer > 0 && !(o.eatT >= 0)) { const c = o.cheer; v.arL += (2.25 - v.arL) * c; v.arR += (2.25 - v.arR) * c; v.azL = v.azR = -.18; by += .5 * c; bz -= .12 * c; v.nod -= .15 * c; }
     const left = o.eatT >= 0 && holdKind !== "ramen" ? 1 - Math.min(1, o.eatT / eatTime(holdKind)) * .6 : 1;
     u.bowl.scale.setScalar(left);
-    u.bowl.position.set(0, by, bz);
+    let bx = 0;
+    if (o.spin != null) { const a = o.spin; bx = Math.sin(a) * .28; by += .18 + Math.cos(a) * .28; v.arR = 1.6 + Math.cos(a) * .7; v.azR = -.2 + Math.sin(a) * .5; v.arL = .3; v.azL = .2; }
+    u.bowl.position.set(bx, by, bz);
+    if (u.bowl.userData.tip) u.bowl.userData.tip.visible = !!o.lit;
   }
-  if (o.emote) emotePose(v, o.emote.i, o.emote.t, u.pose === "stand");
+  v.roll = 0;
+  if (o.emote) emotePose(v, o.emote.i, o.emote.t, u.pose === "stand", u, o.emote.s); else if (u.vR) u.vR.visible = false;
   u.torso.scale.y = 1 + Math.sin(ph * 2.1) * .012;
   if (o.mat === false) v.matP = 0;
   applyRig(av, v);
 }
 function applyRig(av, v) {
   const u = av.userData;
-  u.inner.rotation.x = v.pitch; u.inner.position.y = v.lift; u.hips.position.y = v.hipY;
+  u.inner.rotation.x = v.pitch; u.inner.rotation.z = v.roll || 0; u.inner.position.y = v.lift; u.hips.position.y = v.hipY;
   u.torso.rotation.x = -v.lean; u.head.rotation.x = -v.nod;
   u.legs[0].rotation.x = v.thL; u.legs[1].rotation.x = v.thR; u.knees[0].rotation.x = v.knL; u.knees[1].rotation.x = v.knR;
   u.arms[0].rotation.set(v.arL, 0, -v.azL); u.arms[1].rotation.set(v.arR, 0, v.azR);

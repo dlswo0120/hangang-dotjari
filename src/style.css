@@ -161,3 +161,14 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
 #danceGrid button{grid-column:1/-1}
 #chatPanel{max-height:calc(100vh - 110px);overflow:auto}
 .panel .ver{font-size:11px;opacity:.55;text-align:right;margin-top:-4px}
+.photo-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.photo-tabs button{border:1px solid var(--line);background:rgba(255,255,255,.06);border-radius:10px;padding:8px;font-size:13px}
+.photo-tabs button[aria-pressed=true]{background:#f2b46b;color:#2a1d0f;border-color:transparent}
+#photoGrid button:last-child:nth-child(odd){grid-column:1/-1}
+.photo-now{border:1px solid var(--line);background:transparent;border-radius:12px;padding:9px;font-size:13px;color:var(--ink-soft)}
+.countdown{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);z-index:16;font-size:min(28vw,150px);font-weight:700;color:#fff;text-shadow:0 4px 30px rgba(0,0,0,.45);pointer-events:none;font-family:var(--display)}
+.countdown.pop{animation:cdPop .9s ease forwards}
+@keyframes cdPop{0%{transform:translate(-50%,-50%) scale(1.5);opacity:0}20%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{opacity:.15}}
+.flash{position:fixed;inset:0;z-index:17;background:#fff;pointer-events:none;opacity:0}
+.flash.go{animation:flash .6s ease-out}
+@keyframes flash{0%{opacity:.9}100%{opacity:0}}

@@ -34,6 +34,13 @@
     <label class="slider" for="volStep">발소리<input type="range" id="volStep" min="0" max="100" value="60"></label>
     <p class="ver" id="verLabel"></p>
   </div>
+  <div class="panel" id="photoPanel" hidden>
+    <h3>사진 찍기</h3>
+    <div class="seg photo-tabs" id="photoTabs"></div>
+    <div class="chat-grid" id="photoGrid"></div>
+    <p id="photoHint"></p>
+    <button class="photo-now" id="photoNow">포즈 없이 지금 찍기</button>
+  </div>
   <div class="panel" id="chatPanel" hidden>
     <h3>말하기</h3>
     <div class="chat-grid" id="chatGrid"></div>
@@ -108,6 +115,15 @@
   </form>
 </div>
 
+<div class="modal" id="fsModal" hidden role="dialog" aria-modal="true" aria-labelledby="fsTitle">
+  <div class="card shop">
+    <div class="shop-head"><h2 id="fsTitle">한강 불꽃 가게</h2><button class="x" id="fsClose" aria-label="닫기">닫기</button></div>
+    <p class="dv-sub">밤 8시~10시에만 열어요. 산 불꽃은 가방에 들어가요. 여기서만 즐기는 가상 불꽃놀이예요</p>
+    <div class="shop-grid" id="fsGrid"></div>
+    <div class="shop-foot"><span>스파클러는 꺼낸 뒤 불을 붙여요</span><span id="fsWallet">내 돈 0원</span></div>
+  </div>
+</div>
+
 <div class="modal" id="dvModal" hidden role="dialog" aria-modal="true" aria-labelledby="dvTitle">
   <div class="card shop">
     <div class="shop-head"><h2 id="dvTitle">한강통닭 배달</h2><button class="x" id="dvClose" aria-label="닫기">닫기</button></div>
@@ -140,6 +156,8 @@
   <small>새로고침하면 펼친 돗자리는 정리되고, 돈과 가방은 그대로예요</small>
 </div>
 
+<div class="countdown" id="countdown" hidden>3</div>
+<div class="flash" id="flash" hidden></div>
 <div class="mung-hint" id="mungHint" hidden>물멍 중 · 화면을 누르면 돌아와요</div>
 
 <div class="modal" id="leaveModal" hidden role="dialog" aria-modal="true" aria-labelledby="leaveTitle">

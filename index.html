@@ -173,6 +173,17 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
 #danceGrid button{grid-column:1/-1}
 #chatPanel{max-height:calc(100vh - 110px);overflow:auto}
 .panel .ver{font-size:11px;opacity:.55;text-align:right;margin-top:-4px}
+.photo-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.photo-tabs button{border:1px solid var(--line);background:rgba(255,255,255,.06);border-radius:10px;padding:8px;font-size:13px}
+.photo-tabs button[aria-pressed=true]{background:#f2b46b;color:#2a1d0f;border-color:transparent}
+#photoGrid button:last-child:nth-child(odd){grid-column:1/-1}
+.photo-now{border:1px solid var(--line);background:transparent;border-radius:12px;padding:9px;font-size:13px;color:var(--ink-soft)}
+.countdown{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);z-index:16;font-size:min(28vw,150px);font-weight:700;color:#fff;text-shadow:0 4px 30px rgba(0,0,0,.45);pointer-events:none;font-family:var(--display)}
+.countdown.pop{animation:cdPop .9s ease forwards}
+@keyframes cdPop{0%{transform:translate(-50%,-50%) scale(1.5);opacity:0}20%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{opacity:.15}}
+.flash{position:fixed;inset:0;z-index:17;background:#fff;pointer-events:none;opacity:0}
+.flash.go{animation:flash .6s ease-out}
+@keyframes flash{0%{opacity:.9}100%{opacity:0}}
 </style>
 
 </head>
@@ -211,6 +222,13 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
     <label class="slider" for="volAnimal">동물<input type="range" id="volAnimal" min="0" max="100" value="45"></label>
     <label class="slider" for="volStep">발소리<input type="range" id="volStep" min="0" max="100" value="60"></label>
     <p class="ver" id="verLabel"></p>
+  </div>
+  <div class="panel" id="photoPanel" hidden>
+    <h3>사진 찍기</h3>
+    <div class="seg photo-tabs" id="photoTabs"></div>
+    <div class="chat-grid" id="photoGrid"></div>
+    <p id="photoHint"></p>
+    <button class="photo-now" id="photoNow">포즈 없이 지금 찍기</button>
   </div>
   <div class="panel" id="chatPanel" hidden>
     <h3>말하기</h3>
@@ -286,6 +304,15 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
   </form>
 </div>
 
+<div class="modal" id="fsModal" hidden role="dialog" aria-modal="true" aria-labelledby="fsTitle">
+  <div class="card shop">
+    <div class="shop-head"><h2 id="fsTitle">한강 불꽃 가게</h2><button class="x" id="fsClose" aria-label="닫기">닫기</button></div>
+    <p class="dv-sub">밤 8시~10시에만 열어요. 산 불꽃은 가방에 들어가요. 여기서만 즐기는 가상 불꽃놀이예요</p>
+    <div class="shop-grid" id="fsGrid"></div>
+    <div class="shop-foot"><span>스파클러는 꺼낸 뒤 불을 붙여요</span><span id="fsWallet">내 돈 0원</span></div>
+  </div>
+</div>
+
 <div class="modal" id="dvModal" hidden role="dialog" aria-modal="true" aria-labelledby="dvTitle">
   <div class="card shop">
     <div class="shop-head"><h2 id="dvTitle">한강통닭 배달</h2><button class="x" id="dvClose" aria-label="닫기">닫기</button></div>
@@ -318,6 +345,8 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
   <small>새로고침하면 펼친 돗자리는 정리되고, 돈과 가방은 그대로예요</small>
 </div>
 
+<div class="countdown" id="countdown" hidden>3</div>
+<div class="flash" id="flash" hidden></div>
 <div class="mung-hint" id="mungHint" hidden>물멍 중 · 화면을 누르면 돌아와요</div>
 
 <div class="modal" id="leaveModal" hidden role="dialog" aria-modal="true" aria-labelledby="leaveTitle">
@@ -536,7 +565,7 @@ window.HANGANG_CONFIG = {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
-const APP_VERSION = "2026.11.02g", UPDATES = [{"v": "2026.11.02g", "date": "11월 2일", "items": ["가슴 튕기기 춤을 출 때 오른팔을 몸 앞에 가로로 받쳐요", "설정 화면 맨 아래에서 지금 버전을 확인할 수 있어요"]}, {"v": "2026.11.02f", "date": "11월 2일", "items": ["말하기 메뉴에 '감정 표현'(손 흔들기 · 박수 · 만세 · 하트 · 꾸벅 인사)이 생겼어요", "'가슴 튕기기 춤'을 출 수 있어요. 여럿이 같이 누르면 단체 춤!"]}, {"v": "2026.11.02e", "date": "11월 2일", "items": ["친구 돗자리 바로 옆에 내 돗자리를 붙여 펼 수 있어요. 옆에 서면 나란히 맞춰 펴져요"]}, {"v": "2026.11.02d", "date": "11월 2일", "items": ["오리배 선착장에 이용 안내 표지판이 생겼어요", "자전거 대여소 옆에 '한강 소식판'이 생겼어요. 업데이트 내역을 언제든 볼 수 있어요"]}, {"v": "2026.11.02c", "date": "11월 2일", "items": ["앉아 있을 때 '한강통닭'에 치킨 배달을 시킬 수 있어요. 2분쯤 뒤 오토바이 기사님이 자리까지 가져다 드려요", "배달 전용 '한강통닭 반마리'(배달비 포함 6,000원)가 생겼어요"]}, {"v": "2026.11.02b", "date": "11월 2일", "items": ["강 건너편 잔디에 '한강 자전거 대여소'가 생겼어요. 10분에 1,000원, 같은 곳에 반납해요", "자전거를 타는 동안 '따르릉' 벨을 울릴 수 있어요", "길가에 '돗자리 대여소'가 생겼어요. 오늘 첫 대여는 무료, 그다음은 500원이에요", "돗자리 없이도 잔디에 그냥 앉거나 누울 수 있어요"]}, {"v": "2026.11.02", "date": "11월 2일", "items": ["앉아서 가만히 있으면 화면이 비워지는 '물멍 모드'가 생겼어요", "강가에서 한마디 적은 종이배를 띄울 수 있어요", "매일 밤 9시, 4분 동안 한강 불꽃놀이가 열려요. 맑은 밤엔 별똥별도 지나가요", "음료를 든 채 가까이 앉으면 '짠' 할 수 있어요", "라면은 편의점에서 봉지라면을 사 와서 기계로 끓여요", "찍은 사진을 휴대폰 사진 앱에 바로 저장할 수 있어요", "새 버전이 나오면 화면 위에 알려 드려요"]}];
+const APP_VERSION = "2026.11.02h", UPDATES = [{"v": "2026.11.02h", "date": "11월 2일", "items": ["강가에 '한강 불꽃 가게'가 생겼어요. 밤 8시~10시에만 열어요", "스파클러(500원)는 손에 들고, 분수 폭죽(1,500원)과 연발 폭죽(3,000원)은 잔디에 놓고 즐겨요", "불붙은 스파클러를 든 사람 곁에서 불을 옮겨 받을 수 있어요", "카메라 버튼에서 혼자·둘이·단체 포즈를 골라 앞에서 사진을 찍어요. 같이 찍은 사람도 사진을 받아요"]}, {"v": "2026.11.02g", "date": "11월 2일", "items": ["가슴 튕기기 춤을 출 때 오른팔을 몸 앞에 가로로 받쳐요", "설정 화면 맨 아래에서 지금 버전을 확인할 수 있어요"]}, {"v": "2026.11.02f", "date": "11월 2일", "items": ["말하기 메뉴에 '감정 표현'(손 흔들기 · 박수 · 만세 · 하트 · 꾸벅 인사)이 생겼어요", "'가슴 튕기기 춤'을 출 수 있어요. 여럿이 같이 누르면 단체 춤!"]}, {"v": "2026.11.02e", "date": "11월 2일", "items": ["친구 돗자리 바로 옆에 내 돗자리를 붙여 펼 수 있어요. 옆에 서면 나란히 맞춰 펴져요"]}, {"v": "2026.11.02d", "date": "11월 2일", "items": ["오리배 선착장에 이용 안내 표지판이 생겼어요", "자전거 대여소 옆에 '한강 소식판'이 생겼어요. 업데이트 내역을 언제든 볼 수 있어요"]}, {"v": "2026.11.02c", "date": "11월 2일", "items": ["앉아 있을 때 '한강통닭'에 치킨 배달을 시킬 수 있어요. 2분쯤 뒤 오토바이 기사님이 자리까지 가져다 드려요", "배달 전용 '한강통닭 반마리'(배달비 포함 6,000원)가 생겼어요"]}, {"v": "2026.11.02b", "date": "11월 2일", "items": ["강 건너편 잔디에 '한강 자전거 대여소'가 생겼어요. 10분에 1,000원, 같은 곳에 반납해요", "자전거를 타는 동안 '따르릉' 벨을 울릴 수 있어요", "길가에 '돗자리 대여소'가 생겼어요. 오늘 첫 대여는 무료, 그다음은 500원이에요", "돗자리 없이도 잔디에 그냥 앉거나 누울 수 있어요"]}, {"v": "2026.11.02", "date": "11월 2일", "items": ["앉아서 가만히 있으면 화면이 비워지는 '물멍 모드'가 생겼어요", "강가에서 한마디 적은 종이배를 띄울 수 있어요", "매일 밤 9시, 4분 동안 한강 불꽃놀이가 열려요. 맑은 밤엔 별똥별도 지나가요", "음료를 든 채 가까이 앉으면 '짠' 할 수 있어요", "라면은 편의점에서 봉지라면을 사 와서 기계로 끓여요", "찍은 사진을 휴대폰 사진 앱에 바로 저장할 수 있어요", "새 버전이 나오면 화면 위에 알려 드려요"]}];
 "use strict";
 const $ = id => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -1283,16 +1312,20 @@ function updateAvatar(av, dt, t, o = {}) {
     if (o.cheer > 0 && !(o.eatT >= 0)) { const c = o.cheer; v.arL += (2.25 - v.arL) * c; v.arR += (2.25 - v.arR) * c; v.azL = v.azR = -.18; by += .5 * c; bz -= .12 * c; v.nod -= .15 * c; }
     const left = o.eatT >= 0 && holdKind !== "ramen" ? 1 - Math.min(1, o.eatT / eatTime(holdKind)) * .6 : 1;
     u.bowl.scale.setScalar(left);
-    u.bowl.position.set(0, by, bz);
+    let bx = 0;
+    if (o.spin != null) { const a = o.spin; bx = Math.sin(a) * .28; by += .18 + Math.cos(a) * .28; v.arR = 1.6 + Math.cos(a) * .7; v.azR = -.2 + Math.sin(a) * .5; v.arL = .3; v.azL = .2; }
+    u.bowl.position.set(bx, by, bz);
+    if (u.bowl.userData.tip) u.bowl.userData.tip.visible = !!o.lit;
   }
-  if (o.emote) emotePose(v, o.emote.i, o.emote.t, u.pose === "stand");
+  v.roll = 0;
+  if (o.emote) emotePose(v, o.emote.i, o.emote.t, u.pose === "stand", u, o.emote.s); else if (u.vR) u.vR.visible = false;
   u.torso.scale.y = 1 + Math.sin(ph * 2.1) * .012;
   if (o.mat === false) v.matP = 0;
   applyRig(av, v);
 }
 function applyRig(av, v) {
   const u = av.userData;
-  u.inner.rotation.x = v.pitch; u.inner.position.y = v.lift; u.hips.position.y = v.hipY;
+  u.inner.rotation.x = v.pitch; u.inner.rotation.z = v.roll || 0; u.inner.position.y = v.lift; u.hips.position.y = v.hipY;
   u.torso.rotation.x = -v.lean; u.head.rotation.x = -v.nod;
   u.legs[0].rotation.x = v.thL; u.legs[1].rotation.x = v.thR; u.knees[0].rotation.x = v.knL; u.knees[1].rotation.x = v.knR;
   u.arms[0].rotation.set(v.arL, 0, -v.azL); u.arms[1].rotation.set(v.arR, 0, v.azR);
@@ -1383,7 +1416,10 @@ const PRODUCTS = {
   mochi: { name: "찹쌀떡 아이스", price: 3500, cat: "ice", color: "#f3efe4", eat: 7 },
   gangjeong: { name: "닭강정 컵", price: 6500, cat: "chicken", color: "#c4632a", eat: 10 },
   chicken: { name: "순살치킨", price: 8000, cat: "chicken", color: "#d9893a", eat: 11 },
-  halfchk: { name: "한강통닭 반마리", price: 5000, cat: "chicken", color: "#e0a046", eat: 9 }
+  halfchk: { name: "한강통닭 반마리", price: 5000, cat: "chicken", color: "#e0a046", eat: 9 },
+  sparkler: { name: "스파클러", price: 500, cat: "fire", color: "#ffcf5a", eat: 0, fire: "hand" },
+  fountain: { name: "분수 폭죽", price: 1500, cat: "fire", color: "#e94d8a", eat: 0, fire: "ground" },
+  rocket: { name: "연발 폭죽", price: 3000, cat: "fire", color: "#3b6ea8", eat: 0, fire: "ground" }
 };
 const CATS = {
   snack: { title: "과자 진열대", verb: "과자 고르기", items: ["chips", "shrimp", "choco", "jelly", "rpack"] },
@@ -1488,6 +1524,25 @@ const ART = {
     x.strokeStyle = "rgba(255,255,255,.75)"; x.lineWidth = 2; [-14, 0, 14].forEach(o => { x.beginPath(); x.moveTo(w / 2 + o, 80); x.bezierCurveTo(w / 2 + o - 6, 72, w / 2 + o + 6, 68, w / 2 + o, 60); x.stroke(); });
     label(x, "얼큰한 맛", w / 2, h - 30, 13, "#fff3c4");
   },
+  sparkler(x, w, h) {
+    const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "#1d2b5a"); g.addColorStop(1, "#3a2a6a"); x.fillStyle = g; rr(x, 14, 8, w - 28, h - 16, 10); x.fill();
+    for (let i = 0; i < 5; i++) { x.strokeStyle = "#c9ccd2"; x.lineWidth = 3; x.beginPath(); x.moveTo(34 + i * 15, 150); x.lineTo(34 + i * 15, 70); x.stroke(); x.fillStyle = "#6b6f78"; x.fillRect(32 + i * 15, 70, 5, 34); }
+    x.fillStyle = "#ffe27a"; for (let i = 0; i < 26; i++) { const a = i / 26 * Math.PI * 2, r = 14 + (i % 3) * 7; x.fillRect(w / 2 + Math.cos(a) * r, 46 + Math.sin(a) * r, 3, 3); }
+    label(x, "스파클러", w / 2, 22, 15, "#ffe9a8");
+  },
+  fountain(x, w, h) {
+    x.fillStyle = "#fff1f6"; rr(x, 10, 8, w - 20, h - 16, 8); x.fill();
+    x.fillStyle = "#e94d8a"; x.beginPath(); x.moveTo(w / 2 - 30, 140); x.lineTo(w / 2 + 30, 140); x.lineTo(w / 2 + 14, 84); x.lineTo(w / 2 - 14, 84); x.fill();
+    x.fillStyle = "#ffd23f"; x.fillRect(w / 2 - 24, 112, 48, 10);
+    const cols = ["#ff5a5a", "#ffd25a", "#5ad1ff", "#7dffa8"]; for (let i = 0; i < 22; i++) { x.fillStyle = cols[i % 4]; const a = -Math.PI / 2 + (i / 21 - .5) * 1.6, r = 20 + (i % 4) * 9; x.fillRect(w / 2 + Math.cos(a) * r, 80 + Math.sin(a) * r, 4, 4); }
+    label(x, "분수 폭죽", w / 2, 26, 15, "#c2185b");
+  },
+  rocket(x, w, h) {
+    x.fillStyle = "#1f3f73"; rr(x, 10, 8, w - 20, h - 16, 8); x.fill();
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) { x.fillStyle = j ? "#ffd23f" : "#ff6b3d"; x.beginPath(); x.arc(38 + i * 26, 96 + j * 26, 11, 0, 7); x.fill(); x.fillStyle = "#2a2a2a"; x.beginPath(); x.arc(38 + i * 26, 96 + j * 26, 4, 0, 7); x.fill(); }
+    x.fillStyle = "#ffe27a"; for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; x.fillRect(w / 2 + Math.cos(a) * 24, 52 + Math.sin(a) * 18, 3, 3); }
+    label(x, "연발 폭죽", w / 2, 26, 15, "#ffffff");
+  },
   halfchk(x, w, h) {
     x.fillStyle = "#f6e7c8"; rr(x, 10, 40, w - 20, h - 50, 8); x.fill(); x.strokeStyle = "#c0392b"; x.lineWidth = 5; rr(x, 12, 42, w - 24, h - 54, 7); x.stroke();
     x.fillStyle = "#c0392b"; x.fillRect(12, 92, w - 24, 30); label(x, "한강통닭", w / 2, 108, 18, "#fff6e0");
@@ -1582,6 +1637,12 @@ function setBasketCount(b, n) {
 // what someone holds while eating: the ramen bowl, or a snack from the store
 function makeHeld(kind) {
   if (kind === "ramen") return makeBowl();
+  if (kind === "sparkler") { // a wire stick; the glowing tip lights up while it burns
+    const g = new THREE.Group(), wire = new THREE.Mesh(new THREE.CylinderGeometry(.006, .006, .46, 5), mat(0x9aa0a8)); wire.position.y = .25; g.add(wire);
+    const coat = new THREE.Mesh(new THREE.CylinderGeometry(.013, .013, .2, 6), mat(0x55585e)); coat.position.y = .36; g.add(coat);
+    const tip = new THREE.Mesh(new THREE.SphereGeometry(.035, 8, 6), new THREE.MeshBasicMaterial({ color: 0xfff1b0 })); tip.position.y = .47; tip.visible = false; g.add(tip);
+    g.userData.tip = tip; return g;
+  }
   const P = PRODUCTS[kind] || PRODUCTS.chips, g = new THREE.Group(), col = new THREE.Color(P.color);
   const add = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; };
   const art = new THREE.MeshLambertMaterial({ map: PRODUCT_TEX[kind] }), side = mat(col);
@@ -1995,7 +2056,11 @@ function cleanPresence(p) {
     q: num(p.q, 0, 1e15, 0), bk: Number.isInteger(p.bk) ? clamp(p.bk, -1, 30) : -1,
     ch: num(p.ch, 0, 1e15, 0), pb: null, mt: p.mt === 1, bl: num(p.bl, 0, 1e15, 0)
   };
-  if (p.em && typeof p.em === "object" && Number.isInteger(p.em.i) && p.em.i >= 0 && p.em.i < EMOTES.length && typeof p.em.at === "number") o.em = { i: p.em.i, at: p.em.at };
+  o.lt = num(p.lt, 0, 1e15, 0); o.tw = num(p.tw, 0, 1e15, 0);
+  if (p.gf && typeof p.gf === "object" && (p.gf.k === "fountain" || p.gf.k === "rocket") && typeof p.gf.at === "number") o.gf = { k: p.gf.k, at: p.gf.at, x: num(p.gf.x, WORLD.x0, WORLD.x1, 0), z: num(p.gf.z, 0, WORLD.z1, 10) };
+  if (p.em && typeof p.em === "object" && Number.isInteger(p.em.i) && p.em.i >= 0 && p.em.i < EMOTES.length && typeof p.em.at === "number") o.em = { i: p.em.i, at: p.em.at, s: p.em.s === -1 ? -1 : 1 };
+  if (p.ph && typeof p.ph === "object" && Number.isInteger(p.ph.i) && EMOTES[p.ph.i] && EMOTES[p.ph.i].photo && typeof p.ph.at === "number") o.ph = { i: p.ph.i, at: p.ph.at, yaw: num(p.ph.yaw, -10, 10, 0) };
+  if (p.pj && typeof p.pj === "object" && typeof p.pj.p === "string" && typeof p.pj.at === "number") o.pj = { p: p.pj.p.slice(0, 80), at: p.pj.at };
   if (p.dv && typeof p.dv === "object" && typeof p.dv.k === "string" && PRODUCTS[p.dv.k] && typeof p.dv.at === "number") o.dv = { k: p.dv.k, at: p.dv.at };
   if (p.pb && typeof p.pb === "object" && typeof p.pb.t === "string" && typeof p.pb.at === "number") o.pb = { t: cleanWords(p.pb.t), at: p.pb.at, x: num(p.pb.x, WORLD.x0, WORLD.x1, 0) };
   if (p.rm && typeof p.rm === "object" && Number.isInteger(p.rm.m) && p.rm.m >= 0 && p.rm.m < 3) o.rm = { m: p.rm.m, at: num(p.rm.at, 0, 1e15, 0) };
@@ -2043,7 +2108,7 @@ function syncPeers(peers) {
 })();
 let lastPub = 0, lastPubKey = "", mySay = null;
 function presenceObj() {
-  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id, at: me.bt.at } : null, say: mySay, rm: me.rm, hr: me.hold ? 1 : 0, hi: me.hold || null, ea: me.eat || 0, q: me.q || 0, bk: me.basket ? me.basket.length : -1, ch: me.ch || 0, pb: me.pb || null, mt: me.mat ? 1 : 0, bl: me.bl || 0, dv: me.dv ? { k: me.dv.k, at: me.dv.at } : null, em: me.em || null };
+  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id, at: me.bt.at } : null, say: mySay, rm: me.rm, hr: me.hold ? 1 : 0, hi: me.hold || null, ea: me.eat || 0, q: me.q || 0, bk: me.basket ? me.basket.length : -1, ch: me.ch || 0, pb: me.pb || null, mt: me.mat ? 1 : 0, bl: me.bl || 0, dv: me.dv ? { k: me.dv.k, at: me.dv.at } : null, em: me.em || null, lt: me.lit || 0, tw: me.tw || 0, gf: me.gf || null, ph: me.ph || null, pj: me.pj || null };
   if (boarded && boarded.driver) { o.bx = +boatLocal.x.toFixed(2); o.bz = +boatLocal.z.toFixed(2); o.br = +boatLocal.r.toFixed(2); }
   else { o.bx = null; o.bz = null; o.br = null; }
   return o;
@@ -2175,6 +2240,7 @@ function dropRamen(reason) {
   if (!me.hold) return; me.hold = false; me.eat = 0; toast(reason); publish(true);
 }
 let actKey = "", matHinted = false;
+function canEatHeld() { return !!me.hold && !me.eat && (me.hold === "ramen" || !PRODUCTS[me.hold] || PRODUCTS[me.hold].cat !== "fire"); }
 function eatLabel() { return PRODUCTS[me.hold] && PRODUCTS[me.hold].cat === "drink" ? "마시기" : "먹기"; }
 function refreshActions() {
   if (!started) return;
@@ -2197,7 +2263,7 @@ function refreshActions() {
       else if (!me.rm && !own) status = "편의점에서 봉지라면을 사 오면 끓일 수 있어요";
       else if (!me.rm && own) status = "다른 분이 라면을 끓이는 중이에요";
     }
-    if (me.hold && !me.eat) acts.push(["eat", eatLabel(), "primary"]);
+    if (canEatHeld()) acts.push(["eat", eatLabel(), "primary"]);
     if (nearRiver()) acts.push(["paper", "종이배 띄우기", acts.length ? "" : "primary"]);
     const nb = nearBench();
     if (nb) acts.push(["bench", nb.kind === "stool" ? "의자에 앉기" : "벤치에 앉기", acts.length ? "" : "primary"]);
@@ -2209,12 +2275,12 @@ function refreshActions() {
     if (!me.hold && bo.squeeze != null) acts.push(["squeeze", "끼어 타기 (3명)", "duck"]);
   } else if (me.st === "bench" || me.st === "stool") {
     cheersAction(acts);
-    if (me.hold && !me.eat) acts.push(["eat", eatLabel(), acts.length ? "" : "primary"]);
+    if (canEatHeld()) acts.push(["eat", eatLabel(), acts.length ? "" : "primary"]);
     acts.push(["stand", "일어나기", acts.length ? "" : "primary"]);
     acts.push(["mung", "물멍", ""]);
   } else if (me.st === "sit" || me.st === "lie") {
     if (me.st === "sit") cheersAction(acts);
-    if (me.hold && !me.eat && me.st === "sit") acts.push(["eat", eatLabel(), acts.length ? "" : "primary"]);
+    if (canEatHeld() && me.st === "sit") acts.push(["eat", eatLabel(), acts.length ? "" : "primary"]);
     acts.push(["stand", "일어나기", acts.length ? "" : "primary"]);
     if (!me.hold) acts.push([me.st === "sit" ? "lie" : "sit", me.st === "sit" ? "눕기" : "앉기", ""]);
     acts.push(["mung", "물멍", ""]);
@@ -2229,6 +2295,8 @@ function refreshActions() {
   status = rentalActions(acts, status);
   deliveryActions(acts);
   boardActions(acts);
+  status = fireActions(acts, status);
+  status = photoActions(acts, status);
   if ($("status").textContent !== status) { $("status").textContent = status; $("status").hidden = !status; }
   // rebuild the buttons only when they change, so a running timer in the status line never eats a tap
   const key = JSON.stringify(acts); if (key === actKey) return; actKey = key;
@@ -2237,7 +2305,7 @@ function refreshActions() {
 }
 $("actRow").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return; const a = b.dataset.act;
-  if (storeClick(a) || rentalClick(a) || deliveryClick(a) || boardClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
+  if (storeClick(a) || rentalClick(a) || deliveryClick(a) || boardClick(a) || fireClick(a) || photoClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
   if (a === "sit" || a === "lie") {
     if (me.st === "walk") {
       if (!canSpread()) { toast("잔디나 대교 위에서만 돗자리를 펼 수 있습니다"); return; }
@@ -2440,7 +2508,7 @@ function openBag() {
   $("basketSec").hidden = !me.basket;
   (me.basket || []).forEach((k, i) => bl.appendChild(bagRow(PRODUCTS[k].name + " · " + won(PRODUCTS[k].price), "빼기", "drop", i, k)));
   if (me.basket && !me.basket.length) bl.appendChild(Object.assign(document.createElement("p"), { className: "empty", textContent: "아직 담은 물건이 없어요" }));
-  wallet.bag.forEach((k, i) => gl.appendChild(PRODUCTS[k].cook ? bagRow(PRODUCTS[k].name, "라면 기계에서 끓여요", "none", i, k) : bagRow(PRODUCTS[k].name, PRODUCTS[k].cat === "drink" ? "꺼내기" : "먹기", "eat", i, k)));
+  wallet.bag.forEach((k, i) => gl.appendChild(PRODUCTS[k].fire ? bagRow(PRODUCTS[k].name, PRODUCTS[k].fire === "hand" ? "꺼내기" : "설치하기", "fire", i, k) : PRODUCTS[k].cook ? bagRow(PRODUCTS[k].name, "라면 기계에서 끓여요", "none", i, k) : bagRow(PRODUCTS[k].name, PRODUCTS[k].cat === "drink" ? "꺼내기" : "먹기", "eat", i, k)));
   if (!wallet.bag.length) gl.appendChild(Object.assign(document.createElement("p"), { className: "empty", textContent: "산 물건이 없어요. 한강 편의점에 들러 보세요" }));
   $("bagModal").hidden = false;
 }
@@ -2455,6 +2523,7 @@ $("bagModal").addEventListener("click", e => {
   if (e.target === $("bagModal")) { $("bagModal").hidden = true; return; }
   const b = e.target.closest("button[data-act]"); if (!b) return; const i = +b.dataset.i;
   if (b.dataset.act === "drop" && me.basket) { me.basket.splice(i, 1); publish(true); actKey = ""; openBag(); return; }
+  if (b.dataset.act === "fire") { fireFromBag(i); return; }
   if (b.dataset.act === "eat") {
     if (me.hold) { toast("들고 있는 걸 먼저 다 먹어 주세요"); return; }
     if (me.st === "swim" || me.st === "lie" || boarded) { toast("지금은 먹을 수 없어요"); return; }
@@ -2538,11 +2607,11 @@ $("leaveModal").addEventListener("click", e => { if (e.target === $("leaveModal"
 addEventListener("keydown", e => { if (e.key === "Escape" && !$("leaveModal").hidden) $("leaveModal").hidden = true; });
 $("leaveBtn").addEventListener("click", async () => {
   $("leaveModal").hidden = true;
-  started = false; me.bt = null; boarded = null; me.rm = null; me.hold = false; me.eat = 0; me.basket = null; me.q = 0; payState = null; me.ch = 0; me.pb = null; me.mat = false; me.bike = null; me.em = null; if (me.dv && !me.dv.got && Date.now() - me.dv.at < DV_RIDE_IN * 1000) { wallet.money += PRODUCTS[me.dv.k].price + DV_FEE; saveWallet(); } me.dv = null; if (me.st === "bike") me.st = "walk"; exitMung();
+  started = false; me.bt = null; boarded = null; me.rm = null; me.hold = false; me.eat = 0; me.basket = null; me.q = 0; payState = null; me.ch = 0; me.pb = null; me.mat = false; me.bike = null; me.em = null; me.lit = 0; me.tw = 0; me.gf = null; me.ph = null; me.pj = null; if (shoot) shoot.done = true; if (me.dv && !me.dv.got && Date.now() - me.dv.at < DV_RIDE_IN * 1000) { wallet.money += PRODUCTS[me.dv.k].price + DV_FEE; saveWallet(); } me.dv = null; if (me.st === "bike") me.st = "walk"; exitMung();
   try { if (room) { await room.presence({ n: null, st: null, bt: null, rm: null }); if (typeof room.leave === "function") await room.leave(); } } catch (e) {}
   room = null;
   if (myAvatar) { scene.remove(myAvatar); myAvatar = null; }
-  ["hudLeft", "hudRight", "actions", "joy", "keys", "settings", "chatPanel", "bagBtn", "shopModal", "bagModal"].forEach(id => $(id).hidden = true);
+  ["hudLeft", "hudRight", "actions", "joy", "keys", "settings", "chatPanel", "photoPanel", "bagBtn", "shopModal", "bagModal"].forEach(id => $(id).hidden = true);
   try { if (audio.ready) { audio.setMuted(true); audio.ac.suspend(); } } catch (e) {}
   try { window.close(); } catch (e) {}
   setTimeout(() => { $("byeGate").hidden = false; }, 250);
@@ -2561,7 +2630,7 @@ function sayMacro(i) {
   mySay = { i, at: now }; showBubble(() => myAvatar, MACROS[i], 4, "me"); if (audio.ready) audio.pop(); publish(true);
 }
 $("chatGrid").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; sayMacro(+b.dataset.i); $("chatPanel").hidden = true; $("chatBtn").setAttribute("aria-expanded", "false"); });
-$("chatBtn").addEventListener("click", () => { const s = $("chatPanel"); s.hidden = !s.hidden; $("chatBtn").setAttribute("aria-expanded", String(!s.hidden)); $("settings").hidden = true; });
+$("chatBtn").addEventListener("click", () => { const s = $("chatPanel"); s.hidden = !s.hidden; $("chatBtn").setAttribute("aria-expanded", String(!s.hidden)); $("settings").hidden = true; $("photoPanel").hidden = true; });
 addEventListener("keydown", e => { if (e.target && e.target.closest && e.target.closest("input")) return; if (/^[1-6]$/.test(e.key)) sayMacro(+e.key - 1); });
 $("setBtn").addEventListener("click", () => { const s = $("settings"); s.hidden = !s.hidden; $("setBtn").setAttribute("aria-expanded", String(!s.hidden)); });
 [["volWater", "water"], ["volNature", "nature"], ["volAnimal", "animal"], ["volStep", "sfx"]].forEach(([id, k]) => {
@@ -2575,7 +2644,7 @@ document.addEventListener("pointerdown", e => {
 /* photo */
 let shotBlob = null, downloads = null;
 (async () => { try { if (window.claude && typeof window.claude.use === "function") downloads = await window.claude.use("downloads"); } catch (e) { downloads = null; } })();
-$("camBtn").addEventListener("click", () => {
+function snapNow() {
   renderer.render(scene, camera);
   const w = canvas.width, h = canvas.height, c = document.createElement("canvas"); c.width = w; c.height = h;
   const x = c.getContext("2d"); x.drawImage(canvas, 0, 0);
@@ -2583,12 +2652,15 @@ $("camBtn").addEventListener("click", () => {
   x.font = `${Math.round(16 * s)}px 'Gowun Batang', serif`; x.fillStyle = "rgba(255,255,255,.9)"; x.textAlign = "right"; x.textBaseline = "bottom";
   x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = 8 * s;
   x.fillText(`한강 돗자리 · ${me.name} · ${k.getMonth() + 1}월 ${k.getDate()}일 ${phase}`, w - 18 * s, h - 16 * s);
+  deliverShot(c);
+}
+function deliverShot(c) {
   c.toBlob(b => {
     if (!b) return; shotBlob = b; const img = $("shotImg"); if (img.src) URL.revokeObjectURL(img.src); img.src = URL.createObjectURL(b);
     $("shotSave").hidden = !downloads; $("shotTip").textContent = !downloads ? "이미지를 길게 누르거나 우클릭해서 저장할 수 있습니다." : touchy && navigator.canShare ? "저장을 누른 뒤 '이미지 저장'을 고르면 사진 앱에 들어가요" : "";
     $("shot").hidden = false;
   }, "image/png");
-});
+}
 $("shotClose").addEventListener("click", () => { $("shot").hidden = true; });
 $("shotSave").addEventListener("click", async () => {
   if (!downloads || !shotBlob) return; const k = kst(), pad = n => String(n).padStart(2, "0");
@@ -3345,12 +3417,32 @@ const EMOTES = [
   { id: "hurray", name: "만세", icon: "🙌", dur: 2.0, seat: true, say: "만세!" },
   { id: "heart", name: "하트", icon: "💗", dur: 2.6, seat: true, say: "♥" },
   { id: "bow", name: "꾸벅 인사", icon: "🙇", dur: 1.8, seat: false },
-  { id: "chest", name: "가슴 튕기기 춤", icon: "🕺", dur: 4.4, seat: false, dance: true, say: "♪" }
+  { id: "chest", name: "가슴 튕기기 춤", icon: "🕺", dur: 4.4, seat: false, dance: true, say: "♪" },
+  // photo poses (picked from the camera menu, held through the countdown)
+  { id: "pv", name: "브이 볼콕", icon: "✌️", dur: 9, seat: true, photo: "solo" },
+  { id: "pfist", name: "주먹 볼콕", icon: "🤜", dur: 9, seat: true, photo: "solo" },
+  { id: "paerial", name: "항공샷", icon: "🛸", dur: 9, seat: true, photo: "solo", aerial: true },
+  { id: "pheart", name: "하트 반쪽", icon: "🫶", dur: 9, seat: true, photo: "duo" },
+  { id: "pstick", name: "찰싹 붙기", icon: "🤝", dur: 9, seat: true, photo: "duo" },
+  { id: "pv2", name: "같이 브이", icon: "✌️", dur: 9, seat: true, photo: "duo" },
+  { id: "pjump", name: "점프샷", icon: "🦘", dur: 9, seat: false, photo: "group" },
+  { id: "paerial2", name: "단체 항공샷", icon: "🛸", dur: 9, seat: true, photo: "group", aerial: true },
+  { id: "pfight", name: "다 같이 파이팅", icon: "✊", dur: 9, seat: true, photo: "group", say: "화이팅!" }
 ];
+const PHOTO_SHOT_AT = { solo: 3.2, duo: 6.2, group: 6.2 }; // seconds from the start until the shutter
 const CHEST_BPM = 2.25; // beats per second
 
 // pose overrides, blended in and out over the emote's length
-function emotePose(v, i, t, standing) {
+function vSign(u, on) {
+  if (on && !u.vR) {
+    const g = new THREE.Group(), sk = new THREE.MeshLambertMaterial({ color: 0xf2c9a0 });
+    [-.32, .32].forEach(a => { const f = new THREE.Mesh(new THREE.CylinderGeometry(.018, .016, .13, 6), sk); f.position.set(Math.sin(a) * .06, -.06, 0); f.rotation.z = a; g.add(f); });
+    g.position.set(0, -.33, 0); u.arms[1].add(g); u.vR = g;
+  }
+  if (u.vR) u.vR.visible = on;
+}
+function emotePose(v, i, t, standing, u, side) {
+  if (u) vSign(u, false);
   const E = EMOTES[i]; if (!E || t < 0 || t > E.dur) return;
   const env = clamp(Math.min(t / .2, (E.dur - t) / .25), 0, 1), to = (k, val) => { v[k] += (val - v[k]) * env; };
   // arms are short next to the big head, so raises go out to the side where they stay visible
@@ -3368,10 +3460,18 @@ function emotePose(v, i, t, standing) {
     to("arL", .08); to("azL", .28);
     if (t > E.dur - 1) v.nod -= .15 * env; // finish looking up at the camera
   }
+  // photo poses (the arms are short, so hands go to the side of the big face)
+  else if (E.id === "pv" || E.id === "pv2") { to("arR", .75); to("azR", 1.55); v.roll = (v.roll || 0) + .14 * env; v.nod += .05 * env; if (u) vSign(u, env > .5); }
+  else if (E.id === "pfist") { to("arL", .95); to("arR", .95); to("azL", 1.35); to("azR", 1.35); v.roll = (v.roll || 0) - .1 * env; v.nod += .06 * env; }
+  else if (E.id === "paerial" || E.id === "paerial2") { v.nod -= .55 * env; to("arR", .3); to("azR", 2.3); to("arL", .3); to("azL", 2.3); if (u) vSign(u, env > .5); }
+  else if (E.id === "pheart") { const s = side || 1; v.roll = (v.roll || 0) - .2 * s * env; if (s > 0) { to("arR", .35); to("azR", 2.05); } else { to("arL", .35); to("azL", 2.05); } }
+  else if (E.id === "pstick") { const s = side || 1; v.roll = (v.roll || 0) - .3 * s * env; to("arL", .1); to("arR", .1); to("azL", .2); to("azR", .2); v.nod -= .05 * env; }
+  else if (E.id === "pjump") { to("arL", .25); to("arR", .25); to("azL", 2.45); to("azR", 2.45); const jt = t - (PHOTO_SHOT_AT.group - .45); if (standing && jt > 0 && jt < .9) v.lift += Math.sin(Math.PI * jt / .9) * .45; }
+  else if (E.id === "pfight") { to("arR", 2.0); to("azR", .15); to("arL", .2); to("azL", .2); v.lean -= .05 * env; }
 }
 function activeEmote(em) {
   if (!em || !EMOTES[em.i]) return null;
-  const t = (Date.now() - em.at) / 1000; return t >= 0 && t <= EMOTES[em.i].dur ? { i: em.i, t } : null;
+  const t = (Date.now() - em.at) / 1000; return t >= 0 && t <= EMOTES[em.i].dur ? { i: em.i, t, s: em.s || 1 } : null;
 }
 
 audio.beat = function (v, strong) {
@@ -3399,7 +3499,7 @@ function emoteSfx(key, a, dist) {
 /* menu inside the 말하기 panel */
 {
   const mk = (E, i) => { const b = document.createElement("button"); b.dataset.e = i; const s = document.createElement("span"); s.textContent = E.icon; s.className = "emo"; b.append(s, E.name); return b; };
-  EMOTES.forEach((E, i) => (E.dance ? $("danceGrid") : $("emoteGrid")).appendChild(mk(E, i)));
+  EMOTES.forEach((E, i) => { if (!E.photo) (E.dance ? $("danceGrid") : $("emoteGrid")).appendChild(mk(E, i)); });
   [$("emoteGrid"), $("danceGrid")].forEach(g => g.addEventListener("click", e => {
     const b = e.target.closest("button"); if (!b) return; playEmote(+b.dataset.e);
     $("chatPanel").hidden = true; $("chatBtn").setAttribute("aria-expanded", "false");
@@ -3495,7 +3595,7 @@ function frame() {
       myAvatar.rotation.y = lerpAngle(myAvatar.rotation.y, tr, 1 - Math.exp(-dt * 14));
     }
     const myEat = me.eat ? (Date.now() - me.eat) / 1000 : -1;
-    updateAvatar(myAvatar, dt, T, { moving: me.moving, speed: me.speed, crank: boarded ? boats[boarded.id].crank + (mySeat === 1 ? Math.PI / 2 : 0) : me.crank || 0, seat: mySeat, hold: me.hold, mat: !!me.mat, eatT: myEat, basket: me.basket ? me.basket.length : -1, cheer: cheerOf("me"), emote: activeEmote(me.em) });
+    updateAvatar(myAvatar, dt, T, { moving: me.moving, speed: me.speed, crank: boarded ? boats[boarded.id].crank + (mySeat === 1 ? Math.PI / 2 : 0) : me.crank || 0, seat: mySeat, hold: me.hold, mat: !!me.mat, eatT: myEat, basket: me.basket ? me.basket.length : -1, cheer: cheerOf("me"), emote: activeEmote(me.em), lit: litOf(me.hold, me.lit), spin: me.hold === "sparkler" && me.lit ? spinOf(me.tw) : null });
     avatarRental(myAvatar, me.st === "bike", me.crank || 0, me.speed, !!me.mat && me.st !== "sit" && me.st !== "lie" && myAvatar.userData.cur.matP < .05, dt);
     eatingFx(myAvatar, "me", myEat, 0, me.hold);
     if (me.eat && myEat >= eatTime(me.hold)) { toast(me.hold === "ramen" ? "잘 먹었습니다! 국물까지 싹 비웠어요" : `${PRODUCTS[me.hold] ? PRODUCTS[me.hold].name : "간식"} 맛있게 먹었어요!`); me.hold = false; me.eat = 0; publish(true); actKey = ""; }
@@ -3530,7 +3630,7 @@ function frame() {
     o.x += (tx - o.x) * k; o.z += (tz - o.z) * k; o.r = lerpAngle(o.r, tr, k);
     o.obj.position.set(o.x, ty, o.z); o.obj.rotation.y = o.r;
     const oEat = p.hi && p.ea ? (Date.now() - p.ea) / 1000 : -1, oE = oEat >= 0 && oEat < eatTime(p.hi) ? oEat : -1;
-    updateAvatar(o.obj, dt, T, { moving, speed: 3.6, seat, crank, hold: p.hi, eatT: oE, basket: p.bk, cheer: cheerOf(peer), mat: !!p.mt, emote: activeEmote(p.em) });
+    updateAvatar(o.obj, dt, T, { moving, speed: 3.6, seat, crank, hold: p.hi, eatT: oE, basket: p.bk, cheer: cheerOf(peer), mat: !!p.mt, emote: activeEmote(p.em), lit: litOf(p.hi, p.lt), spin: litOf(p.hi, p.lt) ? spinOf(p.tw) : null });
     avatarRental(o.obj, p.st === "bike", crank, stepD / Math.max(dt, 1e-3), !!p.mt && p.st !== "sit" && p.st !== "lie" && o.obj.userData.cur.matP < .05, dt);
     eatingFx(o.obj, peer, oE, Math.hypot(o.x - cam.tx, o.z - cam.tz), p.hi);
   }
@@ -3609,6 +3709,8 @@ function frame() {
   updateRentals(dt);
   updateDeliveries(dt);
   updateEmotes();
+  updateFireShop(dt);
+  updatePhoto();
   // bubbles follow their owners
   for (let i = bubbles.length - 1; i >= 0; i--) {
     const b = bubbles[i], o = b.getObj();
@@ -3673,6 +3775,365 @@ function frame() {
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+/* ================= 한강 불꽃 가게: 밤 8시~10시, 스파클러 · 분수 · 연발 ================= */
+const FS = { x: 50, z: 7 }, FS_OPEN = 20, FS_CLOSE = 22, SPARK_LIFE = 40000, TWIRL = 3000;
+const FS_ITEMS = ["sparkler", "fountain", "rocket"];
+const fsForceOpen = /[?&#]fs\b/.test(location.search + location.hash);
+function fireShopOpen() { const h = kst().getHours(); return fsForceOpen || (h >= FS_OPEN && h < FS_CLOSE); }
+function mainShowNow() { const d = todayShowStart(), n = Date.now(); return n >= d && n < d + FW_DUR; }
+
+/* small and medium spark pools (the big show uses its own) */
+function sparkPool(N, size) {
+  const pos = new Float32Array(N * 3), col = new Float32Array(N * 3), base = new Float32Array(N * 3), vel = new Float32Array(N * 3), life = new Float32Array(N), max = new Float32Array(N), grav = new Float32Array(N);
+  for (let i = 0; i < N; i++) pos[i * 3 + 1] = -9999;
+  const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.BufferAttribute(pos, 3)); geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  const pts = new THREE.Points(geo, new THREE.PointsMaterial({ size, map: fwDot, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+  pts.frustumCulled = false; scene.add(pts);
+  let next = 0, alive = 0;
+  return {
+    emit(x, y, z, vx, vy, vz, c, l, g) {
+      const i = next; next = (next + 1) % N; const j = i * 3;
+      pos[j] = x; pos[j + 1] = y; pos[j + 2] = z; vel[j] = vx; vel[j + 1] = vy; vel[j + 2] = vz;
+      base[j] = c.r; base[j + 1] = c.g; base[j + 2] = c.b; life[i] = max[i] = l; grav[i] = g; alive = Math.max(alive, l);
+    },
+    update(dt) {
+      if (alive <= 0) return; alive -= dt;
+      for (let i = 0; i < N; i++) {
+        const j = i * 3;
+        if (life[i] <= 0) { if (pos[j + 1] > -9000) { pos[j + 1] = -9999; col[j] = col[j + 1] = col[j + 2] = 0; } continue; }
+        life[i] -= dt; const dr = 1 - Math.min(1, dt * 1.6);
+        vel[j] *= dr; vel[j + 1] = vel[j + 1] * dr - grav[i] * dt; vel[j + 2] *= dr;
+        pos[j] += vel[j] * dt; pos[j + 1] += vel[j + 1] * dt; pos[j + 2] += vel[j + 2] * dt;
+        const f = Math.max(0, life[i] / max[i]); col[j] = base[j] * f; col[j + 1] = base[j + 1] * f; col[j + 2] = base[j + 2] * f;
+      }
+      geo.attributes.position.needsUpdate = true; geo.attributes.color.needsUpdate = true;
+    }
+  };
+}
+const sparksS = sparkPool(3500, .16), sparksM = sparkPool(1600, .55);
+const GOLD = new THREE.Color(0xffd27a), WHITE = new THREE.Color(0xfff6dc), SPARK_COLS = FW_COLS;
+const rnd = (a, b) => a + Math.random() * (b - a);
+
+/* the stall */
+const fsObj = { bulbs: [], shutter: null, signOpen: null, signClosed: null };
+{
+  const S = FS, add = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; o.receiveShadow = true; scene.add(o); return o; };
+  add(new THREE.BoxGeometry(2.8, .9, .8), mat(0x6b4a33), S.x, .45, S.z);
+  add(new THREE.BoxGeometry(2.9, .06, .9), mat(0x2a2d4a), S.x, .92, S.z);
+  [-1.35, 1.35].forEach(k => add(new THREE.BoxGeometry(.08, 2.5, .08), mat(0x3a3d44), S.x + k, 1.25, S.z - .35));
+  [-1.35, 1.35].forEach(k => add(new THREE.BoxGeometry(.08, 2.2, .08), mat(0x3a3d44), S.x + k, 1.1, S.z + .45));
+  for (let i = 0; i < 7; i++) add(new THREE.BoxGeometry(.42, .08, 1.3), mat(i % 2 ? 0xffffff : 0xd8322f), S.x - 1.26 + i * .42, 2.38, S.z + .05).rotation.x = -.18;
+  // goods on the counter
+  [["sparkler", -.8], ["fountain", 0], ["rocket", .8]].forEach(([k, ox]) => { const p = add(new THREE.PlaneGeometry(.36, .45), new THREE.MeshLambertMaterial({ map: PRODUCT_TEX[k] }), S.x + ox, 1.18, S.z + .2); p.rotation.x = -.35; p.castShadow = false; });
+  // string of bulbs, lit only while open
+  for (let i = 0; i < 9; i++) { const b = add(new THREE.SphereGeometry(.06, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffe2a0 }), S.x - 1.3 + i * .325, 2.12 - Math.sin(i / 8 * Math.PI) * .12, S.z + .7); b.castShadow = false; fsObj.bulbs.push(b); }
+  const open = signTex([["한강 불꽃 가게", 44, .36], ["밤 8시~10시 · 여기서만 할 수 있는 불꽃놀이", 22, .78]], "#2a2d4a", "#ffe9a8");
+  const closed = signTex([["한강 불꽃 가게", 44, .36], ["오늘 밤 8시에 열어요", 26, .78]], "#4a4d55", "#e8e8e8");
+  fsObj.signOpen = add(new THREE.PlaneGeometry(2.6, .62), signMat(open), S.x, 1.72, S.z + .74); fsObj.signOpen.castShadow = false;
+  fsObj.signClosed = add(new THREE.PlaneGeometry(2.6, .62), signMat(closed), S.x, 1.72, S.z + .741); fsObj.signClosed.castShadow = false;
+  fsObj.shutter = add(new THREE.PlaneGeometry(2.7, .55), mat(0x7a7f88, { side: THREE.DoubleSide }), S.x, 1.15, S.z + .46); fsObj.shutter.castShadow = false;
+  OBST.push({ x0: S.x - 1.5, x1: S.x + 1.5, z0: S.z - .5, z1: S.z + .5 });
+}
+const nearFireShop = () => me.level === "ground" && Math.abs(me.x - FS.x) < 2 && me.z > FS.z + .5 && me.z < FS.z + 2.6;
+
+/* buying */
+function openFireShop() {
+  const grid = $("fsGrid"); grid.textContent = "";
+  FS_ITEMS.forEach(k => {
+    const P = PRODUCTS[k], cell = document.createElement("div"); cell.className = "item";
+    const im = document.createElement("img"); im.className = "swatch"; im.alt = ""; im.src = PRODUCT_URL[k];
+    const nm = document.createElement("b"); nm.textContent = P.name;
+    const pr = document.createElement("span"); pr.className = "price"; pr.textContent = won(P.price);
+    const btn = document.createElement("button"); btn.textContent = "사기"; btn.dataset.k = k;
+    cell.append(im, nm, pr, btn); grid.appendChild(cell);
+  });
+  $("fsWallet").textContent = "내 돈 " + won(wallet.money); $("fsModal").hidden = false;
+}
+$("fsGrid").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return; const k = b.dataset.k, P = PRODUCTS[k];
+  if (!fireShopOpen()) { toast("가게 문을 닫았어요. 밤 8시~10시에 열어요"); return; }
+  if (wallet.money < P.price) { toast("돈이 모자라요"); return; }
+  if (wallet.bag.length >= BAG_MAX) { toast("가방이 가득 찼어요"); return; }
+  wallet.money -= P.price; wallet.bag.push(k); saveWallet(); $("fsWallet").textContent = "내 돈 " + won(wallet.money);
+  if (audio.ready) audio.click(); toast(P.name + "을(를) 샀어요. 가방에서 꺼내 쓸 수 있어요");
+});
+$("fsClose").addEventListener("click", () => { $("fsModal").hidden = true; });
+$("fsModal").addEventListener("click", e => { if (e.target === $("fsModal")) $("fsModal").hidden = true; });
+
+/* from the bag */
+function fireFromBag(i) {
+  const k = wallet.bag[i], P = PRODUCTS[k]; if (!P || !P.fire) return;
+  if (P.fire === "hand") {
+    if (me.hold) { toast("손에 든 걸 먼저 다 먹거나 내려놓아 주세요"); return; }
+    if (boarded || me.st === "swim" || me.st === "lie" || me.st === "bike") { toast("지금은 꺼낼 수 없어요"); return; }
+    wallet.bag.splice(i, 1); saveWallet(); me.hold = "sparkler"; me.eat = 0; me.lit = 0; $("bagModal").hidden = true;
+    toast("스파클러를 꺼냈어요. 불꽃 가게에서 불을 붙이거나, 불붙은 스파클러를 든 사람에게 옮겨 받으세요");
+  } else {
+    if (me.gf && Date.now() - me.gf.at < 14000) { toast("앞의 폭죽이 끝나면 놓을 수 있어요"); return; }
+    if (mainShowNow()) { toast("한강 불꽃놀이가 끝나면 놓을 수 있어요. 지금은 같이 구경해요!"); return; }
+    if (me.st !== "walk" || me.level !== "ground" || boarded) { toast("잔디 위에 서서 놓아 주세요"); return; }
+    const x = me.x - Math.sin(me.r) * 1.4, z = me.z - Math.cos(me.r) * 1.4;
+    if (!onGrass(x, z) || underRoof(x, z) || z < 1.5) { toast("잔디 위에서만 놓을 수 있어요"); return; }
+    for (const o of others.values()) if (Math.hypot(o.x - x, o.z - z) < 2.4) { toast("사람이 너무 가까워요. 조금 떨어진 곳에 놓아 주세요"); return; }
+    wallet.bag.splice(i, 1); saveWallet(); me.gf = { k, at: Date.now(), x: +x.toFixed(2), z: +z.toFixed(2) }; $("bagModal").hidden = true;
+    toast("치익… 3초 뒤에 불꽃이 올라가요! 조금 물러서세요");
+  }
+  publish(true); actKey = ""; refreshActions();
+}
+
+/* actions */
+function litOf(hold, lt) { return hold === "sparkler" && lt && Date.now() - lt < SPARK_LIFE; }
+function nearLitSparkler() {
+  for (const o of others.values()) if (litOf(o.p.hi, o.p.lt) && Math.hypot(o.x - me.x, o.z - me.z) < 1.9) return o;
+  return null;
+}
+function fireActions(acts, status) {
+  if (!started || anim || boarded) return status;
+  if (me.hold === "sparkler") {
+    if (!me.lit) {
+      if (nearFireShop() && fireShopOpen()) acts.unshift(["light", "불 붙이기", "primary"]);
+      else { const o = nearLitSparkler(); if (o) acts.unshift(["lightfrom", o.p.n + "님에게 불 옮겨 받기", "primary"]); else if (!status) status = "불꽃 가게나 불붙은 스파클러를 든 사람 곁으로 가 보세요"; }
+    } else { acts.unshift(["twirl", "빙글빙글", "primary"]); acts.push(["sparkoff", "끄기", ""]); }
+  }
+  if (me.st === "walk" && nearFireShop()) {
+    if (fireShopOpen()) { acts.unshift(["fireshop", "불꽃 사기", "primary"]); status = "한강 불꽃 가게 · 밤 10시까지 · 여기서만 할 수 있는 불꽃놀이"; }
+    else status = "한강 불꽃 가게는 밤 8시~10시에만 열어요";
+  }
+  return status;
+}
+function fireClick(a) {
+  if (a === "fireshop") { openFireShop(); return true; }
+  if (a === "light" || a === "lightfrom") {
+    me.lit = Date.now(); showBubble(() => myAvatar, "치익~", 1.4, "me"); if (audio.ready) audio.crunch(.5);
+    if (a === "lightfrom") { const o = nearLitSparkler(); if (o) toast(o.p.n + "님이 불을 나눠 줬어요!"); }
+    return true;
+  }
+  if (a === "twirl") { me.tw = Date.now(); return true; }
+  if (a === "sparkoff") { me.hold = false; me.lit = 0; me.tw = 0; toast("스파클러를 껐어요"); return true; }
+  return false;
+}
+
+/* per-frame: sparklers, ground fireworks, the stall lights */
+const groundFw = new Map(), shells = [];
+function sparkTipOf(av, out) { const b = av.userData.bowl; if (!b || !b.visible || !b.userData.tip) return false; b.userData.tip.getWorldPosition(out); return true; }
+const tipV = new THREE.Vector3();
+function emitSparkler(av, dt, dist) {
+  if (dist > 45 || !sparkTipOf(av, tipV)) return;
+  const n = Math.min(8, Math.floor(dt * 70 + Math.random()));
+  for (let i = 0; i < n; i++) sparksS.emit(tipV.x, tipV.y, tipV.z, rnd(-2.5, 2.5), rnd(-1, 2.8), rnd(-2.5, 2.5), Math.random() < .4 ? WHITE : GOLD, rnd(.25, .55), 4);
+  if (audio.ready && dist < 9 && Math.random() < dt * 5) audio.crunch(.12 * (1 - dist / 9));
+}
+function spinOf(tw) { const t = Date.now() - (tw || 0); return tw && t < TWIRL ? t / 1000 * 8 : null; }
+function updateFireShop(dt) {
+  const now = Date.now(), open = fireShopOpen();
+  fsObj.bulbs.forEach((b, i) => { b.visible = open; if (open) b.material.color.setHSL(.1, .9, .65 + .15 * Math.sin(T * 3 + i)); });
+  fsObj.signOpen.visible = open; fsObj.signClosed.visible = !open; fsObj.shutter.visible = !open;
+  // my sparkler burns out
+  if (me.hold === "sparkler" && me.lit && now - me.lit > SPARK_LIFE) { me.hold = false; me.lit = 0; me.tw = 0; toast("스파클러가 다 탔어요"); publish(true); actKey = ""; }
+  // sparks
+  if (myAvatar && litOf(me.hold, me.lit)) emitSparkler(myAvatar, dt, 0);
+  for (const o of others.values()) if (litOf(o.p.hi, o.p.lt)) emitSparkler(o.obj, dt, Math.hypot(o.x - cam.tx, o.z - cam.tz));
+  // ground fireworks (mine and everyone else's)
+  const live = new Set();
+  const consider = (key, gf) => {
+    if (!gf || !PRODUCTS[gf.k]) return; const t = (now - gf.at) / 1000; if (t < 0 || t > 16) return;
+    const id = key + ":" + gf.at; live.add(id); let g = groundFw.get(id);
+    if (!g) {
+      const obj = gf.k === "fountain" ? new THREE.Mesh(new THREE.CylinderGeometry(.08, .18, .3, 10), mat(0xe94d8a)) : new THREE.Mesh(new THREE.BoxGeometry(.32, .26, .24), mat(0x3b6ea8));
+      obj.position.set(gf.x, .14, gf.z); obj.castShadow = true; scene.add(obj); g = { obj, shots: 0 }; groundFw.set(id, g);
+    }
+    const d = Math.hypot(gf.x - cam.tx, gf.z - cam.tz), v = clamp(1 - d / 50, 0, 1);
+    if (t < 3) { if (Math.random() < dt * 25) sparksS.emit(gf.x, .32, gf.z, rnd(-.5, .5), rnd(.5, 1.5), rnd(-.5, .5), GOLD, .3, 3); if (audio.ready && d < 15 && Math.random() < dt * 4) audio.crunch(.15 * v); }
+    else if (gf.k === "fountain" && t < 11) {
+      const hue = (t * .15) % 1, c = new THREE.Color().setHSL(hue, .9, .6), n = Math.floor(dt * 220 + Math.random());
+      for (let i = 0; i < n; i++) sparksS.emit(gf.x, .32, gf.z, rnd(-1.1, 1.1), rnd(7.5, 10), rnd(-1.1, 1.1), Math.random() < .3 ? WHITE : c, rnd(1.1, 1.6), 5);
+      if (audio.ready && d < 20 && Math.random() < dt * 8) audio.crunch(.2 * v);
+    } else if (gf.k === "rocket") {
+      while (g.shots < 6 && t >= 3 + g.shots * .8) {
+        g.shots++; shells.push({ x: gf.x, y: .3, z: gf.z, vy: 16, top: 13 + Math.random() * 5, col: SPARK_COLS[Math.floor(Math.random() * 7)] });
+        if (audio.ready && d < 40) audio.tone(audio.sfx, "triangle", 900, 1800, .35, .05 * v + .001, audio.ac.currentTime);
+      }
+    }
+  };
+  if (me.gf) consider("me", me.gf);
+  for (const [peer, o] of others) consider(peer, o.p.gf);
+  for (const [id, g] of groundFw) if (!live.has(id)) { scene.remove(g.obj); groundFw.delete(id); }
+  for (let i = shells.length - 1; i >= 0; i--) {
+    const s = shells[i]; s.y += s.vy * dt; s.vy = Math.max(4, s.vy - 6 * dt);
+    sparksS.emit(s.x, s.y, s.z, rnd(-.2, .2), -1, rnd(-.2, .2), GOLD, .35, 0);
+    if (s.y >= s.top) {
+      for (let k = 0; k < 70; k++) { const u = Math.random() * 2 - 1, a = Math.random() * Math.PI * 2, r = Math.sqrt(1 - u * u), sp = rnd(4, 5.5); sparksM.emit(s.x, s.y, s.z, r * Math.cos(a) * sp, u * sp, r * Math.sin(a) * sp, Math.random() < .2 ? WHITE : s.col, rnd(1, 1.5), 2.2); }
+      if (audio.ready) { const dd = Math.hypot(s.x - camera.position.x, s.y - camera.position.y, s.z - camera.position.z); audio.boom(clamp(.6 - dd / 120, .05, .6), Math.min(.4, dd / 340)); }
+      shells.splice(i, 1);
+    }
+  }
+  sparksS.update(dt); sparksM.update(dt);
+}
+/* ================= 사진 포즈: 혼자 · 둘이 · 단체 ================= */
+const PHOTO_MODES = [["solo", "혼자"], ["duo", "둘이"], ["group", "단체"]];
+const photoCam = new THREE.PerspectiveCamera(50, 1, .1, 3000);
+let shoot = null, photoMode = "solo"; // shoot: { owner: "me" | peer, at, i, yaw, mode, done }
+const fwdOf = yaw => [-Math.sin(yaw), -Math.cos(yaw)];
+
+/* the menu (opens from the camera button) */
+function renderPhotoMenu() {
+  const tabs = $("photoTabs"), grid = $("photoGrid"); tabs.textContent = ""; grid.textContent = "";
+  PHOTO_MODES.forEach(([m, label]) => { const b = document.createElement("button"); b.textContent = label; b.dataset.m = m; b.setAttribute("aria-pressed", String(m === photoMode)); tabs.appendChild(b); });
+  EMOTES.forEach((E, i) => { if (E.photo !== photoMode) return; const b = document.createElement("button"); b.dataset.p = i; const s = document.createElement("span"); s.className = "emo"; s.textContent = E.icon; b.append(s, E.name); grid.appendChild(b); });
+  $("photoHint").textContent = photoMode === "solo" ? "고르면 3초 뒤에 앞에서 찍어 줘요" : "고르면 근처 사람들에게 '같이 찍기'가 떠요. 6초 뒤 찰칵!";
+}
+$("camBtn").addEventListener("click", () => {
+  const p = $("photoPanel"); p.hidden = !p.hidden; $("camBtn").setAttribute("aria-expanded", String(!p.hidden));
+  $("chatPanel").hidden = true; $("settings").hidden = true; if (!p.hidden) renderPhotoMenu();
+});
+$("photoTabs").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; photoMode = b.dataset.m; renderPhotoMenu(); });
+$("photoGrid").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; closePhotoMenu(); startShoot(+b.dataset.p); });
+$("photoNow").addEventListener("click", () => { closePhotoMenu(); snapNow(); });
+function closePhotoMenu() { $("photoPanel").hidden = true; $("camBtn").setAttribute("aria-expanded", "false"); }
+addEventListener("pointerdown", e => { if (!e.target.closest("#photoPanel,#camBtn")) closePhotoMenu(); });
+
+function poseReady(E) {
+  const standing = me.st === "walk" && !me.moving && !anim && !boarded, seated = me.st === "sit" || me.st === "bench" || me.st === "stool";
+  if (standing || (E.seat && seated)) return true;
+  toast(E.seat ? "서 있거나 앉아 있을 때 찍을 수 있어요" : "이 포즈는 서 있을 때 찍을 수 있어요"); return false;
+}
+function startShoot(i) {
+  const E = EMOTES[i]; if (!started || !myAvatar || !E) return;
+  if (shoot && !shoot.done) { toast("지금 찍는 중이에요"); return; }
+  if (!poseReady(E)) return;
+  const now = Date.now(), yaw = me.st === "sit" || me.st === "lie" ? 0 : me.r;
+  me.ph = { i, at: now, yaw: +yaw.toFixed(3) }; me.em = { i, at: now, s: 1 }; me.pj = null;
+  shoot = { owner: "me", at: now, i, yaw, mode: E.photo, done: false };
+  if (E.photo !== "solo") { showBubble(() => myAvatar, "📸 같이 찍어요!", 2.5, "me"); toast("근처 사람들이 '같이 찍기'를 누를 수 있게 잠깐 기다려요"); }
+  publish(true); actKey = "";
+}
+function inviteOf() {
+  if (shoot && !shoot.done) return null;
+  const now = Date.now();
+  for (const [peer, o] of others) {
+    const ph = o.p.ph; if (!ph || !EMOTES[ph.i] || EMOTES[ph.i].photo === "solo") continue;
+    const left = ph.at + PHOTO_SHOT_AT[EMOTES[ph.i].photo] * 1000 - now;
+    if (left > 800 && left < 7000 && Math.hypot(o.x - me.x, o.z - me.z) < 7 && o.p.y < .5 === me.y < .5) return { peer, o, ph, left };
+  }
+  return null;
+}
+function photoActions(acts, status) {
+  if (!started || anim || boarded) return status;
+  const inv = inviteOf();
+  if (inv) { acts.unshift(["photojoin", "📸 " + inv.o.p.n + "님과 같이 찍기", "primary"]); return `${EMOTES[inv.ph.i].name} · ${Math.ceil(inv.left / 1000)}초 뒤 찰칵`; }
+  if (shoot && !shoot.done) { const left = Math.ceil((shoot.at + PHOTO_SHOT_AT[shoot.mode] * 1000 - Date.now()) / 1000); if (left > 0) return `📸 ${EMOTES[shoot.i].name} · ${left}초 뒤 찰칵`; }
+  return status;
+}
+function photoClick(a) {
+  if (a !== "photojoin") return false;
+  const inv = inviteOf(); if (!inv) { toast("이미 찍었어요"); return true; }
+  const E = EMOTES[inv.ph.i]; if (!poseReady(E)) return true;
+  const [fx, fz] = fwdOf(inv.ph.yaw), cx = inv.o.x + fx * 3.5, cz = inv.o.z + fz * 3.5;
+  const right = [-Math.cos(inv.ph.yaw), Math.sin(inv.ph.yaw)]; // the camera's right, looking back at the group
+  const dot = (me.x - inv.o.x) * right[0] + (me.z - inv.o.z) * right[1];
+  me.pj = { p: inv.peer, at: inv.ph.at }; me.em = { i: inv.ph.i, at: inv.ph.at, s: dot > 0 ? 1 : -1 };
+  if (me.st === "walk") me.r = yawFrom(cx - me.x, cz - me.z);
+  shoot = { owner: inv.peer, at: inv.ph.at, i: inv.ph.i, yaw: inv.ph.yaw, mode: E.photo, done: false };
+  return true;
+}
+
+/* who is in the picture */
+function shootMembers(s) {
+  const list = [];
+  if (s.owner === "me") { list.push({ av: myAvatar, n: me.name }); for (const o of others.values()) if (o.p.pj && o.p.pj.p === myPeer && o.p.pj.at === s.at) list.push({ av: o.obj, n: o.p.n, o }); }
+  else {
+    const ow = others.get(s.owner); if (ow) list.push({ av: ow.obj, n: ow.p.n, o: ow });
+    list.push({ av: myAvatar, n: me.name });
+    for (const [peer, o] of others) if (peer !== s.owner && o.p.pj && o.p.pj.p === s.owner && o.p.pj.at === s.at) list.push({ av: o.obj, n: o.p.n, o });
+  }
+  return list.filter(m => m.av);
+}
+const hv = new THREE.Vector3();
+function frameShot(s, members) {
+  let cx = 0, cz = 0, hy = 0;
+  members.forEach(m => { m.av.userData.head.getWorldPosition(hv); cx += hv.x; cz += hv.z; hy += hv.y; });
+  const n = members.length; cx /= n; cz /= n; hy /= n;
+  let spread = 0; members.forEach(m => { spread = Math.max(spread, Math.hypot(m.av.position.x - cx, m.av.position.z - cz)); });
+  let [fx, fz] = fwdOf(s.yaw); const E = EMOTES[s.i];
+  // people lined up along the view would hide each other: turn the camera side-on to the line they form
+  if (n > 1) {
+    let a = members[0].av.position, b = a, far = 0;
+    members.forEach(m => members.forEach(k => { const d = m.av.position.distanceTo(k.av.position); if (d > far) { far = d; a = m.av.position; b = k.av.position; } }));
+    if (far > .4) { let ax = (b.x - a.x) / far, az = (b.z - a.z) / far; if (Math.abs(ax * fx + az * fz) > .45) { let px = -az, pz = ax; if (px * fx + pz * fz < 0) { px = -px; pz = -pz; } fx = px; fz = pz; } }
+  }
+  if (E.aerial) { photoCam.position.set(cx + fx * 1.1, hy + 3.6 + spread * 1.2, cz + fz * 1.1); photoCam.lookAt(cx, hy - .5, cz); }
+  else { const d = n === 1 ? 2.7 : Math.max(3.3, spread * 2.3 + 2.4); photoCam.position.set(cx + fx * d, hy + .15, cz + fz * d); photoCam.lookAt(cx, hy - .45, cz); }
+}
+audio.shutter = function () {
+  const t = this.ac.currentTime;
+  [0, .07].forEach(d => { const s = this.ac.createBufferSource(); s.buffer = this.pink; const hp = this.ac.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 2500; const g = this.ac.createGain();
+    g.gain.setValueAtTime(.0001, t + d); g.gain.exponentialRampToValueAtTime(.5, t + d + .003); g.gain.exponentialRampToValueAtTime(.0001, t + d + .05);
+    s.connect(hp); hp.connect(g); g.connect(this.sfx); s.start(t + d, Math.random() * 3); s.stop(t + d + .06); });
+};
+function capturePhoto(s) {
+  const members = shootMembers(s); if (!members.length) return;
+  frameShot(s, members);
+  photoCam.aspect = canvas.width / canvas.height; photoCam.updateProjectionMatrix();
+  const hidden = []; bubbles.forEach(b => { if (b.s.visible) { b.s.visible = false; hidden.push(b.s); } }); const gv = ghost.visible; ghost.visible = false;
+  renderer.render(scene, photoCam);
+  const w = canvas.width, h = canvas.height, c = document.createElement("canvas"); c.width = w; c.height = h;
+  const x = c.getContext("2d"); x.drawImage(canvas, 0, 0);
+  hidden.forEach(o => o.visible = true); ghost.visible = gv;
+  const k = kst(), sc = Math.max(1, w / 900), names = members.map(m => m.n).join(" · ");
+  x.font = `${Math.round(16 * sc)}px 'Gowun Batang', serif`; x.fillStyle = "rgba(255,255,255,.92)"; x.textAlign = "right"; x.textBaseline = "bottom";
+  x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = 8 * sc;
+  x.fillText(`한강 돗자리 · ${EMOTES[s.i].name} · ${names} · ${k.getMonth() + 1}월 ${k.getDate()}일 ${phase}`, w - 18 * sc, h - 16 * sc);
+  if (audio.ready) audio.shutter();
+  const f = $("flash"); f.hidden = false; f.classList.remove("go"); void f.offsetWidth; f.classList.add("go"); setTimeout(() => { f.hidden = true; }, 700);
+  deliverShot(c);
+}
+
+/* per frame: countdown, heart between partners, the shutter, cleanup */
+let heartMesh = null;
+function makeHeartMesh() {
+  const sh = new THREE.Shape(); sh.moveTo(0, -.18); sh.bezierCurveTo(-.32, .02, -.18, .26, 0, .1); sh.bezierCurveTo(.18, .26, .32, .02, 0, -.18);
+  const m = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: .05, bevelEnabled: false }), new THREE.MeshBasicMaterial({ color: 0xff5c8a }));
+  m.scale.setScalar(1.3); scene.add(m); return m;
+}
+const seenPh = new Map();
+function updatePhoto() {
+  const now = Date.now();
+  // others announcing a group shot, and their shutter going off
+  for (const [peer, o] of others) {
+    const ph = o.p.ph; if (!ph || !EMOTES[ph.i]) continue; const E = EMOTES[ph.i], id = peer;
+    const st = seenPh.get(peer) || {};
+    if (st.at !== ph.at) { seenPh.set(peer, { at: ph.at, snap: false }); if (E.photo !== "solo" && now - ph.at < 3000) showBubble(() => (others.get(id) || {}).obj, "📸 같이 찍어요!", 2.5, id); }
+    else if (!st.snap && now > ph.at + PHOTO_SHOT_AT[E.photo] * 1000) { st.snap = true; if (now - ph.at < PHOTO_SHOT_AT[E.photo] * 1000 + 1500) showBubble(() => (others.get(id) || {}).obj, "찰칵!", 1.4, id); }
+  }
+  // my shoot
+  const cd = $("countdown");
+  if (shoot && !shoot.done) {
+    const shotAt = shoot.at + PHOTO_SHOT_AT[shoot.mode] * 1000, left = shotAt - now;
+    const ownerGone = shoot.owner !== "me" && !(others.get(shoot.owner) && others.get(shoot.owner).p.ph && others.get(shoot.owner).p.ph.at === shoot.at);
+    if (!activeEmote(me.em) || ownerGone) { shoot.done = true; cd.hidden = true; me.ph = null; me.pj = null; toast(ownerGone ? "사진 찍기가 취소됐어요" : "움직여서 사진 찍기를 멈췄어요"); publish(true); actKey = ""; }
+    else if (left <= 0) { shoot.done = true; cd.hidden = true; capturePhoto(shoot); const s = shoot; setTimeout(() => { if (me.ph && me.ph.at === s.at) me.ph = null; me.pj = null; if (me.em && me.em.at === s.at) me.em = null; publish(true); actKey = ""; }, 1200); }
+    else if (left <= 3000) { const n = String(Math.ceil(left / 1000)); if (cd.textContent !== n) { cd.textContent = n; cd.hidden = false; cd.classList.remove("pop"); void cd.offsetWidth; cd.classList.add("pop"); if (audio.ready) audio.pop(); } }
+    // everyone standing turns to face where the camera will be
+    if (me.st === "walk" && left > 0) { const mem = shootMembers(shoot); if (mem.length) { frameShot(shoot, mem); me.r = lerpAngle(me.r, yawFrom(photoCam.position.x - me.x, photoCam.position.z - me.z), .25); } }
+    // which hand faces my partner (for the half-heart): worked out from where we actually stand
+    if (me.em && shoot.mode === "duo" && myAvatar) {
+      let best = null, bd = 1e9; shootMembers(shoot).forEach(m => { if (m.av === myAvatar) return; const d = m.av.position.distanceTo(myAvatar.position); if (d < bd) { bd = d; best = m.av; } });
+      if (best) { const r = myAvatar.rotation.y, sd = (best.position.x - me.x) * Math.cos(r) - (best.position.z - me.z) * Math.sin(r), s = sd >= 0 ? 1 : -1; if (me.em.s !== s) { me.em.s = s; publish(true); } }
+    }
+  } else if (!cd.hidden) cd.hidden = true;
+  // a heart between two people doing the half-heart
+  const hearts = [];
+  if (myAvatar && activeEmote(me.em) && EMOTES[me.em.i].id === "pheart") hearts.push(myAvatar);
+  for (const o of others.values()) { const a = activeEmote(o.p.em); if (a && EMOTES[a.i].id === "pheart") hearts.push(o.obj); }
+  let pair = null;
+  for (let a = 0; a < hearts.length && !pair; a++) for (let b = a + 1; b < hearts.length; b++) if (hearts[a].position.distanceTo(hearts[b].position) < 2.6) { pair = [hearts[a], hearts[b]]; break; }
+  if (pair) {
+    if (!heartMesh) heartMesh = makeHeartMesh();
+    pair[0].userData.head.getWorldPosition(hv); const y = hv.y + .55;
+    heartMesh.visible = true; heartMesh.position.set((pair[0].position.x + pair[1].position.x) / 2, y, (pair[0].position.z + pair[1].position.z) / 2);
+    heartMesh.lookAt(camera.position); heartMesh.scale.setScalar(1.2 + Math.sin(T * 6) * .08);
+  } else if (heartMesh) heartMesh.visible = false;
+}
 })();
 </script>
 

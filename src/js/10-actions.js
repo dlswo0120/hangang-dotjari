@@ -67,6 +67,7 @@ function dropRamen(reason) {
   if (!me.hold) return; me.hold = false; me.eat = 0; toast(reason); publish(true);
 }
 let actKey = "", matHinted = false;
+function canEatHeld() { return !!me.hold && !me.eat && (me.hold === "ramen" || !PRODUCTS[me.hold] || PRODUCTS[me.hold].cat !== "fire"); }
 function eatLabel() { return PRODUCTS[me.hold] && PRODUCTS[me.hold].cat === "drink" ? "마시기" : "먹기"; }
 function refreshActions() {
   if (!started) return;
@@ -89,7 +90,7 @@ function refreshActions() {
       else if (!me.rm && !own) status = "편의점에서 봉지라면을 사 오면 끓일 수 있어요";
       else if (!me.rm && own) status = "다른 분이 라면을 끓이는 중이에요";
     }
-    if (me.hold && !me.eat) acts.push(["eat", eatLabel(), "primary"]);
+    if (canEatHeld()) acts.push(["eat", eatLabel(), "primary"]);
     if (nearRiver()) acts.push(["paper", "종이배 띄우기", acts.length ? "" : "primary"]);
     const nb = nearBench();
     if (nb) acts.push(["bench", nb.kind === "stool" ? "의자에 앉기" : "벤치에 앉기", acts.length ? "" : "primary"]);
@@ -101,12 +102,12 @@ function refreshActions() {
     if (!me.hold && bo.squeeze != null) acts.push(["squeeze", "끼어 타기 (3명)", "duck"]);
   } else if (me.st === "bench" || me.st === "stool") {
     cheersAction(acts);
-    if (me.hold && !me.eat) acts.push(["eat", eatLabel(), acts.length ? "" : "primary"]);
+    if (canEatHeld()) acts.push(["eat", eatLabel(), acts.length ? "" : "primary"]);
     acts.push(["stand", "일어나기", acts.length ? "" : "primary"]);
     acts.push(["mung", "물멍", ""]);
   } else if (me.st === "sit" || me.st === "lie") {
     if (me.st === "sit") cheersAction(acts);
-    if (me.hold && !me.eat && me.st === "sit") acts.push(["eat", eatLabel(), acts.length ? "" : "primary"]);
+    if (canEatHeld() && me.st === "sit") acts.push(["eat", eatLabel(), acts.length ? "" : "primary"]);
     acts.push(["stand", "일어나기", acts.length ? "" : "primary"]);
     if (!me.hold) acts.push([me.st === "sit" ? "lie" : "sit", me.st === "sit" ? "눕기" : "앉기", ""]);
     acts.push(["mung", "물멍", ""]);
@@ -121,6 +122,8 @@ function refreshActions() {
   status = rentalActions(acts, status);
   deliveryActions(acts);
   boardActions(acts);
+  status = fireActions(acts, status);
+  status = photoActions(acts, status);
   if ($("status").textContent !== status) { $("status").textContent = status; $("status").hidden = !status; }
   // rebuild the buttons only when they change, so a running timer in the status line never eats a tap
   const key = JSON.stringify(acts); if (key === actKey) return; actKey = key;
@@ -129,7 +132,7 @@ function refreshActions() {
 }
 $("actRow").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return; const a = b.dataset.act;
-  if (storeClick(a) || rentalClick(a) || deliveryClick(a) || boardClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
+  if (storeClick(a) || rentalClick(a) || deliveryClick(a) || boardClick(a) || fireClick(a) || photoClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
   if (a === "sit" || a === "lie") {
     if (me.st === "walk") {
       if (!canSpread()) { toast("잔디나 대교 위에서만 돗자리를 펼 수 있습니다"); return; }

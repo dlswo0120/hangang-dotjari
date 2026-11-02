@@ -133,7 +133,7 @@ function openBag() {
   $("basketSec").hidden = !me.basket;
   (me.basket || []).forEach((k, i) => bl.appendChild(bagRow(PRODUCTS[k].name + " · " + won(PRODUCTS[k].price), "빼기", "drop", i, k)));
   if (me.basket && !me.basket.length) bl.appendChild(Object.assign(document.createElement("p"), { className: "empty", textContent: "아직 담은 물건이 없어요" }));
-  wallet.bag.forEach((k, i) => gl.appendChild(PRODUCTS[k].cook ? bagRow(PRODUCTS[k].name, "라면 기계에서 끓여요", "none", i, k) : bagRow(PRODUCTS[k].name, PRODUCTS[k].cat === "drink" ? "꺼내기" : "먹기", "eat", i, k)));
+  wallet.bag.forEach((k, i) => gl.appendChild(PRODUCTS[k].fire ? bagRow(PRODUCTS[k].name, PRODUCTS[k].fire === "hand" ? "꺼내기" : "설치하기", "fire", i, k) : PRODUCTS[k].cook ? bagRow(PRODUCTS[k].name, "라면 기계에서 끓여요", "none", i, k) : bagRow(PRODUCTS[k].name, PRODUCTS[k].cat === "drink" ? "꺼내기" : "먹기", "eat", i, k)));
   if (!wallet.bag.length) gl.appendChild(Object.assign(document.createElement("p"), { className: "empty", textContent: "산 물건이 없어요. 한강 편의점에 들러 보세요" }));
   $("bagModal").hidden = false;
 }
@@ -148,6 +148,7 @@ $("bagModal").addEventListener("click", e => {
   if (e.target === $("bagModal")) { $("bagModal").hidden = true; return; }
   const b = e.target.closest("button[data-act]"); if (!b) return; const i = +b.dataset.i;
   if (b.dataset.act === "drop" && me.basket) { me.basket.splice(i, 1); publish(true); actKey = ""; openBag(); return; }
+  if (b.dataset.act === "fire") { fireFromBag(i); return; }
   if (b.dataset.act === "eat") {
     if (me.hold) { toast("들고 있는 걸 먼저 다 먹어 주세요"); return; }
     if (me.st === "swim" || me.st === "lie" || boarded) { toast("지금은 먹을 수 없어요"); return; }
