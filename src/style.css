@@ -157,3 +157,6 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
 .modal-btns.one{grid-template-columns:1fr}
 .dv-sub{margin:-6px 0 0;font-size:13px;color:var(--ink-soft);line-height:1.5;word-break:keep-all}
 #dvGrid button:disabled{opacity:.4}
+.chat-grid .emo{font-size:16px;line-height:1}
+#danceGrid button{grid-column:1/-1}
+#chatPanel{max-height:calc(100vh - 110px);overflow:auto}

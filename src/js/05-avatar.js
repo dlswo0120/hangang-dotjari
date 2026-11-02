@@ -202,6 +202,7 @@ function updateAvatar(av, dt, t, o = {}) {
     u.bowl.scale.setScalar(left);
     u.bowl.position.set(0, by, bz);
   }
+  if (o.emote) emotePose(v, o.emote.i, o.emote.t, u.pose === "stand");
   u.torso.scale.y = 1 + Math.sin(ph * 2.1) * .012;
   if (o.mat === false) v.matP = 0;
   applyRig(av, v);
