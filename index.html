@@ -153,6 +153,16 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
 .mung-hint{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:6;padding:9px 16px;border-radius:999px;background:rgba(10,14,20,.45);color:rgba(255,255,255,.85);font-size:13px;pointer-events:none;white-space:nowrap;opacity:0}
 .mung-hint.show{animation:mungHint 6s ease forwards}
 @keyframes mungHint{0%{opacity:0}12%{opacity:1}70%{opacity:1}100%{opacity:0}}
+.modal .card.news{text-align:left;width:min(380px,100%);gap:12px}
+.news-list{max-height:min(52vh,420px);overflow:auto}
+.news-list h3{margin:4px 0 6px;font-size:13px;color:var(--ink-soft);font-weight:600}
+.news-list ul{margin:0 0 10px;padding-left:18px;display:flex;flex-direction:column;gap:7px;font-size:14px;line-height:1.5;word-break:keep-all}
+.news-ok{border-radius:14px;padding:13px;font-size:15px;border:0;background:#f2b46b;color:#2a1d0f}
+.upd{position:fixed;z-index:15;left:50%;transform:translateX(-50%);top:calc(70px + env(safe-area-inset-top,0px));width:min(420px,calc(100% - 32px));box-sizing:border-box;display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:12px 14px;border-radius:18px;background:var(--glass-strong);border:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);font-size:13.5px;line-height:1.45;word-break:keep-all}
+.upd small{grid-column:1/-1;font-size:11.5px;opacity:.65}
+.upd-btns{display:flex;gap:6px}
+.upd-btns button{border-radius:999px;padding:8px 12px;font-size:13px;border:1px solid var(--line);background:rgba(255,255,255,.07);white-space:nowrap}
+.upd-btns .go{background:#f2b46b;color:#2a1d0f;border-color:transparent}
 </style>
 
 </head>
@@ -259,6 +269,20 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
     <input id="paperText" class="paper-in" maxlength="30" autocomplete="off" placeholder="오늘 하고 싶었던 말">
     <div class="modal-btns"><button type="button" id="paperCancel">그만두기</button><button type="submit" class="leave paper-go">띄우기</button></div>
   </form>
+</div>
+
+<div class="modal" id="newsModal" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
+  <div class="card news">
+    <h2 id="newsTitle">한강이 새로 단장했어요</h2>
+    <div class="news-list" id="newsList"></div>
+    <button class="news-ok" id="newsOk">좋아요</button>
+  </div>
+</div>
+
+<div class="upd" id="updBanner" hidden role="status">
+  <span id="updText">한강이 새로 단장했어요</span>
+  <span class="upd-btns"><button id="updLater">나중에</button><button class="go" id="updReload">새로고침</button></span>
+  <small>새로고침하면 펼친 돗자리는 정리되고, 돈과 가방은 그대로예요</small>
 </div>
 
 <div class="mung-hint" id="mungHint" hidden>물멍 중 · 화면을 누르면 돌아와요</div>
@@ -471,6 +495,7 @@ window.HANGANG_CONFIG = {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
+const APP_VERSION = "2026.11.02", UPDATES = [{"v": "2026.11.02", "date": "11월 2일", "items": ["앉아서 가만히 있으면 화면이 비워지는 '물멍 모드'가 생겼어요", "강가에서 한마디 적은 종이배를 띄울 수 있어요", "매일 밤 9시, 4분 동안 한강 불꽃놀이가 열려요. 맑은 밤엔 별똥별도 지나가요", "음료를 든 채 가까이 앉으면 '짠' 할 수 있어요", "라면은 편의점에서 봉지라면을 사 와서 기계로 끓여요", "새 버전이 나오면 화면 위에 알려 드려요"]}];
 "use strict";
 const $ = id => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -2430,7 +2455,7 @@ $("joinForm").addEventListener("submit", e => {
   cam.tx = me.x; cam.tz = me.z; cam.yaw = cam.tYaw = 0; cam.tPitch = 0.26; cam.tDist = 6.5; cam.init = false;
   $("gate2").hidden = true; $("hudLeft").hidden = false; $("hudRight").hidden = false; $("actions").hidden = false;
   if (touchy) $("joy").hidden = false; else { $("keys").hidden = false; setTimeout(() => { $("keys").hidden = true; }, 15000); }
-  publish(true); refreshActions(); $("count").textContent = String(others.size + 1); storeOnJoin();
+  publish(true); refreshActions(); $("count").textContent = String(others.size + 1); storeOnJoin(); checkNews();
   toast(touchy ? "패드로 걸어가서 마음에 드는 잔디에 돗자리를 펴세요" : "WASD로 걸어가서 마음에 드는 잔디에 돗자리를 펴세요");
 });
 $("exitBtn").addEventListener("click", () => { $("leaveModal").hidden = false; $("stayBtn").focus(); });
@@ -2497,6 +2522,45 @@ $("shotSave").addEventListener("click", async () => {
   catch (e) { if (e && e.code !== "declined" && e.code !== "cancelled") $("shotTip").textContent = "저장하지 못했습니다. 이미지를 길게 눌러 저장해 주세요."; }
 });
 
+/* ================= 업데이트 공지 · 새 버전 안내 ================= */
+// APP_VERSION and UPDATES are written in by tools/build.py from src/updates.json.
+const SEEN_KEY = "hangang-seen-version";
+const RETURNING = (() => { try { return !!localStorage.getItem("hangang-wallet"); } catch (e) { return false; } })();
+function fillNews(list) {
+  const box = $("newsList"); box.textContent = "";
+  list.forEach(u => {
+    const h = document.createElement("h3"); h.textContent = u.date + " 업데이트"; box.appendChild(h);
+    const ul = document.createElement("ul"); u.items.forEach(t => { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); }); box.appendChild(ul);
+  });
+}
+function checkNews() {
+  let seen = null; try { seen = localStorage.getItem(SEEN_KEY); } catch (e) {}
+  try { localStorage.setItem(SEEN_KEY, APP_VERSION); } catch (e) {}
+  if (seen === APP_VERSION || (!seen && !RETURNING)) return; // first visit: nothing to announce
+  const idx = UPDATES.findIndex(u => u.v === seen), fresh = UPDATES.slice(0, idx < 0 ? 1 : Math.min(idx, 3));
+  if (!fresh.length) return;
+  fillNews(fresh); $("newsModal").hidden = false;
+}
+$("newsOk").addEventListener("click", () => { $("newsModal").hidden = true; });
+$("newsModal").addEventListener("click", e => { if (e.target === $("newsModal")) $("newsModal").hidden = true; });
+
+// a newer version went live while this page was open
+let newerShown = "";
+async function pollVersion() {
+  if (!/^https?:$/.test(location.protocol) || /claude\.ai|claudeusercontent/.test(location.hostname)) return;
+  try {
+    const r = await fetch("version.json?t=" + Date.now(), { cache: "no-store" }); if (!r.ok) return;
+    const j = await r.json(); if (!j || typeof j.v !== "string" || j.v === APP_VERSION || j.v === newerShown) return;
+    newerShown = j.v;
+    $("updText").textContent = Array.isArray(j.items) && j.items[0] ? "한강이 새로 단장했어요 · " + String(j.items[0]).slice(0, 60) : "한강이 새로 단장했어요";
+    $("updBanner").hidden = false;
+  } catch (e) {}
+}
+setInterval(pollVersion, 180000);
+addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") pollVersion(); });
+setTimeout(pollVersion, 20000);
+$("updReload").addEventListener("click", () => location.reload());
+$("updLater").addEventListener("click", () => { $("updBanner").hidden = true; });
 /* ================= simulation ================= */
 let boundToastAt = 0;
 function hitBound() { const n = performance.now(); if (n - boundToastAt > 6000) { boundToastAt = n; toast("여기까지만 갈 수 있습니다"); } }

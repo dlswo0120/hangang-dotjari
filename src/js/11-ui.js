@@ -24,7 +24,7 @@ $("joinForm").addEventListener("submit", e => {
   cam.tx = me.x; cam.tz = me.z; cam.yaw = cam.tYaw = 0; cam.tPitch = 0.26; cam.tDist = 6.5; cam.init = false;
   $("gate2").hidden = true; $("hudLeft").hidden = false; $("hudRight").hidden = false; $("actions").hidden = false;
   if (touchy) $("joy").hidden = false; else { $("keys").hidden = false; setTimeout(() => { $("keys").hidden = true; }, 15000); }
-  publish(true); refreshActions(); $("count").textContent = String(others.size + 1); storeOnJoin();
+  publish(true); refreshActions(); $("count").textContent = String(others.size + 1); storeOnJoin(); checkNews();
   toast(touchy ? "패드로 걸어가서 마음에 드는 잔디에 돗자리를 펴세요" : "WASD로 걸어가서 마음에 드는 잔디에 돗자리를 펴세요");
 });
 $("exitBtn").addEventListener("click", () => { $("leaveModal").hidden = false; $("stayBtn").focus(); });

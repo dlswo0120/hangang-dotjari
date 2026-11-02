@@ -3,10 +3,11 @@
 src/ 아래로 나눠 둔 파일들을 하나로 합쳐 두 가지 결과물을 만듭니다.
   - index.html               : Vercel·깃허브 페이지에 올라가는 공개판 (Supabase 연결 포함)
   - dist/claude-artifact.html : claude.ai 아티팩트용 (claude.ai 자체 접속 기능 사용)
+  - version.json             : 지금 버전과 업데이트 내용. 접속 중인 화면이 이 파일을 보고 "새 버전" 안내를 띄웁니다
 
 사용법:  python3 tools/build.py
 """
-import pathlib, re, sys
+import json, pathlib, re, sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SRC = ROOT / "src"
@@ -17,10 +18,17 @@ def read(p):
     return (SRC / p).read_text(encoding="utf-8")
 
 
+def updates():
+    """src/updates.json: 맨 위 항목이 최신 버전입니다. 업데이트할 때마다 맨 위에 새 항목을 추가합니다."""
+    return json.loads(read("updates.json"))
+
+
 def page_body():
     """claude.ai에 올리던 형태 그대로의 본문 (doctype 없이)."""
     js_files = sorted((SRC / "js").glob("*.js"))
-    js = "".join(f.read_text(encoding="utf-8") for f in js_files)
+    ups = updates()
+    js = ("const APP_VERSION = " + json.dumps(ups[0]["v"]) + ", UPDATES = " + json.dumps(ups[:5], ensure_ascii=False) + ";\n"
+          + "".join(f.read_text(encoding="utf-8") for f in js_files))
     return (read("head.html") + "<style>\n" + read("style.css") + "</style>\n" + read("body.html")
             + THREE + "\n<script>\n(() => {\n" + js + "})();\n</script>\n")
 
@@ -47,6 +55,8 @@ def build():
     assert rest.count(THREE) == 1
     public = PUBLIC_HEAD + top + "</head>\n<body>\n" + rest.replace(THREE, glue + THREE) + "\n</body>\n</html>\n"
     (ROOT / "index.html").write_text(public, encoding="utf-8")
+    top = updates()[0]
+    (ROOT / "version.json").write_text(json.dumps({"v": top["v"], "date": top["date"], "items": top["items"]}, ensure_ascii=False) + "\n", encoding="utf-8")
     (ROOT / "dist").mkdir(exist_ok=True)
     (ROOT / "dist" / "claude-artifact.html").write_text(ARTIFACT_HEAD + body + "</body></html>", encoding="utf-8")
     print("index.html", len(public.encode()), "bytes / dist/claude-artifact.html", len(body.encode()), "bytes")
