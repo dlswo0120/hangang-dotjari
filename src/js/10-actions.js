@@ -1,9 +1,24 @@
 /* ================= actions UI ================= */
 function onGrass(x, z) { return (z > 3.1 && z < 26.8) || (z > 34.2 && z <= BOUND.landZ1); }
 function onPath(z) { return z >= 26.8 && z <= 34.2; }
+// Mats lie square to the river, so two mats only clash when their rectangles overlap:
+// side by side (1.5 m apart) is fine, which lets friends lie right next to each other.
+const MAT_GAP_X = MAT_W - .02, MAT_GAP_Z = 2.8;
 function matConflict(x, z) {
-  for (const o of others.values()) if ((o.p.st === "sit" || o.p.st === "lie") && o.p.mt && Math.hypot(o.p.x - x, o.p.z - z) < 3.2) return o.p.n;
+  for (const o of others.values()) if ((o.p.st === "sit" || o.p.st === "lie") && o.p.mt && Math.abs(o.p.x - x) < MAT_GAP_X && Math.abs(o.p.z - z) < MAT_GAP_Z) return o.p.n;
   return null;
+}
+// standing close beside someone's mat lines yours up neatly next to theirs
+function matSnap(x, z) {
+  let best = null, bd = 1e9;
+  for (const o of others.values()) {
+    if (!(o.p.st === "sit" || o.p.st === "lie") || !o.p.mt || o.p.y > .5) continue;
+    const dx = x - o.p.x, dz = z - o.p.z;
+    if (Math.abs(dz) > 1.4 || Math.abs(dx) > 2.6) continue;
+    const sx = o.p.x + (dx >= 0 ? 1 : -1) * MAT_W, d = Math.hypot(sx - x, o.p.z - z);
+    if (d < bd && !matConflict(sx, o.p.z) && onGrass(sx, o.p.z) && !underRoof(sx, o.p.z)) { bd = d; best = [sx, o.p.z]; }
+  }
+  return best;
 }
 function canSpread() { return (me.level === "ground" && onGrass(me.x, me.z) && !underRoof(me.x, me.z)) || me.level === "bridge"; }
 BENCHES.forEach(b => { if (b.x > BOUND.x0 && b.x < BOUND.x1) [-0.6, 0.6].forEach(k => SEAT_SPOTS.push({ x: b.x + k, z: b.z - 0.05, r: 0, kind: "bench" })); });
@@ -118,6 +133,8 @@ $("actRow").addEventListener("click", e => {
   if (a === "sit" || a === "lie") {
     if (me.st === "walk") {
       if (!canSpread()) { toast("잔디나 대교 위에서만 돗자리를 펼 수 있습니다"); return; }
+      const snap = me.mat && me.level === "ground" ? matSnap(me.x, me.z) : null;
+      if (snap) { me.x = snap[0]; me.z = snap[1]; }
       const who = me.mat && matConflict(me.x, me.z);
       if (who) { toast(who + "님 돗자리와 너무 가깝습니다. 조금만 떨어져 주세요"); return; }
       if (!me.mat && !matHinted && me.level === "ground") { matHinted = true; toast("잔디에 그냥 앉았어요. 돗자리는 돗자리 대여소에서 빌릴 수 있어요"); }

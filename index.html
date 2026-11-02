@@ -527,7 +527,7 @@ window.HANGANG_CONFIG = {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
-const APP_VERSION = "2026.11.02d", UPDATES = [{"v": "2026.11.02d", "date": "11월 2일", "items": ["오리배 선착장에 이용 안내 표지판이 생겼어요", "자전거 대여소 옆에 '한강 소식판'이 생겼어요. 업데이트 내역을 언제든 볼 수 있어요"]}, {"v": "2026.11.02c", "date": "11월 2일", "items": ["앉아 있을 때 '한강통닭'에 치킨 배달을 시킬 수 있어요. 2분쯤 뒤 오토바이 기사님이 자리까지 가져다 드려요", "배달 전용 '한강통닭 반마리'(배달비 포함 6,000원)가 생겼어요"]}, {"v": "2026.11.02b", "date": "11월 2일", "items": ["강 건너편 잔디에 '한강 자전거 대여소'가 생겼어요. 10분에 1,000원, 같은 곳에 반납해요", "자전거를 타는 동안 '따르릉' 벨을 울릴 수 있어요", "길가에 '돗자리 대여소'가 생겼어요. 오늘 첫 대여는 무료, 그다음은 500원이에요", "돗자리 없이도 잔디에 그냥 앉거나 누울 수 있어요"]}, {"v": "2026.11.02", "date": "11월 2일", "items": ["앉아서 가만히 있으면 화면이 비워지는 '물멍 모드'가 생겼어요", "강가에서 한마디 적은 종이배를 띄울 수 있어요", "매일 밤 9시, 4분 동안 한강 불꽃놀이가 열려요. 맑은 밤엔 별똥별도 지나가요", "음료를 든 채 가까이 앉으면 '짠' 할 수 있어요", "라면은 편의점에서 봉지라면을 사 와서 기계로 끓여요", "찍은 사진을 휴대폰 사진 앱에 바로 저장할 수 있어요", "새 버전이 나오면 화면 위에 알려 드려요"]}];
+const APP_VERSION = "2026.11.02e", UPDATES = [{"v": "2026.11.02e", "date": "11월 2일", "items": ["친구 돗자리 바로 옆에 내 돗자리를 붙여 펼 수 있어요. 옆에 서면 나란히 맞춰 펴져요"]}, {"v": "2026.11.02d", "date": "11월 2일", "items": ["오리배 선착장에 이용 안내 표지판이 생겼어요", "자전거 대여소 옆에 '한강 소식판'이 생겼어요. 업데이트 내역을 언제든 볼 수 있어요"]}, {"v": "2026.11.02c", "date": "11월 2일", "items": ["앉아 있을 때 '한강통닭'에 치킨 배달을 시킬 수 있어요. 2분쯤 뒤 오토바이 기사님이 자리까지 가져다 드려요", "배달 전용 '한강통닭 반마리'(배달비 포함 6,000원)가 생겼어요"]}, {"v": "2026.11.02b", "date": "11월 2일", "items": ["강 건너편 잔디에 '한강 자전거 대여소'가 생겼어요. 10분에 1,000원, 같은 곳에 반납해요", "자전거를 타는 동안 '따르릉' 벨을 울릴 수 있어요", "길가에 '돗자리 대여소'가 생겼어요. 오늘 첫 대여는 무료, 그다음은 500원이에요", "돗자리 없이도 잔디에 그냥 앉거나 누울 수 있어요"]}, {"v": "2026.11.02", "date": "11월 2일", "items": ["앉아서 가만히 있으면 화면이 비워지는 '물멍 모드'가 생겼어요", "강가에서 한마디 적은 종이배를 띄울 수 있어요", "매일 밤 9시, 4분 동안 한강 불꽃놀이가 열려요. 맑은 밤엔 별똥별도 지나가요", "음료를 든 채 가까이 앉으면 '짠' 할 수 있어요", "라면은 편의점에서 봉지라면을 사 와서 기계로 끓여요", "찍은 사진을 휴대폰 사진 앱에 바로 저장할 수 있어요", "새 버전이 나오면 화면 위에 알려 드려요"]}];
 "use strict";
 const $ = id => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -2098,9 +2098,24 @@ function leaveBoat(forced) {
 /* ================= actions UI ================= */
 function onGrass(x, z) { return (z > 3.1 && z < 26.8) || (z > 34.2 && z <= BOUND.landZ1); }
 function onPath(z) { return z >= 26.8 && z <= 34.2; }
+// Mats lie square to the river, so two mats only clash when their rectangles overlap:
+// side by side (1.5 m apart) is fine, which lets friends lie right next to each other.
+const MAT_GAP_X = MAT_W - .02, MAT_GAP_Z = 2.8;
 function matConflict(x, z) {
-  for (const o of others.values()) if ((o.p.st === "sit" || o.p.st === "lie") && o.p.mt && Math.hypot(o.p.x - x, o.p.z - z) < 3.2) return o.p.n;
+  for (const o of others.values()) if ((o.p.st === "sit" || o.p.st === "lie") && o.p.mt && Math.abs(o.p.x - x) < MAT_GAP_X && Math.abs(o.p.z - z) < MAT_GAP_Z) return o.p.n;
   return null;
+}
+// standing close beside someone's mat lines yours up neatly next to theirs
+function matSnap(x, z) {
+  let best = null, bd = 1e9;
+  for (const o of others.values()) {
+    if (!(o.p.st === "sit" || o.p.st === "lie") || !o.p.mt || o.p.y > .5) continue;
+    const dx = x - o.p.x, dz = z - o.p.z;
+    if (Math.abs(dz) > 1.4 || Math.abs(dx) > 2.6) continue;
+    const sx = o.p.x + (dx >= 0 ? 1 : -1) * MAT_W, d = Math.hypot(sx - x, o.p.z - z);
+    if (d < bd && !matConflict(sx, o.p.z) && onGrass(sx, o.p.z) && !underRoof(sx, o.p.z)) { bd = d; best = [sx, o.p.z]; }
+  }
+  return best;
 }
 function canSpread() { return (me.level === "ground" && onGrass(me.x, me.z) && !underRoof(me.x, me.z)) || me.level === "bridge"; }
 BENCHES.forEach(b => { if (b.x > BOUND.x0 && b.x < BOUND.x1) [-0.6, 0.6].forEach(k => SEAT_SPOTS.push({ x: b.x + k, z: b.z - 0.05, r: 0, kind: "bench" })); });
@@ -2215,6 +2230,8 @@ $("actRow").addEventListener("click", e => {
   if (a === "sit" || a === "lie") {
     if (me.st === "walk") {
       if (!canSpread()) { toast("잔디나 대교 위에서만 돗자리를 펼 수 있습니다"); return; }
+      const snap = me.mat && me.level === "ground" ? matSnap(me.x, me.z) : null;
+      if (snap) { me.x = snap[0]; me.z = snap[1]; }
       const who = me.mat && matConflict(me.x, me.z);
       if (who) { toast(who + "님 돗자리와 너무 가깝습니다. 조금만 떨어져 주세요"); return; }
       if (!me.mat && !matHinted && me.level === "ground") { matHinted = true; toast("잔디에 그냥 앉았어요. 돗자리는 돗자리 대여소에서 빌릴 수 있어요"); }
@@ -3385,7 +3402,7 @@ function frame() {
     if (me.eat && myEat >= eatTime(me.hold)) { toast(me.hold === "ramen" ? "잘 먹었습니다! 국물까지 싹 비웠어요" : `${PRODUCTS[me.hold] ? PRODUCTS[me.hold].name : "간식"} 맛있게 먹었어요!`); me.hold = false; me.eat = 0; publish(true); actKey = ""; }
     const showGhost = me.st === "walk" && !anim && !me.moving && !me.bt && !!me.mat && canSpread();
     ghost.visible = showGhost;
-    if (showGhost) { ghost.position.set(me.x, me.y + 0.05, me.z + POSES.sit.matZ); ghost.material.color.set(matConflict(me.x, me.z) ? 0xff8a7a : 0x9be3a0); }
+    if (showGhost) { const sn = me.level === "ground" ? matSnap(me.x, me.z) : null, gx = sn ? sn[0] : me.x, gz = sn ? sn[1] : me.z; ghost.position.set(gx, me.y + 0.05, gz + POSES.sit.matZ); ghost.material.color.set(matConflict(gx, gz) ? 0xff8a7a : 0x9be3a0); }
     playerLight.position.set(me.x + 1.5, me.y + 4, me.z + 3);
     // footsteps and strokes
     if (!anim && me.moving && (me.st === "walk" || me.st === "swim")) {

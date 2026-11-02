@@ -74,7 +74,7 @@ function frame() {
     if (me.eat && myEat >= eatTime(me.hold)) { toast(me.hold === "ramen" ? "잘 먹었습니다! 국물까지 싹 비웠어요" : `${PRODUCTS[me.hold] ? PRODUCTS[me.hold].name : "간식"} 맛있게 먹었어요!`); me.hold = false; me.eat = 0; publish(true); actKey = ""; }
     const showGhost = me.st === "walk" && !anim && !me.moving && !me.bt && !!me.mat && canSpread();
     ghost.visible = showGhost;
-    if (showGhost) { ghost.position.set(me.x, me.y + 0.05, me.z + POSES.sit.matZ); ghost.material.color.set(matConflict(me.x, me.z) ? 0xff8a7a : 0x9be3a0); }
+    if (showGhost) { const sn = me.level === "ground" ? matSnap(me.x, me.z) : null, gx = sn ? sn[0] : me.x, gz = sn ? sn[1] : me.z; ghost.position.set(gx, me.y + 0.05, gz + POSES.sit.matZ); ghost.material.color.set(matConflict(gx, gz) ? 0xff8a7a : 0x9be3a0); }
     playerLight.position.set(me.x + 1.5, me.y + 4, me.z + 3);
     // footsteps and strokes
     if (!anim && me.moving && (me.st === "walk" || me.st === "swim")) {
