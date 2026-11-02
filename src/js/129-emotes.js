@@ -20,11 +20,12 @@ function emotePose(v, i, t, standing) {
   else if (E.id === "heart") { to("arL", 1.25); to("arR", 1.25); to("azL", -.42); to("azR", -.42); v.nod += .1 * env; }
   else if (E.id === "bow") { const b = Math.sin(Math.PI * clamp(t / E.dur, 0, 1)); v.lean += .8 * b; v.nod += .35 * b; to("arL", .12); to("arR", .12); to("azL", .05); to("azR", .05); }
   else if (E.id === "chest") {
-    const beat = t * CHEST_BPM, pop = Math.exp(-(beat % 1) * 7) * env, side = Math.floor(beat) % 2 ? 1 : -1;
+    // right arm held flat across the front of the body like a shelf, the chest pops above it
+    const beat = t * CHEST_BPM, pop = Math.exp(-(beat % 1) * 7) * env;
     v.lean -= .6 * pop; v.nod += .2 * pop; v.lift += .05 * pop;
     v.hipY -= .04 * pop; v.knL -= .3 * pop; v.knR -= .3 * pop; v.thL += .15 * pop; v.thR += .15 * pop;
-    to("arL", .55); to("arR", .55); to("azL", .5); to("azR", .5);
-    v.azL += (side > 0 ? .35 : -.1) * pop; v.azR += (side < 0 ? .35 : -.1) * pop; v.arL -= .35 * pop; v.arR -= .35 * pop;
+    to("arR", 1.45); to("azR", -1.1); v.arR -= .6 * pop; // cancel the torso tilt so the arm stays level
+    to("arL", .08); to("azL", .28);
     if (t > E.dur - 1) v.nod -= .15 * env; // finish looking up at the camera
   }
 }
