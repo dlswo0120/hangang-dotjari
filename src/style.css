@@ -155,3 +155,5 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
 .matpick{aspect-ratio:3/4;border-radius:10px;border:2px solid transparent;background-size:cover;background-position:center;box-shadow:0 2px 8px rgba(0,0,0,.25)}
 .matpick:hover,.matpick:focus-visible{border-color:#f2b46b}
 .modal-btns.one{grid-template-columns:1fr}
+.dv-sub{margin:-6px 0 0;font-size:13px;color:var(--ink-soft);line-height:1.5;word-break:keep-all}
+#dvGrid button:disabled{opacity:.4}

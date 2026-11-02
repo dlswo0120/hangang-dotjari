@@ -167,6 +167,8 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
 .matpick{aspect-ratio:3/4;border-radius:10px;border:2px solid transparent;background-size:cover;background-position:center;box-shadow:0 2px 8px rgba(0,0,0,.25)}
 .matpick:hover,.matpick:focus-visible{border-color:#f2b46b}
 .modal-btns.one{grid-template-columns:1fr}
+.dv-sub{margin:-6px 0 0;font-size:13px;color:var(--ink-soft);line-height:1.5;word-break:keep-all}
+#dvGrid button:disabled{opacity:.4}
 </style>
 
 </head>
@@ -273,6 +275,15 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
     <input id="paperText" class="paper-in" maxlength="30" autocomplete="off" placeholder="오늘 하고 싶었던 말">
     <div class="modal-btns"><button type="button" id="paperCancel">그만두기</button><button type="submit" class="leave paper-go">띄우기</button></div>
   </form>
+</div>
+
+<div class="modal" id="dvModal" hidden role="dialog" aria-modal="true" aria-labelledby="dvTitle">
+  <div class="card shop">
+    <div class="shop-head"><h2 id="dvTitle">한강통닭 배달</h2><button class="x" id="dvClose" aria-label="닫기">닫기</button></div>
+    <p class="dv-sub">배달비 1,000원 포함 · 2분쯤 뒤에 지금 있는 곳으로 가져다 드려요</p>
+    <div class="shop-grid" id="dvGrid"></div>
+    <div class="shop-foot"><span>튀기는 동안에는 취소할 수 있어요</span><span id="dvWallet">내 돈 0원</span></div>
+  </div>
 </div>
 
 <div class="modal" id="matModal" hidden role="dialog" aria-modal="true" aria-labelledby="matTitle">
@@ -516,7 +527,7 @@ window.HANGANG_CONFIG = {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
-const APP_VERSION = "2026.11.02b", UPDATES = [{"v": "2026.11.02b", "date": "11월 2일", "items": ["강 건너편 잔디에 '한강 자전거 대여소'가 생겼어요. 10분에 1,000원, 같은 곳에 반납해요", "자전거를 타는 동안 '따르릉' 벨을 울릴 수 있어요", "길가에 '돗자리 대여소'가 생겼어요. 오늘 첫 대여는 무료, 그다음은 500원이에요", "돗자리 없이도 잔디에 그냥 앉거나 누울 수 있어요"]}, {"v": "2026.11.02", "date": "11월 2일", "items": ["앉아서 가만히 있으면 화면이 비워지는 '물멍 모드'가 생겼어요", "강가에서 한마디 적은 종이배를 띄울 수 있어요", "매일 밤 9시, 4분 동안 한강 불꽃놀이가 열려요. 맑은 밤엔 별똥별도 지나가요", "음료를 든 채 가까이 앉으면 '짠' 할 수 있어요", "라면은 편의점에서 봉지라면을 사 와서 기계로 끓여요", "찍은 사진을 휴대폰 사진 앱에 바로 저장할 수 있어요", "새 버전이 나오면 화면 위에 알려 드려요"]}];
+const APP_VERSION = "2026.11.02c", UPDATES = [{"v": "2026.11.02c", "date": "11월 2일", "items": ["앉아 있을 때 '한강통닭'에 치킨 배달을 시킬 수 있어요. 2분쯤 뒤 오토바이 기사님이 자리까지 가져다 드려요", "배달 전용 '한강통닭 반마리'(배달비 포함 6,000원)가 생겼어요"]}, {"v": "2026.11.02b", "date": "11월 2일", "items": ["강 건너편 잔디에 '한강 자전거 대여소'가 생겼어요. 10분에 1,000원, 같은 곳에 반납해요", "자전거를 타는 동안 '따르릉' 벨을 울릴 수 있어요", "길가에 '돗자리 대여소'가 생겼어요. 오늘 첫 대여는 무료, 그다음은 500원이에요", "돗자리 없이도 잔디에 그냥 앉거나 누울 수 있어요"]}, {"v": "2026.11.02", "date": "11월 2일", "items": ["앉아서 가만히 있으면 화면이 비워지는 '물멍 모드'가 생겼어요", "강가에서 한마디 적은 종이배를 띄울 수 있어요", "매일 밤 9시, 4분 동안 한강 불꽃놀이가 열려요. 맑은 밤엔 별똥별도 지나가요", "음료를 든 채 가까이 앉으면 '짠' 할 수 있어요", "라면은 편의점에서 봉지라면을 사 와서 기계로 끓여요", "찍은 사진을 휴대폰 사진 앱에 바로 저장할 수 있어요", "새 버전이 나오면 화면 위에 알려 드려요"]}];
 "use strict";
 const $ = id => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -1361,7 +1372,8 @@ const PRODUCTS = {
   cone: { name: "콘 아이스크림", price: 3000, cat: "ice", color: "#f7c6d9", eat: 8 },
   mochi: { name: "찹쌀떡 아이스", price: 3500, cat: "ice", color: "#f3efe4", eat: 7 },
   gangjeong: { name: "닭강정 컵", price: 6500, cat: "chicken", color: "#c4632a", eat: 10 },
-  chicken: { name: "순살치킨", price: 8000, cat: "chicken", color: "#d9893a", eat: 11 }
+  chicken: { name: "순살치킨", price: 8000, cat: "chicken", color: "#d9893a", eat: 11 },
+  halfchk: { name: "한강통닭 반마리", price: 5000, cat: "chicken", color: "#e0a046", eat: 9 }
 };
 const CATS = {
   snack: { title: "과자 진열대", verb: "과자 고르기", items: ["chips", "shrimp", "choco", "jelly", "rpack"] },
@@ -1465,6 +1477,12 @@ const ART = {
     x.fillStyle = "#4caf50"; x.fillRect(w / 2 + 8, 92, 8, 4); x.fillStyle = "#ffd23f"; x.beginPath(); x.ellipse(w / 2 - 12, 96, 7, 4, 0, 0, 7); x.fill();
     x.strokeStyle = "rgba(255,255,255,.75)"; x.lineWidth = 2; [-14, 0, 14].forEach(o => { x.beginPath(); x.moveTo(w / 2 + o, 80); x.bezierCurveTo(w / 2 + o - 6, 72, w / 2 + o + 6, 68, w / 2 + o, 60); x.stroke(); });
     label(x, "얼큰한 맛", w / 2, h - 30, 13, "#fff3c4");
+  },
+  halfchk(x, w, h) {
+    x.fillStyle = "#f6e7c8"; rr(x, 10, 40, w - 20, h - 50, 8); x.fill(); x.strokeStyle = "#c0392b"; x.lineWidth = 5; rr(x, 12, 42, w - 24, h - 54, 7); x.stroke();
+    x.fillStyle = "#c0392b"; x.fillRect(12, 92, w - 24, 30); label(x, "한강통닭", w / 2, 108, 18, "#fff6e0");
+    label(x, "반마리", w / 2, 134, 13, "#7a3b10");
+    for (let i = 0; i < 4; i++) { const cx = 30 + i * 23, cy = 30 + (i % 2) * 10; const g = x.createRadialGradient(cx - 4, cy - 4, 2, cx, cy, 14); g.addColorStop(0, "#f6c983"); g.addColorStop(1, "#b5602a"); x.fillStyle = g; x.beginPath(); x.ellipse(cx, cy, 14, 11, i, 0, 7); x.fill(); }
   },
   chicken(x, w, h) {
     x.fillStyle = "#ffffff"; rr(x, 12, 44, w - 24, h - 52, 6); x.fill(); x.fillStyle = "#d8322f"; for (let i = 12; i < w - 12; i += 16) x.fillRect(i, 44, 8, h - 52);
@@ -1967,6 +1985,7 @@ function cleanPresence(p) {
     q: num(p.q, 0, 1e15, 0), bk: Number.isInteger(p.bk) ? clamp(p.bk, -1, 30) : -1,
     ch: num(p.ch, 0, 1e15, 0), pb: null, mt: p.mt === 1, bl: num(p.bl, 0, 1e15, 0)
   };
+  if (p.dv && typeof p.dv === "object" && typeof p.dv.k === "string" && PRODUCTS[p.dv.k] && typeof p.dv.at === "number") o.dv = { k: p.dv.k, at: p.dv.at };
   if (p.pb && typeof p.pb === "object" && typeof p.pb.t === "string" && typeof p.pb.at === "number") o.pb = { t: cleanWords(p.pb.t), at: p.pb.at, x: num(p.pb.x, WORLD.x0, WORLD.x1, 0) };
   if (p.rm && typeof p.rm === "object" && Number.isInteger(p.rm.m) && p.rm.m >= 0 && p.rm.m < 3) o.rm = { m: p.rm.m, at: num(p.rm.at, 0, 1e15, 0) };
   if (p.say && typeof p.say === "object" && Number.isInteger(p.say.i) && p.say.i >= 0 && p.say.i < MACROS.length && typeof p.say.at === "number") o.say = { i: p.say.i, at: p.say.at };
@@ -2013,7 +2032,7 @@ function syncPeers(peers) {
 })();
 let lastPub = 0, lastPubKey = "", mySay = null;
 function presenceObj() {
-  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id, at: me.bt.at } : null, say: mySay, rm: me.rm, hr: me.hold ? 1 : 0, hi: me.hold || null, ea: me.eat || 0, q: me.q || 0, bk: me.basket ? me.basket.length : -1, ch: me.ch || 0, pb: me.pb || null, mt: me.mat ? 1 : 0, bl: me.bl || 0 };
+  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id, at: me.bt.at } : null, say: mySay, rm: me.rm, hr: me.hold ? 1 : 0, hi: me.hold || null, ea: me.eat || 0, q: me.q || 0, bk: me.basket ? me.basket.length : -1, ch: me.ch || 0, pb: me.pb || null, mt: me.mat ? 1 : 0, bl: me.bl || 0, dv: me.dv ? { k: me.dv.k, at: me.dv.at } : null };
   if (boarded && boarded.driver) { o.bx = +boatLocal.x.toFixed(2); o.bz = +boatLocal.z.toFixed(2); o.br = +boatLocal.r.toFixed(2); }
   else { o.bx = null; o.bz = null; o.br = null; }
   return o;
@@ -2182,6 +2201,7 @@ function refreshActions() {
   }
   status = storeActions(acts, status);
   status = rentalActions(acts, status);
+  deliveryActions(acts);
   if ($("status").textContent !== status) { $("status").textContent = status; $("status").hidden = !status; }
   // rebuild the buttons only when they change, so a running timer in the status line never eats a tap
   const key = JSON.stringify(acts); if (key === actKey) return; actKey = key;
@@ -2190,7 +2210,7 @@ function refreshActions() {
 }
 $("actRow").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return; const a = b.dataset.act;
-  if (storeClick(a) || rentalClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
+  if (storeClick(a) || rentalClick(a) || deliveryClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
   if (a === "sit" || a === "lie") {
     if (me.st === "walk") {
       if (!canSpread()) { toast("잔디나 대교 위에서만 돗자리를 펼 수 있습니다"); return; }
@@ -2489,7 +2509,7 @@ $("leaveModal").addEventListener("click", e => { if (e.target === $("leaveModal"
 addEventListener("keydown", e => { if (e.key === "Escape" && !$("leaveModal").hidden) $("leaveModal").hidden = true; });
 $("leaveBtn").addEventListener("click", async () => {
   $("leaveModal").hidden = true;
-  started = false; me.bt = null; boarded = null; me.rm = null; me.hold = false; me.eat = 0; me.basket = null; me.q = 0; payState = null; me.ch = 0; me.pb = null; me.mat = false; me.bike = null; if (me.st === "bike") me.st = "walk"; exitMung();
+  started = false; me.bt = null; boarded = null; me.rm = null; me.hold = false; me.eat = 0; me.basket = null; me.q = 0; payState = null; me.ch = 0; me.pb = null; me.mat = false; me.bike = null; if (me.dv && !me.dv.got && Date.now() - me.dv.at < DV_RIDE_IN * 1000) { wallet.money += PRODUCTS[me.dv.k].price + DV_FEE; saveWallet(); } me.dv = null; if (me.st === "bike") me.st = "walk"; exitMung();
   try { if (room) { await room.presence({ n: null, st: null, bt: null, rm: null }); if (typeof room.leave === "function") await room.leave(); } } catch (e) {}
   room = null;
   if (myAvatar) { scene.remove(myAvatar); myAvatar = null; }
@@ -3112,6 +3132,122 @@ function updateRentals(dt) {
     }
   }
 }
+/* ================= 한강통닭 치킨 배달 ================= */
+// The order (menu + time) rides along in presence, and every screen plays the same timeline,
+// so everyone sees the same rider without any server.
+const DV_FEE = 1000, DV_MENU = ["halfchk", "chicken", "gangjeong"];
+const DV_RIDE_IN = 90, DV_RIDE = 15, DV_LANE = 30.6, DV_WALK_SPEED = 1.7;
+const dvLogo = signTex([["한강통닭", 44, .55]], "#c0392b", "#fff6e0", 256, 96);
+
+function makeHelmet(av) {
+  const h = new THREE.Mesh(new THREE.SphereGeometry(.5, 24, 16, 0, Math.PI * 2, 0, Math.PI * .56), mat(0xd8322f));
+  h.rotation.x = .3; h.position.y = .03; av.userData.head.add(h);
+  const v = new THREE.Mesh(new THREE.BoxGeometry(.62, .05, .22), mat(0x2a2d31)); v.position.set(0, .12, -.42); av.userData.head.add(v);
+}
+function makeScooter() {
+  const g = new THREE.Group(), bike = makeBike(0xd8322f); g.add(bike);
+  const boxM = [mat(0xc0392b), mat(0xc0392b), mat(0xc0392b), mat(0xc0392b), new THREE.MeshLambertMaterial({ map: dvLogo }), new THREE.MeshLambertMaterial({ map: dvLogo })];
+  const box = new THREE.Mesh(new THREE.BoxGeometry(.5, .42, .46), boxM); box.position.set(0, 1.06, .62); g.add(box);
+  const rider = makeAvatar({ g: "m", c: 0, pose: "bike" }); setAvatarState(rider, "bike", false, true); rider.position.set(0, .84, .08); makeHelmet(rider); g.add(rider);
+  g.traverse(m => { if (m.isMesh) m.castShadow = true; });
+  g.userData = { bike, rider, h: 2.4 }; return g;
+}
+const deliveries = new Map(); // key -> local playback state
+
+function dvCustomer(key) {
+  if (key === "me") return myAvatar ? { x: me.x, z: me.z, r: me.st === "sit" || me.st === "lie" ? 0 : me.r, st: me.st, y: me.y, obj: myAvatar } : null;
+  const o = others.get(key); return o ? { x: o.x, z: o.z, r: o.p.st === "sit" || o.p.st === "lie" ? 0 : o.p.r, st: o.p.st, y: o.p.y, obj: o.obj } : null;
+}
+function dvTimeline(d, c, t) {
+  const parkX = clamp(c.x, BOUND.x0 + 4, BOUND.x1 - 4), side = parkX - 70 < BOUND.x0 + 5 ? 1 : -1;
+  const startX = parkX + side * 70, front = [c.x - Math.sin(c.r) * 1.05, c.z - Math.cos(c.r) * 1.05];
+  if (d.walk == null && t >= DV_RIDE_IN + DV_RIDE) d.walk = Math.hypot(front[0] - parkX, front[1] - DV_LANE) / DV_WALK_SPEED + .3;
+  const walk = d.walk == null ? 6 : d.walk, t1 = DV_RIDE_IN + DV_RIDE, t2 = t1 + walk, t3 = t2 + 3, t4 = t3 + walk, t5 = t4 + 14;
+  return { parkX, side, startX, front, t1, t2, t3, t4, t5 };
+}
+function updateDeliveries(dt) {
+  const now = Date.now(), live = new Set();
+  const consider = (key, dv) => {
+    if (!dv || !PRODUCTS[dv.k]) return;
+    const t = (now - dv.at) / 1000; if (t < DV_RIDE_IN || t > 220) return;
+    const c = dvCustomer(key); if (!c) return;
+    const id = key + ":" + dv.at; live.add(id);
+    let d = deliveries.get(id);
+    if (!d) {
+      d = { scooter: makeScooter(), walker: makeAvatar({ g: "m", c: 0, name: "한강통닭" }), walk: null, said: 0 };
+      makeHelmet(d.walker); setAvatarState(d.walker, "walk", false, true); scene.add(d.scooter); scene.add(d.walker); deliveries.set(id, d);
+      if (audio.ready) { const dd = Math.hypot(c.x - cam.tx, c.z - cam.tz); if (dd < 40) audio.tone(audio.sfx, "square", 520, 500, .12, .05, audio.ac.currentTime); }
+    }
+    const L = dvTimeline(d, c, t), S = d.scooter, W = d.walker;
+    let sx = L.parkX, sr = L.side > 0 ? Math.PI / 2 : -Math.PI / 2, riding = false, wx = L.parkX + .9, wz = DV_LANE, wr = 0, walking = false, holding = false, wv = false;
+    if (t < L.t1) { const k = ease(clamp((t - DV_RIDE_IN) / DV_RIDE, 0, 1)); sx = L.startX + (L.parkX - L.startX) * k; riding = true; }
+    else if (t < L.t2) { const k = clamp((t - L.t1) / (L.t2 - L.t1), 0, 1); wx = L.parkX + .9 + (L.front[0] - L.parkX - .9) * k; wz = DV_LANE + (L.front[1] - DV_LANE) * k; wr = yawFrom(L.front[0] - L.parkX - .9, L.front[1] - DV_LANE); walking = true; holding = true; wv = true; }
+    else if (t < L.t3) { wx = L.front[0]; wz = L.front[1]; wr = yawFrom(c.x - wx, c.z - wz); holding = t < L.t2 + 1.2; wv = true; }
+    else if (t < L.t4) { const k = clamp((t - L.t3) / (L.t4 - L.t3), 0, 1); wx = L.front[0] + (L.parkX + .9 - L.front[0]) * k; wz = L.front[1] + (DV_LANE - L.front[1]) * k; wr = yawFrom(L.parkX + .9 - L.front[0], DV_LANE - L.front[1]); walking = true; wv = true; }
+    else { const k = clamp((t - L.t4) / (L.t5 - L.t4), 0, 1); sx = L.parkX - L.side * 70 * ease(k); sr = -sr; riding = true; }
+    // the scooter faces along the path; parked while the rider walks
+    S.position.set(sx, 0, DV_LANE); S.rotation.y = lerpAngle(S.rotation.y, sr, riding ? 1 : Math.min(1, dt * 3));
+    S.visible = t < L.t5; S.userData.rider.visible = riding;
+    if (riding) { S.userData.bike.userData.wheels.forEach(w => w.rotation.x -= dt * 9); updateAvatar(S.userData.rider, dt, T, { crank: 0 }); }
+    W.visible = wv; if (wv) { W.position.set(wx, 0, wz); W.rotation.y = lerpAngle(W.rotation.y, wr, Math.min(1, dt * 8)); updateAvatar(W, dt, T, { moving: walking, speed: 3, hold: holding ? dv.k : null, eatT: -1 }); }
+    // lines and the handover
+    if (t >= L.t2 && d.said < 1) { d.said = 1; showBubble(() => W, "한강통닭입니다~ 치킨 왔어요!", 2.6, "dv-" + id); if (audio.ready && Math.hypot(c.x - cam.tx, c.z - cam.tz) < 25) audio.pop(); }
+    if (t >= L.t3 && d.said < 2) { d.said = 2; showBubble(() => W, "맛있게 드세요~", 2.2, "dv-" + id); }
+    if (key === "me" && t >= L.t2 + 1.2 && me.dv && me.dv.at === dv.at && !me.dv.got) receiveDelivery();
+  };
+  if (me.dv) consider("me", me.dv);
+  for (const [peer, o] of others) consider(peer, o.p.dv);
+  for (const [id, d] of deliveries) if (!live.has(id)) { scene.remove(d.scooter); scene.remove(d.walker); deliveries.delete(id); }
+  if (me.dv && (now - me.dv.at) / 1000 > 220) { me.dv = null; publish(true); }
+}
+function receiveDelivery() {
+  const k = me.dv.k; me.dv.got = true;
+  const canHold = !me.hold && !boarded && (me.st === "walk" || me.st === "sit" || me.st === "bench" || me.st === "stool") && me.level === "ground";
+  if (canHold) { me.hold = k; me.eat = 0; toast(PRODUCTS[k].name + " 도착! '먹기'를 누르면 먹을 수 있어요"); }
+  else { if (wallet.bag.length < BAG_MAX) wallet.bag.push(k); saveWallet(); toast(PRODUCTS[k].name + " 도착! 가방에 넣어 두었어요"); }
+  if (audio.ready) audio.ding();
+  publish(true); actKey = "";
+}
+function dvPhase() {
+  if (!me.dv || me.dv.got) return "";
+  const t = (Date.now() - me.dv.at) / 1000;
+  return t < DV_RIDE_IN ? "치킨 튀기는 중 " + fmt(Math.ceil(DV_RIDE_IN - t)) : t < DV_RIDE_IN + DV_RIDE ? "배달 출발! 오토바이가 오고 있어요" : "곧 도착해요";
+}
+function deliveryActions(acts) {
+  if (!started || anim || boarded) return;
+  if (me.dv && !me.dv.got && (Date.now() - me.dv.at) / 1000 < DV_RIDE_IN) { acts.push(["dvcancel", "배달 취소", ""]); return; }
+  if ((!me.dv || me.dv.got) && me.level === "ground" && ["sit", "lie", "bench", "stool"].includes(me.st)) acts.push(["dvorder", "치킨 배달", ""]);
+}
+function deliveryClick(a) {
+  if (a === "dvorder") { openDelivery(); return true; }
+  if (a === "dvcancel") {
+    if (!me.dv || (Date.now() - me.dv.at) / 1000 >= DV_RIDE_IN) { toast("이미 출발해서 취소할 수 없어요"); return true; }
+    wallet.money += PRODUCTS[me.dv.k].price + DV_FEE; saveWallet(); me.dv = null; toast("배달을 취소했어요. 돈은 돌려받았어요"); return true;
+  }
+  return false;
+}
+function openDelivery() {
+  const grid = $("dvGrid"); grid.textContent = "";
+  DV_MENU.forEach(k => {
+    const P = PRODUCTS[k], cell = document.createElement("div"); cell.className = "item";
+    const im = document.createElement("img"); im.className = "swatch"; im.alt = ""; im.src = PRODUCT_URL[k];
+    const nm = document.createElement("b"); nm.textContent = P.name;
+    const pr = document.createElement("span"); pr.className = "price"; pr.textContent = won(P.price + DV_FEE);
+    const btn = document.createElement("button"); btn.textContent = "주문하기"; btn.dataset.k = k; btn.disabled = wallet.money < P.price + DV_FEE;
+    cell.append(im, nm, pr, btn); grid.appendChild(cell);
+  });
+  $("dvWallet").textContent = "내 돈 " + won(wallet.money); $("dvModal").hidden = false;
+}
+$("dvGrid").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b || (me.dv && !me.dv.got)) return;
+  const k = b.dataset.k, cost = PRODUCTS[k].price + DV_FEE;
+  if (wallet.money < cost) { toast("돈이 모자라요. 용돈을 모아서 다시 시켜 보세요"); return; }
+  wallet.money -= cost; saveWallet(); me.dv = { k, at: Date.now() };
+  $("dvModal").hidden = true; publish(true); actKey = ""; refreshActions(); if (audio.ready) audio.click();
+  toast("한강통닭에 " + PRODUCTS[k].name + "을(를) 주문했어요. 2분쯤 뒤에 도착해요");
+});
+$("dvClose").addEventListener("click", () => { $("dvModal").hidden = true; });
+$("dvModal").addEventListener("click", e => { if (e.target === $("dvModal")) $("dvModal").hidden = true; });
 /* ================= main loop ================= */
 applyEnv(); setInterval(applyEnv, 30000);
 const clock = new THREE.Clock(); let T = 0, actTimer = 0, plantTimer = 0;
@@ -3287,12 +3423,14 @@ function frame() {
     const chip = $("ramenChip");
     if (me.rm) { const left = ramenLeft(); chip.hidden = false; chip.textContent = left > 0 ? "라면 끓는 중 " + fmt(Math.ceil(left)) : "라면 완성! 기계로 가서 들어 주세요"; }
     else if (me.eat) { chip.hidden = false; chip.textContent = (me.hold === "ramen" ? "라면" : PRODUCTS[me.hold] ? PRODUCTS[me.hold].name : "간식") + (PRODUCTS[me.hold] && PRODUCTS[me.hold].cat === "drink" ? " 꿀꺽꿀꺽 마시는 중" : " 냠냠 먹는 중"); }
+    else if (dvPhase()) { chip.hidden = false; chip.textContent = dvPhase(); }
     else chip.hidden = true;
   }
 
   updateStore(dt);
   updateExtras(dt);
   updateRentals(dt);
+  updateDeliveries(dt);
   // bubbles follow their owners
   for (let i = bubbles.length - 1; i >= 0; i--) {
     const b = bubbles[i], o = b.getObj();

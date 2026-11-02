@@ -173,12 +173,14 @@ function frame() {
     const chip = $("ramenChip");
     if (me.rm) { const left = ramenLeft(); chip.hidden = false; chip.textContent = left > 0 ? "라면 끓는 중 " + fmt(Math.ceil(left)) : "라면 완성! 기계로 가서 들어 주세요"; }
     else if (me.eat) { chip.hidden = false; chip.textContent = (me.hold === "ramen" ? "라면" : PRODUCTS[me.hold] ? PRODUCTS[me.hold].name : "간식") + (PRODUCTS[me.hold] && PRODUCTS[me.hold].cat === "drink" ? " 꿀꺽꿀꺽 마시는 중" : " 냠냠 먹는 중"); }
+    else if (dvPhase()) { chip.hidden = false; chip.textContent = dvPhase(); }
     else chip.hidden = true;
   }
 
   updateStore(dt);
   updateExtras(dt);
   updateRentals(dt);
+  updateDeliveries(dt);
   // bubbles follow their owners
   for (let i = bubbles.length - 1; i >= 0; i--) {
     const b = bubbles[i], o = b.getObj();

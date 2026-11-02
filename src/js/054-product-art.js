@@ -15,7 +15,8 @@ const PRODUCTS = {
   cone: { name: "콘 아이스크림", price: 3000, cat: "ice", color: "#f7c6d9", eat: 8 },
   mochi: { name: "찹쌀떡 아이스", price: 3500, cat: "ice", color: "#f3efe4", eat: 7 },
   gangjeong: { name: "닭강정 컵", price: 6500, cat: "chicken", color: "#c4632a", eat: 10 },
-  chicken: { name: "순살치킨", price: 8000, cat: "chicken", color: "#d9893a", eat: 11 }
+  chicken: { name: "순살치킨", price: 8000, cat: "chicken", color: "#d9893a", eat: 11 },
+  halfchk: { name: "한강통닭 반마리", price: 5000, cat: "chicken", color: "#e0a046", eat: 9 }
 };
 const CATS = {
   snack: { title: "과자 진열대", verb: "과자 고르기", items: ["chips", "shrimp", "choco", "jelly", "rpack"] },
@@ -119,6 +120,12 @@ const ART = {
     x.fillStyle = "#4caf50"; x.fillRect(w / 2 + 8, 92, 8, 4); x.fillStyle = "#ffd23f"; x.beginPath(); x.ellipse(w / 2 - 12, 96, 7, 4, 0, 0, 7); x.fill();
     x.strokeStyle = "rgba(255,255,255,.75)"; x.lineWidth = 2; [-14, 0, 14].forEach(o => { x.beginPath(); x.moveTo(w / 2 + o, 80); x.bezierCurveTo(w / 2 + o - 6, 72, w / 2 + o + 6, 68, w / 2 + o, 60); x.stroke(); });
     label(x, "얼큰한 맛", w / 2, h - 30, 13, "#fff3c4");
+  },
+  halfchk(x, w, h) {
+    x.fillStyle = "#f6e7c8"; rr(x, 10, 40, w - 20, h - 50, 8); x.fill(); x.strokeStyle = "#c0392b"; x.lineWidth = 5; rr(x, 12, 42, w - 24, h - 54, 7); x.stroke();
+    x.fillStyle = "#c0392b"; x.fillRect(12, 92, w - 24, 30); label(x, "한강통닭", w / 2, 108, 18, "#fff6e0");
+    label(x, "반마리", w / 2, 134, 13, "#7a3b10");
+    for (let i = 0; i < 4; i++) { const cx = 30 + i * 23, cy = 30 + (i % 2) * 10; const g = x.createRadialGradient(cx - 4, cy - 4, 2, cx, cy, 14); g.addColorStop(0, "#f6c983"); g.addColorStop(1, "#b5602a"); x.fillStyle = g; x.beginPath(); x.ellipse(cx, cy, 14, 11, i, 0, 7); x.fill(); }
   },
   chicken(x, w, h) {
     x.fillStyle = "#ffffff"; rr(x, 12, 44, w - 24, h - 52, 6); x.fill(); x.fillStyle = "#d8322f"; for (let i = 12; i < w - 12; i += 16) x.fillRect(i, 44, 8, h - 52);
