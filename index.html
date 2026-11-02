@@ -345,6 +345,14 @@ window.HANGANG_CONFIG = {
   const downloads = {
     async save({ filename, data }) {
       const blob = data instanceof Blob ? data : new Blob([data]);
+      // 휴대폰: 공유 창을 열어 '이미지 저장'으로 사진 앱에 바로 저장
+      if (matchMedia("(pointer: coarse)").matches && navigator.canShare && typeof File === "function") {
+        const file = new File([blob], filename, { type: blob.type || "image/png" });
+        if (navigator.canShare({ files: [file] })) {
+          try { await navigator.share({ files: [file] }); return { saved: true }; }
+          catch (e) { if (e && e.name === "AbortError") { const c = new Error("cancelled"); c.code = "cancelled"; throw c; } }
+        }
+      }
       const url = URL.createObjectURL(blob), a = document.createElement("a");
       a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 4000);
@@ -495,7 +503,7 @@ window.HANGANG_CONFIG = {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
-const APP_VERSION = "2026.11.02", UPDATES = [{"v": "2026.11.02", "date": "11월 2일", "items": ["앉아서 가만히 있으면 화면이 비워지는 '물멍 모드'가 생겼어요", "강가에서 한마디 적은 종이배를 띄울 수 있어요", "매일 밤 9시, 4분 동안 한강 불꽃놀이가 열려요. 맑은 밤엔 별똥별도 지나가요", "음료를 든 채 가까이 앉으면 '짠' 할 수 있어요", "라면은 편의점에서 봉지라면을 사 와서 기계로 끓여요", "새 버전이 나오면 화면 위에 알려 드려요"]}];
+const APP_VERSION = "2026.11.02", UPDATES = [{"v": "2026.11.02", "date": "11월 2일", "items": ["앉아서 가만히 있으면 화면이 비워지는 '물멍 모드'가 생겼어요", "강가에서 한마디 적은 종이배를 띄울 수 있어요", "매일 밤 9시, 4분 동안 한강 불꽃놀이가 열려요. 맑은 밤엔 별똥별도 지나가요", "음료를 든 채 가까이 앉으면 '짠' 할 수 있어요", "라면은 편의점에서 봉지라면을 사 와서 기계로 끓여요", "찍은 사진을 휴대폰 사진 앱에 바로 저장할 수 있어요", "새 버전이 나오면 화면 위에 알려 드려요"]}];
 "use strict";
 const $ = id => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -2511,7 +2519,7 @@ $("camBtn").addEventListener("click", () => {
   x.fillText(`한강 돗자리 · ${me.name} · ${k.getMonth() + 1}월 ${k.getDate()}일 ${phase}`, w - 18 * s, h - 16 * s);
   c.toBlob(b => {
     if (!b) return; shotBlob = b; const img = $("shotImg"); if (img.src) URL.revokeObjectURL(img.src); img.src = URL.createObjectURL(b);
-    $("shotSave").hidden = !downloads; $("shotTip").textContent = downloads ? "" : "이미지를 길게 누르거나 우클릭해서 저장할 수 있습니다.";
+    $("shotSave").hidden = !downloads; $("shotTip").textContent = !downloads ? "이미지를 길게 누르거나 우클릭해서 저장할 수 있습니다." : touchy && navigator.canShare ? "저장을 누른 뒤 '이미지 저장'을 고르면 사진 앱에 들어가요" : "";
     $("shot").hidden = false;
   }, "image/png");
 });

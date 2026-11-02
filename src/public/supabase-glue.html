@@ -30,6 +30,14 @@ window.HANGANG_CONFIG = {
   const downloads = {
     async save({ filename, data }) {
       const blob = data instanceof Blob ? data : new Blob([data]);
+      // 휴대폰: 공유 창을 열어 '이미지 저장'으로 사진 앱에 바로 저장
+      if (matchMedia("(pointer: coarse)").matches && navigator.canShare && typeof File === "function") {
+        const file = new File([blob], filename, { type: blob.type || "image/png" });
+        if (navigator.canShare({ files: [file] })) {
+          try { await navigator.share({ files: [file] }); return { saved: true }; }
+          catch (e) { if (e && e.name === "AbortError") { const c = new Error("cancelled"); c.code = "cancelled"; throw c; } }
+        }
+      }
       const url = URL.createObjectURL(blob), a = document.createElement("a");
       a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 4000);

@@ -80,7 +80,7 @@ $("camBtn").addEventListener("click", () => {
   x.fillText(`한강 돗자리 · ${me.name} · ${k.getMonth() + 1}월 ${k.getDate()}일 ${phase}`, w - 18 * s, h - 16 * s);
   c.toBlob(b => {
     if (!b) return; shotBlob = b; const img = $("shotImg"); if (img.src) URL.revokeObjectURL(img.src); img.src = URL.createObjectURL(b);
-    $("shotSave").hidden = !downloads; $("shotTip").textContent = downloads ? "" : "이미지를 길게 누르거나 우클릭해서 저장할 수 있습니다.";
+    $("shotSave").hidden = !downloads; $("shotTip").textContent = !downloads ? "이미지를 길게 누르거나 우클릭해서 저장할 수 있습니다." : touchy && navigator.canShare ? "저장을 누른 뒤 '이미지 저장'을 고르면 사진 앱에 들어가요" : "";
     $("shot").hidden = false;
   }, "image/png");
 });
