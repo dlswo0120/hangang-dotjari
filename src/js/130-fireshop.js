@@ -7,14 +7,15 @@ function mainShowNow() { const d = todayShowStart(), n = Date.now(); return n >=
 
 /* small and medium spark pools (the big show uses its own) */
 function sparkPool(N, size) {
-  const pos = new Float32Array(N * 3), col = new Float32Array(N * 3), base = new Float32Array(N * 3), vel = new Float32Array(N * 3), life = new Float32Array(N), max = new Float32Array(N), grav = new Float32Array(N);
+  const drag = new Float32Array(N), pos = new Float32Array(N * 3), col = new Float32Array(N * 3), base = new Float32Array(N * 3), vel = new Float32Array(N * 3), life = new Float32Array(N), max = new Float32Array(N), grav = new Float32Array(N);
   for (let i = 0; i < N; i++) pos[i * 3 + 1] = -9999;
   const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.BufferAttribute(pos, 3)); geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
   const pts = new THREE.Points(geo, new THREE.PointsMaterial({ size, map: fwDot, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
   pts.frustumCulled = false; scene.add(pts);
   let next = 0, alive = 0;
   return {
-    emit(x, y, z, vx, vy, vz, c, l, g) {
+    emit(x, y, z, vx, vy, vz, c, l, g, dg = 1.6) {
+      drag[next] = dg;
       const i = next; next = (next + 1) % N; const j = i * 3;
       pos[j] = x; pos[j + 1] = y; pos[j + 2] = z; vel[j] = vx; vel[j + 1] = vy; vel[j + 2] = vz;
       base[j] = c.r; base[j + 1] = c.g; base[j + 2] = c.b; life[i] = max[i] = l; grav[i] = g; alive = Math.max(alive, l);
@@ -24,7 +25,7 @@ function sparkPool(N, size) {
       for (let i = 0; i < N; i++) {
         const j = i * 3;
         if (life[i] <= 0) { if (pos[j + 1] > -9000) { pos[j + 1] = -9999; col[j] = col[j + 1] = col[j + 2] = 0; } continue; }
-        life[i] -= dt; const dr = 1 - Math.min(1, dt * 1.6);
+        life[i] -= dt; const dr = 1 - Math.min(1, dt * drag[i]);
         vel[j] *= dr; vel[j + 1] = vel[j + 1] * dr - grav[i] * dt; vel[j + 2] *= dr;
         pos[j] += vel[j] * dt; pos[j + 1] += vel[j + 1] * dt; pos[j + 2] += vel[j + 2] * dt;
         const f = Math.max(0, life[i] / max[i]); col[j] = base[j] * f; col[j + 1] = base[j + 1] * f; col[j + 2] = base[j + 2] * f;
@@ -33,7 +34,7 @@ function sparkPool(N, size) {
     }
   };
 }
-const sparksS = sparkPool(3500, .16), sparksM = sparkPool(1600, .55);
+const sparksS = sparkPool(3500, .16), sparksL = sparkPool(2500, .3), sparksM = sparkPool(2400, .8);
 const GOLD = new THREE.Color(0xffd27a), WHITE = new THREE.Color(0xfff6dc), SPARK_COLS = FW_COLS;
 const rnd = (a, b) => a + Math.random() * (b - a);
 
@@ -142,8 +143,8 @@ function sparkTipOf(av, out) { const b = av.userData.bowl; if (!b || !b.visible 
 const tipV = new THREE.Vector3();
 function emitSparkler(av, dt, dist) {
   if (dist > 45 || !sparkTipOf(av, tipV)) return;
-  const n = Math.min(8, Math.floor(dt * 70 + Math.random()));
-  for (let i = 0; i < n; i++) sparksS.emit(tipV.x, tipV.y, tipV.z, rnd(-2.5, 2.5), rnd(-1, 2.8), rnd(-2.5, 2.5), Math.random() < .4 ? WHITE : GOLD, rnd(.25, .55), 4);
+  const n = Math.min(14, Math.floor(dt * 140 + Math.random()));
+  for (let i = 0; i < n; i++) { const u = Math.random() * 2 - 1, a = Math.random() * Math.PI * 2, r = Math.sqrt(1 - u * u), sp = rnd(2.5, 5); sparksL.emit(tipV.x, tipV.y, tipV.z, r * Math.cos(a) * sp, u * sp + .8, r * Math.sin(a) * sp, Math.random() < .45 ? WHITE : GOLD, rnd(.35, .75), 4, 2.2); }
   if (audio.ready && dist < 9 && Math.random() < dt * 5) audio.crunch(.12 * (1 - dist / 9));
 }
 function spinOf(tw) { const t = Date.now() - (tw || 0); return tw && t < TWIRL ? t / 1000 * 8 : null; }
@@ -168,12 +169,12 @@ function updateFireShop(dt) {
     const d = Math.hypot(gf.x - cam.tx, gf.z - cam.tz), v = clamp(1 - d / 50, 0, 1);
     if (t < 3) { if (Math.random() < dt * 25) sparksS.emit(gf.x, .32, gf.z, rnd(-.5, .5), rnd(.5, 1.5), rnd(-.5, .5), GOLD, .3, 3); if (audio.ready && d < 15 && Math.random() < dt * 4) audio.crunch(.15 * v); }
     else if (gf.k === "fountain" && t < 11) {
-      const hue = (t * .15) % 1, c = new THREE.Color().setHSL(hue, .9, .6), n = Math.floor(dt * 220 + Math.random());
-      for (let i = 0; i < n; i++) sparksS.emit(gf.x, .32, gf.z, rnd(-1.1, 1.1), rnd(7.5, 10), rnd(-1.1, 1.1), Math.random() < .3 ? WHITE : c, rnd(1.1, 1.6), 5);
+      const hue = (t * .15) % 1, c = new THREE.Color().setHSL(hue, .9, .6), n = Math.floor(dt * 260 + Math.random());
+      for (let i = 0; i < n; i++) sparksL.emit(gf.x, .32, gf.z, rnd(-1.5, 1.5), rnd(11, 14.5), rnd(-1.5, 1.5), Math.random() < .3 ? WHITE : c, rnd(1.8, 2.5), 6, .3);
       if (audio.ready && d < 20 && Math.random() < dt * 8) audio.crunch(.2 * v);
     } else if (gf.k === "rocket") {
       while (g.shots < 6 && t >= 3 + g.shots * .8) {
-        g.shots++; shells.push({ x: gf.x, y: .3, z: gf.z, vy: 16, top: 13 + Math.random() * 5, col: SPARK_COLS[Math.floor(Math.random() * 7)] });
+        g.shots++; shells.push({ x: gf.x, y: .3, z: gf.z, vy: 30, top: 24 + Math.random() * 8, col: SPARK_COLS[Math.floor(Math.random() * 7)] });
         if (audio.ready && d < 40) audio.tone(audio.sfx, "triangle", 900, 1800, .35, .05 * v + .001, audio.ac.currentTime);
       }
     }
@@ -182,13 +183,13 @@ function updateFireShop(dt) {
   for (const [peer, o] of others) consider(peer, o.p.gf);
   for (const [id, g] of groundFw) if (!live.has(id)) { scene.remove(g.obj); groundFw.delete(id); }
   for (let i = shells.length - 1; i >= 0; i--) {
-    const s = shells[i]; s.y += s.vy * dt; s.vy = Math.max(4, s.vy - 6 * dt);
-    sparksS.emit(s.x, s.y, s.z, rnd(-.2, .2), -1, rnd(-.2, .2), GOLD, .35, 0);
+    const s = shells[i]; s.y += s.vy * dt; s.vy = Math.max(8, s.vy - 6 * dt);
+    sparksL.emit(s.x, s.y, s.z, rnd(-.3, .3), -1.5, rnd(-.3, .3), GOLD, .45, 0);
     if (s.y >= s.top) {
-      for (let k = 0; k < 70; k++) { const u = Math.random() * 2 - 1, a = Math.random() * Math.PI * 2, r = Math.sqrt(1 - u * u), sp = rnd(4, 5.5); sparksM.emit(s.x, s.y, s.z, r * Math.cos(a) * sp, u * sp, r * Math.sin(a) * sp, Math.random() < .2 ? WHITE : s.col, rnd(1, 1.5), 2.2); }
+      for (let k = 0; k < 120; k++) { const u = Math.random() * 2 - 1, a = Math.random() * Math.PI * 2, r = Math.sqrt(1 - u * u), sp = rnd(8, 10.5); sparksM.emit(s.x, s.y, s.z, r * Math.cos(a) * sp, u * sp, r * Math.sin(a) * sp, Math.random() < .2 ? WHITE : s.col, rnd(1.6, 2.2), 2.5, .9); }
       if (audio.ready) { const dd = Math.hypot(s.x - camera.position.x, s.y - camera.position.y, s.z - camera.position.z); audio.boom(clamp(.6 - dd / 120, .05, .6), Math.min(.4, dd / 340)); }
       shells.splice(i, 1);
     }
   }
-  sparksS.update(dt); sparksM.update(dt);
+  sparksS.update(dt); sparksL.update(dt); sparksM.update(dt);
 }

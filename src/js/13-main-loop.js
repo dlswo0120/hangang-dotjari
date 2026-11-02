@@ -230,7 +230,8 @@ function frame() {
     if (py < floor) py = floor;
     camPos.set(...storeCam(px, py, pz));
     if (!cam.init) { camera.position.copy(camPos); cam.init = true; } else camera.position.lerp(camPos, 1 - Math.exp(-dt * 14));
-    camera.lookAt(cam.tx - Math.sin(cam.yaw) * 2.5, cam.ty + 0.35, cam.tz - Math.cos(cam.yaw) * 2.5);
+    // below zero pitch the camera sits low and tilts up toward the sky
+    camera.lookAt(cam.tx - Math.sin(cam.yaw) * 2.5, cam.ty + 0.35 + Math.max(0, -cam.pitch) * 9, cam.tz - Math.cos(cam.yaw) * 2.5);
     publish(false);
     actTimer += dt; if (actTimer > 0.2) { actTimer = 0; refreshActions(); }
     plantTimer += dt;

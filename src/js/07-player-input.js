@@ -54,7 +54,7 @@ canvas.addEventListener("pointerdown", e => { canvas.setPointerCapture(e.pointer
 canvas.addEventListener("pointermove", e => {
   const p = ptrs.get(e.pointerId); if (!p || !started) return;
   cam.dragAt = performance.now();
-  if (ptrs.size === 1) { cam.tYaw -= (e.clientX - p.x) * 0.005; cam.tPitch = clamp(cam.tPitch + (e.clientY - p.y) * 0.004, 0.02, 0.9); }
+  if (ptrs.size === 1) { cam.tYaw -= (e.clientX - p.x) * 0.005; cam.tPitch = clamp(cam.tPitch + (e.clientY - p.y) * 0.004, -0.75, 0.9); }
   else if (ptrs.size === 2) { p.x = e.clientX; p.y = e.clientY; const [a, b] = [...ptrs.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch0) cam.tDist = clamp(cam.tDist * pinch0 / d, 2.8, 16); pinch0 = d; return; }
   p.x = e.clientX; p.y = e.clientY;
 });

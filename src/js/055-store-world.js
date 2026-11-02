@@ -34,6 +34,8 @@ function makeHeld(kind) {
     const g = new THREE.Group(), wire = new THREE.Mesh(new THREE.CylinderGeometry(.006, .006, .46, 5), mat(0x9aa0a8)); wire.position.y = .25; g.add(wire);
     const coat = new THREE.Mesh(new THREE.CylinderGeometry(.013, .013, .2, 6), mat(0x55585e)); coat.position.y = .36; g.add(coat);
     const tip = new THREE.Mesh(new THREE.SphereGeometry(.035, 8, 6), new THREE.MeshBasicMaterial({ color: 0xfff1b0 })); tip.position.y = .47; tip.visible = false; g.add(tip);
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: fwDot, color: 0xffd27a, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+    halo.scale.setScalar(.7); tip.add(halo);
     g.userData.tip = tip; return g;
   }
   const P = PRODUCTS[kind] || PRODUCTS.chips, g = new THREE.Group(), col = new THREE.Color(P.color);
