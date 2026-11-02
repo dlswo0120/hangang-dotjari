@@ -160,3 +160,4 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
 .chat-grid .emo{font-size:16px;line-height:1}
 #danceGrid button{grid-column:1/-1}
 #chatPanel{max-height:calc(100vh - 110px);overflow:auto}
+.panel .ver{font-size:11px;opacity:.55;text-align:right;margin-top:-4px}

@@ -1,6 +1,7 @@
 /* ================= 업데이트 공지 · 새 버전 안내 ================= */
 // APP_VERSION and UPDATES are written in by tools/build.py from src/updates.json.
 const SEEN_KEY = "hangang-seen-version";
+$("verLabel").textContent = "버전 " + APP_VERSION;
 const RETURNING = (() => { try { return !!localStorage.getItem("hangang-wallet"); } catch (e) { return false; } })();
 function fillNews(list) {
   const box = $("newsList"); box.textContent = "";
