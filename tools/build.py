@@ -27,7 +27,7 @@ def page_body():
     """claude.ai에 올리던 형태 그대로의 본문 (doctype 없이)."""
     js_files = sorted((SRC / "js").glob("*.js"))
     ups = updates()
-    js = ("const APP_VERSION = " + json.dumps(ups[0]["v"]) + ", UPDATES = " + json.dumps(ups[:5], ensure_ascii=False) + ";\n"
+    js = ("const APP_VERSION = " + json.dumps(ups[0]["v"]) + ", UPDATES = " + json.dumps(ups[:12], ensure_ascii=False) + ";\n"
           + "".join(f.read_text(encoding="utf-8") for f in js_files))
     return (read("head.html") + "<style>\n" + read("style.css") + "</style>\n" + read("body.html")
             + THREE + "\n<script>\n(() => {\n" + js + "})();\n</script>\n")

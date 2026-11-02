@@ -4,9 +4,10 @@ const SEEN_KEY = "hangang-seen-version";
 const RETURNING = (() => { try { return !!localStorage.getItem("hangang-wallet"); } catch (e) { return false; } })();
 function fillNews(list) {
   const box = $("newsList"); box.textContent = "";
+  let lastDate = null, ul = null;
   list.forEach(u => {
-    const h = document.createElement("h3"); h.textContent = u.date + " 업데이트"; box.appendChild(h);
-    const ul = document.createElement("ul"); u.items.forEach(t => { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); }); box.appendChild(ul);
+    if (u.date !== lastDate) { lastDate = u.date; const h = document.createElement("h3"); h.textContent = u.date + " 업데이트"; box.appendChild(h); ul = document.createElement("ul"); box.appendChild(ul); }
+    u.items.forEach(t => { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); });
   });
 }
 function checkNews() {
@@ -15,7 +16,7 @@ function checkNews() {
   if (seen === APP_VERSION || (!seen && !RETURNING)) return; // first visit: nothing to announce
   const idx = UPDATES.findIndex(u => u.v === seen), fresh = UPDATES.slice(0, idx < 0 ? 2 : Math.min(idx, 3));
   if (!fresh.length) return;
-  fillNews(fresh); $("newsModal").hidden = false;
+  fillNews(fresh); $("newsTitle").textContent = "한강이 새로 단장했어요"; $("newsModal").hidden = false;
 }
 $("newsOk").addEventListener("click", () => { $("newsModal").hidden = true; });
 $("newsModal").addEventListener("click", e => { if (e.target === $("newsModal")) $("newsModal").hidden = true; });

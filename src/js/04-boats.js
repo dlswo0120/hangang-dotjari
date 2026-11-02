@@ -4,8 +4,8 @@ const dock = new THREE.Group();
 { const wood = mat(0x8a6a48);
   const d = new THREE.Mesh(new THREE.BoxGeometry(18, 0.3, 2.6), wood); d.position.set(0, -0.15, -1.1); dock.add(d);
   for (let x = -8; x <= 8; x += 4) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 1.6, 6), wood); p.position.set(x, -0.6, -2.3); dock.add(p); }
-  const sign = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1, 0.12), mat(0xffd54a)); sign.position.set(-6.5, 1.4, 1.8); dock.add(sign);
-  const sp = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.4, 6), mat(0x3d4247)); sp.position.set(-6.5, 0.7, 1.8); dock.add(sp);
+  const sign = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.95, 0.12), mat(0xffd54a)); sign.position.set(-6.5, 1.85, 1.8); dock.add(sign);
+  const sp = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.9, 6), mat(0x3d4247)); sp.position.set(-6.5, 0.95, 1.7); dock.add(sp);
 }
 dock.position.set(DOCK.x, 0, 0); scene.add(dock);
 const BOAT_HOME = [[88, -4.4], [94, -4.4], [100, -4.4]];

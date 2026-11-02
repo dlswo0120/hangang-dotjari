@@ -527,7 +527,7 @@ window.HANGANG_CONFIG = {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
-const APP_VERSION = "2026.11.02c", UPDATES = [{"v": "2026.11.02c", "date": "11월 2일", "items": ["앉아 있을 때 '한강통닭'에 치킨 배달을 시킬 수 있어요. 2분쯤 뒤 오토바이 기사님이 자리까지 가져다 드려요", "배달 전용 '한강통닭 반마리'(배달비 포함 6,000원)가 생겼어요"]}, {"v": "2026.11.02b", "date": "11월 2일", "items": ["강 건너편 잔디에 '한강 자전거 대여소'가 생겼어요. 10분에 1,000원, 같은 곳에 반납해요", "자전거를 타는 동안 '따르릉' 벨을 울릴 수 있어요", "길가에 '돗자리 대여소'가 생겼어요. 오늘 첫 대여는 무료, 그다음은 500원이에요", "돗자리 없이도 잔디에 그냥 앉거나 누울 수 있어요"]}, {"v": "2026.11.02", "date": "11월 2일", "items": ["앉아서 가만히 있으면 화면이 비워지는 '물멍 모드'가 생겼어요", "강가에서 한마디 적은 종이배를 띄울 수 있어요", "매일 밤 9시, 4분 동안 한강 불꽃놀이가 열려요. 맑은 밤엔 별똥별도 지나가요", "음료를 든 채 가까이 앉으면 '짠' 할 수 있어요", "라면은 편의점에서 봉지라면을 사 와서 기계로 끓여요", "찍은 사진을 휴대폰 사진 앱에 바로 저장할 수 있어요", "새 버전이 나오면 화면 위에 알려 드려요"]}];
+const APP_VERSION = "2026.11.02d", UPDATES = [{"v": "2026.11.02d", "date": "11월 2일", "items": ["오리배 선착장에 이용 안내 표지판이 생겼어요", "자전거 대여소 옆에 '한강 소식판'이 생겼어요. 업데이트 내역을 언제든 볼 수 있어요"]}, {"v": "2026.11.02c", "date": "11월 2일", "items": ["앉아 있을 때 '한강통닭'에 치킨 배달을 시킬 수 있어요. 2분쯤 뒤 오토바이 기사님이 자리까지 가져다 드려요", "배달 전용 '한강통닭 반마리'(배달비 포함 6,000원)가 생겼어요"]}, {"v": "2026.11.02b", "date": "11월 2일", "items": ["강 건너편 잔디에 '한강 자전거 대여소'가 생겼어요. 10분에 1,000원, 같은 곳에 반납해요", "자전거를 타는 동안 '따르릉' 벨을 울릴 수 있어요", "길가에 '돗자리 대여소'가 생겼어요. 오늘 첫 대여는 무료, 그다음은 500원이에요", "돗자리 없이도 잔디에 그냥 앉거나 누울 수 있어요"]}, {"v": "2026.11.02", "date": "11월 2일", "items": ["앉아서 가만히 있으면 화면이 비워지는 '물멍 모드'가 생겼어요", "강가에서 한마디 적은 종이배를 띄울 수 있어요", "매일 밤 9시, 4분 동안 한강 불꽃놀이가 열려요. 맑은 밤엔 별똥별도 지나가요", "음료를 든 채 가까이 앉으면 '짠' 할 수 있어요", "라면은 편의점에서 봉지라면을 사 와서 기계로 끓여요", "찍은 사진을 휴대폰 사진 앱에 바로 저장할 수 있어요", "새 버전이 나오면 화면 위에 알려 드려요"]}];
 "use strict";
 const $ = id => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -1003,8 +1003,8 @@ const dock = new THREE.Group();
 { const wood = mat(0x8a6a48);
   const d = new THREE.Mesh(new THREE.BoxGeometry(18, 0.3, 2.6), wood); d.position.set(0, -0.15, -1.1); dock.add(d);
   for (let x = -8; x <= 8; x += 4) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 1.6, 6), wood); p.position.set(x, -0.6, -2.3); dock.add(p); }
-  const sign = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1, 0.12), mat(0xffd54a)); sign.position.set(-6.5, 1.4, 1.8); dock.add(sign);
-  const sp = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.4, 6), mat(0x3d4247)); sp.position.set(-6.5, 0.7, 1.8); dock.add(sp);
+  const sign = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.95, 0.12), mat(0xffd54a)); sign.position.set(-6.5, 1.85, 1.8); dock.add(sign);
+  const sp = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.9, 6), mat(0x3d4247)); sp.position.set(-6.5, 0.95, 1.7); dock.add(sp);
 }
 dock.position.set(DOCK.x, 0, 0); scene.add(dock);
 const BOAT_HOME = [[88, -4.4], [94, -4.4], [100, -4.4]];
@@ -2202,6 +2202,7 @@ function refreshActions() {
   status = storeActions(acts, status);
   status = rentalActions(acts, status);
   deliveryActions(acts);
+  boardActions(acts);
   if ($("status").textContent !== status) { $("status").textContent = status; $("status").hidden = !status; }
   // rebuild the buttons only when they change, so a running timer in the status line never eats a tap
   const key = JSON.stringify(acts); if (key === actKey) return; actKey = key;
@@ -2210,7 +2211,7 @@ function refreshActions() {
 }
 $("actRow").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return; const a = b.dataset.act;
-  if (storeClick(a) || rentalClick(a) || deliveryClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
+  if (storeClick(a) || rentalClick(a) || deliveryClick(a) || boardClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
   if (a === "sit" || a === "lie") {
     if (me.st === "walk") {
       if (!canSpread()) { toast("잔디나 대교 위에서만 돗자리를 펼 수 있습니다"); return; }
@@ -2573,9 +2574,10 @@ const SEEN_KEY = "hangang-seen-version";
 const RETURNING = (() => { try { return !!localStorage.getItem("hangang-wallet"); } catch (e) { return false; } })();
 function fillNews(list) {
   const box = $("newsList"); box.textContent = "";
+  let lastDate = null, ul = null;
   list.forEach(u => {
-    const h = document.createElement("h3"); h.textContent = u.date + " 업데이트"; box.appendChild(h);
-    const ul = document.createElement("ul"); u.items.forEach(t => { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); }); box.appendChild(ul);
+    if (u.date !== lastDate) { lastDate = u.date; const h = document.createElement("h3"); h.textContent = u.date + " 업데이트"; box.appendChild(h); ul = document.createElement("ul"); box.appendChild(ul); }
+    u.items.forEach(t => { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); });
   });
 }
 function checkNews() {
@@ -2584,7 +2586,7 @@ function checkNews() {
   if (seen === APP_VERSION || (!seen && !RETURNING)) return; // first visit: nothing to announce
   const idx = UPDATES.findIndex(u => u.v === seen), fresh = UPDATES.slice(0, idx < 0 ? 2 : Math.min(idx, 3));
   if (!fresh.length) return;
-  fillNews(fresh); $("newsModal").hidden = false;
+  fillNews(fresh); $("newsTitle").textContent = "한강이 새로 단장했어요"; $("newsModal").hidden = false;
 }
 $("newsOk").addEventListener("click", () => { $("newsModal").hidden = true; });
 $("newsModal").addEventListener("click", e => { if (e.target === $("newsModal")) $("newsModal").hidden = true; });
@@ -3248,6 +3250,65 @@ $("dvGrid").addEventListener("click", e => {
 });
 $("dvClose").addEventListener("click", () => { $("dvModal").hidden = true; });
 $("dvModal").addEventListener("click", e => { if (e.target === $("dvModal")) $("dvModal").hidden = true; });
+/* ================= 표지판: 오리배 이용 안내 · 한강 소식판 ================= */
+function wrapLines(x, text, maxW) {
+  const out = []; let line = "";
+  for (const ch of String(text)) { if (x.measureText(line + ch).width > maxW && line) { out.push(line); line = ch.trimStart(); } else line += ch; }
+  if (line) out.push(line); return out;
+}
+const boardMat = tex => new THREE.MeshLambertMaterial({ map: tex, emissive: 0xffffff, emissiveIntensity: .22, emissiveMap: tex });
+
+/* duck boat rules on the yellow sign by the dock */
+{
+  const tex = canvasTex(560, 390, (x, w, h) => {
+    x.fillStyle = "#ffd54a"; x.fillRect(0, 0, w, h);
+    x.fillStyle = "#2f6fd8"; x.fillRect(0, 0, w, 78);
+    // a little duck
+    x.fillStyle = "#ffe066"; x.beginPath(); x.ellipse(52, 46, 26, 17, 0, 0, 7); x.fill(); x.beginPath(); x.arc(70, 26, 13, 0, 7); x.fill();
+    x.fillStyle = "#ff8a3d"; x.beginPath(); x.moveTo(81, 25); x.lineTo(95, 29); x.lineTo(81, 33); x.fill(); x.fillStyle = "#222"; x.beginPath(); x.arc(73, 22, 2.6, 0, 7); x.fill();
+    x.fillStyle = "#fff"; x.font = "bold 36px 'Gowun Dodum', sans-serif"; x.textAlign = "left"; x.textBaseline = "middle"; x.fillText("한강 오리배 이용 안내", 112, 41);
+    const lines = ["1. 두 명이 타면 출발해요", "2. 운전은 먼저 탄 분이 해요", "    (W 앞으로 · A/D 방향)", "3. 한 명이 내리면 함께 내려요"];
+    x.fillStyle = "#3a2c10"; x.font = "bold 28px 'Gowun Dodum', sans-serif";
+    lines.forEach((t, i) => x.fillText(t, 28, 112 + i * 44));
+    x.fillStyle = "#d8322f"; rr(x, 20, 300, w - 40, 72, 14); x.fill();
+    x.fillStyle = "#fff"; x.font = "bold 24px 'Gowun Dodum', sans-serif"; x.textAlign = "center";
+    x.fillText("정원 2명! 그 이상 타면… 책임지지 않습니다", w / 2, 337);
+  }, 1, 1);
+  const p = new THREE.Mesh(new THREE.PlaneGeometry(2.7, 1.88), boardMat(tex)); p.position.set(DOCK.x - 6.5, 1.85, 1.87); scene.add(p);
+}
+
+/* 한강 소식판: the update notes on a notice board near the entrance */
+const NEWS_BOARD = { x: -3.5, z: 35.5 };
+{
+  const S = NEWS_BOARD, wood = mat(0x8a6a48);
+  [-1.25, 1.25].forEach(k => { const post = new THREE.Mesh(new THREE.BoxGeometry(.12, 2.5, .12), wood); post.position.set(S.x + k, 1.25, S.z); post.castShadow = true; scene.add(post); });
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(2.7, 1.95, .1), wood); frame.position.set(S.x, 1.6, S.z + .03); frame.castShadow = true; scene.add(frame);
+  const roof = new THREE.Mesh(new THREE.BoxGeometry(3, .1, .5), mat(0x3f8f6b)); roof.position.set(S.x, 2.62, S.z); roof.castShadow = true; scene.add(roof);
+  const tex = canvasTex(540, 390, (x, w, h) => {
+    x.fillStyle = "#f7f1e1"; x.fillRect(0, 0, w, h);
+    x.fillStyle = "#3f8f6b"; x.fillRect(0, 0, w, 66);
+    x.fillStyle = "#fff"; x.font = "bold 34px 'Gowun Dodum', sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("한강 소식판", w / 2, 35);
+    x.textAlign = "left"; x.fillStyle = "#3f8f6b"; x.font = "bold 22px 'Gowun Dodum', sans-serif";
+    const u = UPDATES[0]; x.fillText((u ? u.date : "") + " 새 소식", 24, 92);
+    x.fillStyle = "#3a3226"; x.font = "20px 'Gowun Dodum', sans-serif";
+    let y = 126; const all = UPDATES.filter(v => v.date === (u && u.date)).flatMap(v => v.items);
+    for (const item of all) {
+      const ls = wrapLines(x, "· " + item, w - 48);
+      if (y + ls.length * 26 > h - 40) { x.fillText("…", 24, y); break; }
+      ls.forEach((l, i) => { x.fillText(i ? "  " + l : l, 24, y); y += 26; }); y += 4;
+    }
+    x.fillStyle = "#8a7a60"; x.font = "17px 'Gowun Dodum', sans-serif"; x.textAlign = "center"; x.fillText("가까이 와서 '소식판 보기'를 누르면 전부 볼 수 있어요", w / 2, h - 18);
+  }, 1, 1);
+  const p = new THREE.Mesh(new THREE.PlaneGeometry(2.55, 1.84), boardMat(tex)); p.position.set(S.x, 1.6, S.z - .03); p.rotation.y = Math.PI; scene.add(p);
+  const back = p.clone(); back.rotation.y = 0; back.position.z = S.z + .09; scene.add(back);
+  OBST.push({ x0: S.x - 1.4, x1: S.x + 1.4, z0: S.z - .2, z1: S.z + .25 });
+}
+const nearNewsBoard = () => me.level === "ground" && me.st === "walk" && Math.abs(me.x - NEWS_BOARD.x) < 2 && me.z > NEWS_BOARD.z - 2.2 && me.z < NEWS_BOARD.z;
+function boardActions(acts) { if (started && !anim && !boarded && !me.q && nearNewsBoard()) acts.unshift(["news", "소식판 보기", "primary"]); }
+function boardClick(a) {
+  if (a !== "news") return false;
+  fillNews(UPDATES); $("newsTitle").textContent = "한강 소식판"; $("newsModal").hidden = false; return true;
+}
 /* ================= main loop ================= */
 applyEnv(); setInterval(applyEnv, 30000);
 const clock = new THREE.Clock(); let T = 0, actTimer = 0, plantTimer = 0;
