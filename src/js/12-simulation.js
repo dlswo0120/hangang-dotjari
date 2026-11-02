@@ -13,7 +13,7 @@ function pushOut(x, z, rad) {
   }
   return [x, z];
 }
-function onDock(x, z) { return Math.abs(x - DOCK.x) < 8.5 && z > -2.2 && z < BOUND.landZ0 + 0.1; }
+function onDock(x, z) { return (Math.abs(x - DOCK.x) < 8.5 && z > -2.2 && z < BOUND.landZ0 + 0.1) || onFishDeck(x, z); }
 function stepPlayer(dt) {
   if (anim) {
     anim.t += dt; const u = Math.min(1, anim.t / anim.dur);

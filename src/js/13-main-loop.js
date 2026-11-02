@@ -68,10 +68,10 @@ function frame() {
       myAvatar.rotation.y = lerpAngle(myAvatar.rotation.y, tr, 1 - Math.exp(-dt * 14));
     }
     const myEat = me.eat ? (Date.now() - me.eat) / 1000 : -1;
-    updateAvatar(myAvatar, dt, T, { moving: me.moving, speed: me.speed, crank: boarded ? boats[boarded.id].crank + (mySeat === 1 ? Math.PI / 2 : 0) : me.crank || 0, seat: mySeat, hold: me.hold, mat: !!me.mat, eatT: myEat, basket: me.basket ? me.basket.length : -1, cheer: cheerOf("me"), emote: activeEmote(me.em), lit: litOf(me.hold, me.lit), spin: me.hold === "sparkler" && me.lit ? spinOf(me.tw) : null });
+    updateAvatar(myAvatar, dt, T, { moving: me.moving, speed: me.speed, crank: boarded ? boats[boarded.id].crank + (mySeat === 1 ? Math.PI / 2 : 0) : me.crank || 0, seat: mySeat, hold: me.hold, mat: !!me.mat, eatT: myEat, basket: me.basket ? me.basket.length : -1, cheer: cheerOf("me"), emote: activeEmote(me.em), rod: !!me.rod, fs: me.fs, lit: litOf(me.hold, me.lit), spin: me.hold === "sparkler" && me.lit ? spinOf(me.tw) : null });
     avatarRental(myAvatar, me.st === "bike", me.crank || 0, me.speed, !!me.mat && me.st !== "sit" && me.st !== "lie" && myAvatar.userData.cur.matP < .05, dt);
     eatingFx(myAvatar, "me", myEat, 0, me.hold);
-    if (me.eat && myEat >= eatTime(me.hold)) { toast(me.hold === "ramen" ? "잘 먹었습니다! 국물까지 싹 비웠어요" : `${PRODUCTS[me.hold] ? PRODUCTS[me.hold].name : "간식"} 맛있게 먹었어요!`); me.hold = false; me.eat = 0; publish(true); actKey = ""; }
+    if (me.eat && myEat >= eatTime(me.hold)) { noteDrink(me.hold); toast(me.hold === "ramen" ? "잘 먹었습니다! 국물까지 싹 비웠어요" : `${PRODUCTS[me.hold] ? PRODUCTS[me.hold].name : "간식"} 맛있게 먹었어요!`); me.hold = false; me.eat = 0; publish(true); actKey = ""; }
     const showGhost = me.st === "walk" && !anim && !me.moving && !me.bt && !!me.mat && canSpread();
     ghost.visible = showGhost;
     if (showGhost) { const sn = me.level === "ground" ? matSnap(me.x, me.z) : null, gx = sn ? sn[0] : me.x, gz = sn ? sn[1] : me.z; ghost.position.set(gx, me.y + 0.05, gz + POSES.sit.matZ); ghost.material.color.set(matConflict(gx, gz) ? 0xff8a7a : 0x9be3a0); }
@@ -103,7 +103,7 @@ function frame() {
     o.x += (tx - o.x) * k; o.z += (tz - o.z) * k; o.r = lerpAngle(o.r, tr, k);
     o.obj.position.set(o.x, ty, o.z); o.obj.rotation.y = o.r;
     const oEat = p.hi && p.ea ? (Date.now() - p.ea) / 1000 : -1, oE = oEat >= 0 && oEat < eatTime(p.hi) ? oEat : -1;
-    updateAvatar(o.obj, dt, T, { moving, speed: 3.6, seat, crank, hold: p.hi, eatT: oE, basket: p.bk, cheer: cheerOf(peer), mat: !!p.mt, emote: activeEmote(p.em), lit: litOf(p.hi, p.lt), spin: litOf(p.hi, p.lt) ? spinOf(p.tw) : null });
+    updateAvatar(o.obj, dt, T, { moving, speed: 3.6, seat, crank, hold: p.hi, eatT: oE, basket: p.bk, cheer: cheerOf(peer), mat: !!p.mt, emote: activeEmote(p.em), rod: !!p.fr, fs: p.fs, lit: litOf(p.hi, p.lt), spin: litOf(p.hi, p.lt) ? spinOf(p.tw) : null });
     avatarRental(o.obj, p.st === "bike", crank, stepD / Math.max(dt, 1e-3), !!p.mt && p.st !== "sit" && p.st !== "lie" && o.obj.userData.cur.matP < .05, dt);
     eatingFx(o.obj, peer, oE, Math.hypot(o.x - cam.tx, o.z - cam.tz), p.hi);
   }
@@ -184,6 +184,8 @@ function frame() {
   updateEmotes();
   updateFireShop(dt);
   updatePhoto();
+  updateBeer();
+  updateFishing();
   // bubbles follow their owners
   for (let i = bubbles.length - 1; i >= 0; i--) {
     const b = bubbles[i], o = b.getObj();

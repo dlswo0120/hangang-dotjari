@@ -6,6 +6,7 @@ const FIX = {
   gondolaA: { x0: -4.2, x1: 1.0, z0: -1.0, z1: -0.2 },
   gondolaB: { x0: -4.2, x1: 1.0, z0: -2.9, z1: -2.1 },
   fridge: { x0: -5.8, x1: 2.0, z0: -4.4, z1: -3.7 },
+  beer: { x0: 2.15, x1: 3.1, z0: -4.4, z1: -3.75 },
   freezer: { x0: 3.2, x1: 5.2, z0: -3.6, z1: -2.6 },
   counter: { x0: 0.9, x1: 5.8, z0: 2.2, z1: 2.9 },
   counterSide: { x0: 0.9, x1: 1.3, z0: 2.9, z1: 4.4 },
@@ -43,7 +44,9 @@ function makeHeld(kind) {
   const art = new THREE.MeshLambertMaterial({ map: PRODUCT_TEX[kind] }), side = mat(col);
   if (P.cat === "snack") { const b = add(new THREE.BoxGeometry(.16, .2, .05), [side, side, side, side, art, art], 0, .12, 0); b.rotation.y = Math.PI; }
   else if (P.cat === "drink") {
-    if (kind === "banana") { const b = add(new THREE.BoxGeometry(.1, .14, .1), [art, art, side, side, art, art], 0, .09, 0); b.rotation.y = Math.PI; add(new THREE.CylinderGeometry(.015, .015, .04, 8), mat(0xffffff), .02, .18, 0); }
+    if (kind === "soju") { const glass = new THREE.MeshPhongMaterial({ color: 0x2f9a5c, transparent: true, opacity: .85, shininess: 80 }); add(new THREE.CylinderGeometry(.042, .042, .15, 14), glass, 0, .09, 0); add(new THREE.CylinderGeometry(.016, .04, .05, 12), glass, 0, .19, 0); add(new THREE.CylinderGeometry(.017, .017, .04, 10), glass, 0, .23, 0); add(new THREE.CylinderGeometry(.043, .043, .06, 14, 1, true), mat(0xfbfbf5, { side: THREE.DoubleSide }), 0, .09, 0); }
+    else if (kind === "beer") { add(new THREE.CylinderGeometry(.06, .055, .16, 14), new THREE.MeshPhongMaterial({ color: 0xf2b33a, transparent: true, opacity: .9, shininess: 90 }), 0, .09, 0); add(new THREE.CylinderGeometry(.062, .062, .04, 14), mat(0xfffdf4), 0, .19, 0); const hd = add(new THREE.TorusGeometry(.04, .012, 6, 12, Math.PI), new THREE.MeshPhongMaterial({ color: 0xe8f4ff, transparent: true, opacity: .6 }), .06, .1, 0); hd.rotation.z = -Math.PI / 2; }
+    else if (kind === "banana") { const b = add(new THREE.BoxGeometry(.1, .14, .1), [art, art, side, side, art, art], 0, .09, 0); b.rotation.y = Math.PI; add(new THREE.CylinderGeometry(.015, .015, .04, 8), mat(0xffffff), .02, .18, 0); }
     else { const c = add(new THREE.CylinderGeometry(.045, .045, .18, 16), [art, side, side], 0, .1, 0); c.rotation.y = Math.PI / 2; add(new THREE.CylinderGeometry(.02, .02, .03, 8), mat(kind === "coffee" ? 0xd8d8d8 : 0x2f6fd8), 0, .205, 0); }
   } else if (P.cat === "ice") {
     if (kind === "cone") { const c = add(new THREE.ConeGeometry(.055, .16, 12), mat(0xd9a35e), 0, .1, 0); c.rotation.x = Math.PI; add(new THREE.SphereGeometry(.065, 12, 8), mat(0xfff4f8), 0, .2, 0); add(new THREE.SphereGeometry(.02, 8, 6), mat(0xe94d8a), .03, .25, -.02); }
@@ -114,6 +117,14 @@ function makeHeld(kind) {
     box(w, 2.2, f.z1 - f.z0, mat(0x3a4048), cx, 1.1, cz);
     add(new THREE.PlaneGeometry(w - .1, 1.9), lit(0xffffff, packShelf(CATS.drink.items, 1536, 384, 5, 77, { bg: "#1d2228", rail: "#8a959f", frames: 8, tags: true })), cx, 1.1, f.z1 + .005);
     add(new THREE.PlaneGeometry(1.6, .32), lit(0xffffff, canvasTex(256, 52, (x, w2, h2) => { x.fillStyle = "#2f7fd8"; x.fillRect(0, 0, w2, h2); x.fillStyle = "#fff"; x.font = "bold 30px 'Gowun Dodum', sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("시원한 음료", w2 / 2, h2 / 2); }, 1, 1)), cx, 2.5, f.z1 - .3); }
+  // self-service draft beer tap
+  { const f = FIX.beer, cx = (f.x0 + f.x1) / 2, cz = (f.z0 + f.z1) / 2;
+    box(f.x1 - f.x0, .95, f.z1 - f.z0, mat(0x2f3338), cx, .475, cz);
+    box(.5, .5, .22, mat(0xc9ced4), cx, 1.2, cz - .05);
+    [-.12, .12].forEach(k => { add(new THREE.CylinderGeometry(.025, .025, .12, 8), mat(0xb8bdc4), cx + k, 1.08, cz + .1); const hnd = add(new THREE.CylinderGeometry(.022, .03, .22, 8), mat(0x1d1f22), cx + k, 1.37, cz + .1); hnd.rotation.x = -.2; });
+    add(new THREE.BoxGeometry(.6, .03, .22), mat(0x8a9097), cx, .97, cz + .12);
+    add(new THREE.PlaneGeometry(.9, .26), lit(0xffffff, canvasTex(256, 74, (x, w2, h2) => { x.fillStyle = "#f2b33a"; x.fillRect(0, 0, w2, h2); x.fillStyle = "#3a2508"; x.font = "bold 30px 'Gowun Dodum', sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("셀프 생맥주", w2 / 2, h2 / 2); }, 1, 1)), cx, 1.68, cz - .14);
+  }
   // ice cream chest freezer
   { const f = FIX.freezer, w = f.x1 - f.x0, d = f.z1 - f.z0, cx = (f.x0 + f.x1) / 2, cz = (f.z0 + f.z1) / 2;
     box(w, .85, d, mat(0xffffff), cx, .425, cz);
@@ -155,7 +166,7 @@ function makeHeld(kind) {
   const wb = (x0, x1, z0, z1) => OBST.push({ x0: S.x + x0, x1: S.x + x1, z0: S.z + z0, z1: S.z + z1 });
   wb(-6.1, 6.1, -4.6, -4.4); wb(-6.1, -5.9, -4.6, 4.6); wb(5.9, 6.1, -4.6, 4.6);
   wb(-6.1, STORE_DOOR.lx - STORE_DOOR.half, 4.4, 4.6); wb(STORE_DOOR.lx + STORE_DOOR.half, 6.1, 4.4, 4.6);
-  ["gondolaA", "gondolaB", "fridge", "freezer", "counter", "counterSide"].forEach(k => { const f = FIX[k]; wb(f.x0, f.x1, f.z0, f.z1); });
+  ["gondolaA", "gondolaB", "fridge", "beer", "freezer", "counter", "counterSide"].forEach(k => { const f = FIX[k]; wb(f.x0, f.x1, f.z0, f.z1); });
   wb(1.1, 5.9, 3.9, 4.4);
   OBST.push({ x: S.x + FIX.basket.x, z: S.z + FIX.basket.z, r: .25 });
 }

@@ -172,3 +172,24 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
 .flash{position:fixed;inset:0;z-index:17;background:#fff;pointer-events:none;opacity:0}
 .flash.go{animation:flash .6s ease-out}
 @keyframes flash{0%{opacity:.9}100%{opacity:0}}
+.card.pour{width:min(330px,100%);text-align:center;gap:12px}
+.glass{position:relative;margin:4px auto;width:110px;height:170px;border:4px solid rgba(220,235,255,.65);border-top:none;border-radius:0 0 14px 14px;overflow:hidden;background:rgba(255,255,255,.05)}
+.glass .beer{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(#f6c34a,#d98f1c)}
+.glass .foam{position:absolute;left:0;right:0;height:0;background:#fffbef}
+.glass .mark{position:absolute;right:-2px;font-size:10px;color:var(--ink-soft);border-top:1px dashed rgba(255,255,255,.55);width:100%;text-align:right;padding-right:4px}
+.glass .m70{bottom:70%}.glass .m100{bottom:calc(100% - 14px)}
+#pourB,#pourF{touch-action:none;user-select:none;-webkit-user-select:none}
+#pourB.on{background:#f2b33a;color:#2a1d0f}#pourF.on{background:#fffbef;color:#2a1d0f}
+.fish-sheet{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:14;width:min(360px,calc(100% - 32px))}
+.card.fish{gap:10px;padding:16px;width:100%;box-sizing:border-box}
+.card.fish p{margin:0;font-size:13.5px;color:var(--ink-soft);word-break:keep-all}
+.fish-power{height:10px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden}
+.fish-power>div{height:100%;width:0;background:linear-gradient(90deg,#7dd3fc,#f2b46b,#ef5350)}
+.fish-btn{border:0;border-radius:16px;padding:16px;font-size:16px;font-weight:700;background:#2f6fb0;color:#fff;touch-action:none;user-select:none;-webkit-user-select:none}
+.fish-btn.bite{background:#ef5350;animation:bite .3s ease infinite alternate}
+@keyframes bite{to{transform:scale(1.05)}}
+.fish-card{display:flex;gap:12px;align-items:center;padding:10px;border-radius:14px;background:rgba(255,255,255,.06)}
+.fish-card i{width:46px;height:26px;border-radius:50% 40% 40% 50%;flex:none}
+.fish-card b{display:block;font-size:17px}.fish-card span{font-size:12px;color:var(--ink-soft)}
+.dex-box{display:grid;gap:6px;max-height:40vh;overflow:auto}
+.dex{display:flex;gap:8px;align-items:center;font-size:13px}.dex i{width:22px;height:12px;border-radius:50%;flex:none}.dex.unknown{opacity:.55}

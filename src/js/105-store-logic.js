@@ -124,8 +124,8 @@ function refreshShopFoot() { $("shopSum").textContent = `장바구니 ${me.baske
 $("shopGrid").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b || !me.basket) return;
   if (me.basket.length >= BASKET_MAX) { toast("장바구니가 가득 찼어요"); return; }
-  me.basket.push(b.dataset.k); refreshShopFoot(); if (audio.ready) audio.click();
-  toast(PRODUCTS[b.dataset.k].name + "을(를) 담았어요"); publish(true); actKey = "";
+  const k = b.dataset.k, put = () => { if (!me.basket) return; me.basket.push(k); refreshShopFoot(); if (audio.ready) audio.click(); toast(PRODUCTS[k].name + "을(를) 담았어요"); publish(true); actKey = ""; };
+  if (PRODUCTS[k].alc) askAge(put); else put();
 });
 function openBag() {
   $("bagMoney").textContent = "내 돈 " + won(wallet.money);
@@ -133,7 +133,7 @@ function openBag() {
   $("basketSec").hidden = !me.basket;
   (me.basket || []).forEach((k, i) => bl.appendChild(bagRow(PRODUCTS[k].name + " · " + won(PRODUCTS[k].price), "빼기", "drop", i, k)));
   if (me.basket && !me.basket.length) bl.appendChild(Object.assign(document.createElement("p"), { className: "empty", textContent: "아직 담은 물건이 없어요" }));
-  wallet.bag.forEach((k, i) => gl.appendChild(PRODUCTS[k].fire ? bagRow(PRODUCTS[k].name, PRODUCTS[k].fire === "hand" ? "꺼내기" : "설치하기", "fire", i, k) : PRODUCTS[k].cook ? bagRow(PRODUCTS[k].name, "라면 기계에서 끓여요", "none", i, k) : bagRow(PRODUCTS[k].name, PRODUCTS[k].cat === "drink" ? "꺼내기" : "먹기", "eat", i, k)));
+  wallet.bag.forEach((k, i) => gl.appendChild(PRODUCTS[k].fire ? bagRow(PRODUCTS[k].name, PRODUCTS[k].fire === "hand" ? "꺼내기" : "설치하기", "fire", i, k) : PRODUCTS[k].tap ? bagRow(PRODUCTS[k].name, "생맥주 기계에서 따라요", "none", i, k) : PRODUCTS[k].cook ? bagRow(PRODUCTS[k].name, "라면 기계에서 끓여요", "none", i, k) : bagRow(PRODUCTS[k].name, PRODUCTS[k].cat === "drink" ? "꺼내기" : "먹기", "eat", i, k)));
   if (!wallet.bag.length) gl.appendChild(Object.assign(document.createElement("p"), { className: "empty", textContent: "산 물건이 없어요. 한강 편의점에 들러 보세요" }));
   $("bagModal").hidden = false;
 }
@@ -148,11 +148,12 @@ $("bagModal").addEventListener("click", e => {
   if (e.target === $("bagModal")) { $("bagModal").hidden = true; return; }
   const b = e.target.closest("button[data-act]"); if (!b) return; const i = +b.dataset.i;
   if (b.dataset.act === "drop" && me.basket) { me.basket.splice(i, 1); publish(true); actKey = ""; openBag(); return; }
+  if (me.rod && (b.dataset.act === "fire" || b.dataset.act === "eat")) { toast("낚싯대를 든 채로는 꺼낼 수 없어요. 반납한 뒤에 꺼내 주세요"); return; }
   if (b.dataset.act === "fire") { fireFromBag(i); return; }
   if (b.dataset.act === "eat") {
     if (me.hold) { toast("들고 있는 걸 먼저 다 먹어 주세요"); return; }
     if (me.st === "swim" || me.st === "lie" || boarded) { toast("지금은 먹을 수 없어요"); return; }
-    if (!PRODUCTS[wallet.bag[i]] || PRODUCTS[wallet.bag[i]].cook) return;
+    if (!PRODUCTS[wallet.bag[i]] || PRODUCTS[wallet.bag[i]].cook || PRODUCTS[wallet.bag[i]].tap) return;
     const k = wallet.bag.splice(i, 1)[0]; saveWallet();
     const drink = PRODUCTS[k].cat === "drink";
     me.hold = k; me.eat = drink ? 0 : Date.now(); u_lastBite.me = -1; $("bagModal").hidden = true;

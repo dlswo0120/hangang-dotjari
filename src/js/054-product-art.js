@@ -11,6 +11,10 @@ const PRODUCTS = {
   banana: { name: "바나나우유", price: 1700, cat: "drink", color: "#f6dc5c", eat: 5 },
   cider: { name: "사이다", price: 1500, cat: "drink", color: "#4fbf6a", eat: 5 },
   coffee: { name: "캔커피", price: 1400, cat: "drink", color: "#6b4a3a", eat: 5 },
+  soju: { name: "한강소주", price: 1500, cat: "drink", color: "#2f8f55", eat: 6, alc: true },
+  canbeer: { name: "캔맥주", price: 2000, cat: "drink", color: "#e8b23a", eat: 6, alc: true },
+  beercup: { name: "생맥주 잔", price: 3000, cat: "drink", color: "#f4e6c0", eat: 0, alc: true, tap: true },
+  beer: { name: "생맥주", price: 3000, cat: "drink", color: "#f0b23a", eat: 7, alc: true },
   icebar: { name: "아이스바", price: 2500, cat: "ice", color: "#8fd3ff", eat: 7 },
   cone: { name: "콘 아이스크림", price: 3000, cat: "ice", color: "#f7c6d9", eat: 8 },
   mochi: { name: "찹쌀떡 아이스", price: 3500, cat: "ice", color: "#f3efe4", eat: 7 },
@@ -23,7 +27,7 @@ const PRODUCTS = {
 };
 const CATS = {
   snack: { title: "과자 진열대", verb: "과자 고르기", items: ["chips", "shrimp", "choco", "jelly", "rpack"] },
-  drink: { title: "음료 냉장고", verb: "음료 고르기", items: ["water", "banana", "cider", "coffee"] },
+  drink: { title: "음료 냉장고", verb: "음료 고르기", items: ["water", "banana", "cider", "coffee", "soju", "canbeer", "beercup"] },
   ice: { title: "아이스크림 냉동고", verb: "아이스크림 고르기", items: ["icebar", "cone", "mochi"] },
   chicken: { title: "따끈한 치킨", verb: "치킨 고르기", items: ["gangjeong", "chicken"] }
 };
@@ -124,6 +128,27 @@ const ART = {
     x.strokeStyle = "rgba(255,255,255,.75)"; x.lineWidth = 2; [-14, 0, 14].forEach(o => { x.beginPath(); x.moveTo(w / 2 + o, 80); x.bezierCurveTo(w / 2 + o - 6, 72, w / 2 + o + 6, 68, w / 2 + o, 60); x.stroke(); });
     label(x, "얼큰한 맛", w / 2, h - 30, 13, "#fff3c4");
   },
+  soju(x, w, h) {
+    x.fillStyle = "#e9f6ee"; rr(x, 8, 6, w - 16, h - 12, 8); x.fill();
+    const g = x.createLinearGradient(40, 0, 88, 0); g.addColorStop(0, "#1f7a45"); g.addColorStop(.5, "#5cc489"); g.addColorStop(1, "#1f7a45");
+    x.fillStyle = g; rr(x, 48, 14, 32, 30, 4); x.fill(); rr(x, 38, 40, 52, 112, 12); x.fill();
+    x.fillStyle = "#fbfbf5"; rr(x, 42, 74, 44, 46, 4); x.fill();
+    label(x, "한강", w / 2, 88, 15, "#1f7a45"); label(x, "소주", w / 2, 106, 15, "#1f7a45");
+    x.fillStyle = "rgba(255,255,255,.35)"; x.fillRect(44, 44, 6, 100);
+  },
+  canbeer(x, w, h) {
+    const g = x.createLinearGradient(20, 0, 108, 0); g.addColorStop(0, "#b9861c"); g.addColorStop(.45, "#ffd66b"); g.addColorStop(1, "#b9861c");
+    x.fillStyle = g; rr(x, 22, 14, w - 44, h - 28, 14); x.fill();
+    x.fillStyle = "#c8ccd2"; x.fillRect(22, 14, w - 44, 10); x.fillRect(22, h - 24, w - 44, 10);
+    x.fillStyle = "#1d3c78"; x.fillRect(22, 58, w - 44, 40); label(x, "한강", w / 2, 70, 15, "#fff3c4"); label(x, "라거", w / 2, 88, 15, "#fff3c4");
+    label(x, "캔맥주", w / 2, 122, 13, "#5a3d08");
+  },
+  beercup(x, w, h) {
+    x.fillStyle = "#fff8ea"; rr(x, 8, 6, w - 16, h - 12, 8); x.fill();
+    x.fillStyle = "#f2b33a"; rr(x, 34, 56, 50, 80, 6); x.fill(); x.fillStyle = "#fffdf6"; rr(x, 30, 36, 58, 26, 12); x.fill();
+    x.strokeStyle = "#d9c9a8"; x.lineWidth = 5; x.strokeRect(34, 46, 50, 90); x.beginPath(); x.arc(90, 90, 14, -Math.PI / 2, Math.PI / 2); x.stroke();
+    label(x, "셀프 생맥주", w / 2, 22, 13, "#7a4a10");
+  },
   sparkler(x, w, h) {
     const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "#1d2b5a"); g.addColorStop(1, "#3a2a6a"); x.fillStyle = g; rr(x, 14, 8, w - 28, h - 16, 10); x.fill();
     for (let i = 0; i < 5; i++) { x.strokeStyle = "#c9ccd2"; x.lineWidth = 3; x.beginPath(); x.moveTo(34 + i * 15, 150); x.lineTo(34 + i * 15, 70); x.stroke(); x.fillStyle = "#6b6f78"; x.fillRect(32 + i * 15, 70, 5, 34); }
@@ -157,7 +182,7 @@ const ART = {
 };
 for (const k in PRODUCTS) {
   const c = document.createElement("canvas"); c.width = 128; c.height = 160; const x = c.getContext("2d");
-  (ART[k] || ART.chips)(x, 128, 160);
+  (ART[k] || (k === "beer" ? ART.beercup : ART.chips))(x, 128, 160);
   PRODUCT_IMG[k] = c;
   try { PRODUCT_URL[k] = c.toDataURL("image/png"); } catch (e) { PRODUCT_URL[k] = ""; }
   const t = new THREE.CanvasTexture(c); t.anisotropy = 4; PRODUCT_TEX[k] = t;

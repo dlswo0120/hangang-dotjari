@@ -87,6 +87,7 @@ function rentalClick(a) {
   if (a === "bikerent") {
     if (me.hold) { toast("먹을 걸 든 채로는 자전거를 탈 수 없어요"); return true; }
     if (me.basket) { toast("장바구니를 든 채로는 자전거를 탈 수 없어요"); return true; }
+    if (me.rod) { toast("낚싯대를 든 채로는 자전거를 탈 수 없어요"); return true; }
     if (BIKE_ST.n - bikesOut() <= 0) { toast("남은 자전거가 없어요"); return true; }
     if (wallet.money < BIKE_FEE) { toast("돈이 모자라요. 자전거는 10분에 1,000원이에요"); return true; }
     wallet.money -= BIKE_FEE; saveWallet();

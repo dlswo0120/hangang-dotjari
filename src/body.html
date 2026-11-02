@@ -115,6 +115,37 @@
   </form>
 </div>
 
+<div class="fish-sheet" id="fishModal" hidden role="dialog" aria-labelledby="fishTitle">
+  <div class="card fish">
+    <div class="shop-head"><h2 id="fishTitle">한강 낚시</h2><button class="x" id="fishClose" aria-label="닫기">닫기</button></div>
+    <p id="fishMsg"></p>
+    <div class="fish-power" id="fishPower"><div id="fishPowerBar"></div></div>
+    <div class="fish-card" id="fishCard" hidden><i id="fishIcon"></i><div><b id="fishName"></b><span id="fishRare"></span></div></div>
+    <button class="fish-btn" id="fishBtn">꾹 눌러 던지기</button>
+    <button class="news-ok" id="fishRelease" hidden>방생하기</button>
+    <button class="photo-now" id="fishDexBtn">내 낚시 도감</button>
+    <div class="dex-box" id="dexBox" hidden></div>
+  </div>
+</div>
+
+<div class="modal" id="ageModal" hidden role="dialog" aria-modal="true" aria-labelledby="ageTitle">
+  <div class="card">
+    <h2 id="ageTitle">19세 이상인가요?</h2>
+    <p>주류는 19세 이상만 살 수 있어요. 한 번만 물어볼게요.</p>
+    <div class="modal-btns"><button id="ageNo">아니요</button><button class="leave paper-go" id="ageYes">네, 19세 이상이에요</button></div>
+  </div>
+</div>
+
+<div class="modal" id="pourModal" hidden role="dialog" aria-modal="true" aria-labelledby="pourTitle">
+  <div class="card pour">
+    <div class="shop-head"><h2 id="pourTitle">셀프 생맥주</h2><button class="x" id="pourClose" aria-label="닫기">닫기</button></div>
+    <p id="pourMsg"></p>
+    <div class="glass"><div class="beer" id="pourBeer"></div><div class="foam" id="pourFoam"></div><span class="mark m70">맥주</span><span class="mark m100">거품</span></div>
+    <div class="modal-btns"><button id="pourB">꾹 · 맥주 따르기</button><button id="pourF">꾹 · 거품 올리기</button></div>
+    <button class="news-ok" id="pourDone">다 됐어요</button>
+  </div>
+</div>
+
 <div class="modal" id="fsModal" hidden role="dialog" aria-modal="true" aria-labelledby="fsTitle">
   <div class="card shop">
     <div class="shop-head"><h2 id="fsTitle">한강 불꽃 가게</h2><button class="x" id="fsClose" aria-label="닫기">닫기</button></div>

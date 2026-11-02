@@ -184,6 +184,27 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
 .flash{position:fixed;inset:0;z-index:17;background:#fff;pointer-events:none;opacity:0}
 .flash.go{animation:flash .6s ease-out}
 @keyframes flash{0%{opacity:.9}100%{opacity:0}}
+.card.pour{width:min(330px,100%);text-align:center;gap:12px}
+.glass{position:relative;margin:4px auto;width:110px;height:170px;border:4px solid rgba(220,235,255,.65);border-top:none;border-radius:0 0 14px 14px;overflow:hidden;background:rgba(255,255,255,.05)}
+.glass .beer{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(#f6c34a,#d98f1c)}
+.glass .foam{position:absolute;left:0;right:0;height:0;background:#fffbef}
+.glass .mark{position:absolute;right:-2px;font-size:10px;color:var(--ink-soft);border-top:1px dashed rgba(255,255,255,.55);width:100%;text-align:right;padding-right:4px}
+.glass .m70{bottom:70%}.glass .m100{bottom:calc(100% - 14px)}
+#pourB,#pourF{touch-action:none;user-select:none;-webkit-user-select:none}
+#pourB.on{background:#f2b33a;color:#2a1d0f}#pourF.on{background:#fffbef;color:#2a1d0f}
+.fish-sheet{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:14;width:min(360px,calc(100% - 32px))}
+.card.fish{gap:10px;padding:16px;width:100%;box-sizing:border-box}
+.card.fish p{margin:0;font-size:13.5px;color:var(--ink-soft);word-break:keep-all}
+.fish-power{height:10px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden}
+.fish-power>div{height:100%;width:0;background:linear-gradient(90deg,#7dd3fc,#f2b46b,#ef5350)}
+.fish-btn{border:0;border-radius:16px;padding:16px;font-size:16px;font-weight:700;background:#2f6fb0;color:#fff;touch-action:none;user-select:none;-webkit-user-select:none}
+.fish-btn.bite{background:#ef5350;animation:bite .3s ease infinite alternate}
+@keyframes bite{to{transform:scale(1.05)}}
+.fish-card{display:flex;gap:12px;align-items:center;padding:10px;border-radius:14px;background:rgba(255,255,255,.06)}
+.fish-card i{width:46px;height:26px;border-radius:50% 40% 40% 50%;flex:none}
+.fish-card b{display:block;font-size:17px}.fish-card span{font-size:12px;color:var(--ink-soft)}
+.dex-box{display:grid;gap:6px;max-height:40vh;overflow:auto}
+.dex{display:flex;gap:8px;align-items:center;font-size:13px}.dex i{width:22px;height:12px;border-radius:50%;flex:none}.dex.unknown{opacity:.55}
 </style>
 
 </head>
@@ -302,6 +323,37 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
     <input id="paperText" class="paper-in" maxlength="30" autocomplete="off" placeholder="오늘 하고 싶었던 말">
     <div class="modal-btns"><button type="button" id="paperCancel">그만두기</button><button type="submit" class="leave paper-go">띄우기</button></div>
   </form>
+</div>
+
+<div class="fish-sheet" id="fishModal" hidden role="dialog" aria-labelledby="fishTitle">
+  <div class="card fish">
+    <div class="shop-head"><h2 id="fishTitle">한강 낚시</h2><button class="x" id="fishClose" aria-label="닫기">닫기</button></div>
+    <p id="fishMsg"></p>
+    <div class="fish-power" id="fishPower"><div id="fishPowerBar"></div></div>
+    <div class="fish-card" id="fishCard" hidden><i id="fishIcon"></i><div><b id="fishName"></b><span id="fishRare"></span></div></div>
+    <button class="fish-btn" id="fishBtn">꾹 눌러 던지기</button>
+    <button class="news-ok" id="fishRelease" hidden>방생하기</button>
+    <button class="photo-now" id="fishDexBtn">내 낚시 도감</button>
+    <div class="dex-box" id="dexBox" hidden></div>
+  </div>
+</div>
+
+<div class="modal" id="ageModal" hidden role="dialog" aria-modal="true" aria-labelledby="ageTitle">
+  <div class="card">
+    <h2 id="ageTitle">19세 이상인가요?</h2>
+    <p>주류는 19세 이상만 살 수 있어요. 한 번만 물어볼게요.</p>
+    <div class="modal-btns"><button id="ageNo">아니요</button><button class="leave paper-go" id="ageYes">네, 19세 이상이에요</button></div>
+  </div>
+</div>
+
+<div class="modal" id="pourModal" hidden role="dialog" aria-modal="true" aria-labelledby="pourTitle">
+  <div class="card pour">
+    <div class="shop-head"><h2 id="pourTitle">셀프 생맥주</h2><button class="x" id="pourClose" aria-label="닫기">닫기</button></div>
+    <p id="pourMsg"></p>
+    <div class="glass"><div class="beer" id="pourBeer"></div><div class="foam" id="pourFoam"></div><span class="mark m70">맥주</span><span class="mark m100">거품</span></div>
+    <div class="modal-btns"><button id="pourB">꾹 · 맥주 따르기</button><button id="pourF">꾹 · 거품 올리기</button></div>
+    <button class="news-ok" id="pourDone">다 됐어요</button>
+  </div>
 </div>
 
 <div class="modal" id="fsModal" hidden role="dialog" aria-modal="true" aria-labelledby="fsTitle">
@@ -565,7 +617,7 @@ window.HANGANG_CONFIG = {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
-const APP_VERSION = "2026.11.02i", UPDATES = [{"v": "2026.11.02i", "date": "11월 2일", "items": ["스파클러 불꽃이 더 크고 화려해졌어요", "분수 폭죽과 연발 폭죽이 하늘 높이 올라가요", "화면을 아래로 끌면 하늘을 올려다볼 수 있어요"]}, {"v": "2026.11.02h", "date": "11월 2일", "items": ["강가에 '한강 불꽃 가게'가 생겼어요. 밤 8시~10시에만 열어요", "스파클러(500원)는 손에 들고, 분수 폭죽(1,500원)과 연발 폭죽(3,000원)은 잔디에 놓고 즐겨요", "불붙은 스파클러를 든 사람 곁에서 불을 옮겨 받을 수 있어요", "카메라 버튼에서 혼자·둘이·단체 포즈를 골라 앞에서 사진을 찍어요. 같이 찍은 사람도 사진을 받아요"]}, {"v": "2026.11.02g", "date": "11월 2일", "items": ["가슴 튕기기 춤을 출 때 오른팔을 몸 앞에 가로로 받쳐요", "설정 화면 맨 아래에서 지금 버전을 확인할 수 있어요"]}, {"v": "2026.11.02f", "date": "11월 2일", "items": ["말하기 메뉴에 '감정 표현'(손 흔들기 · 박수 · 만세 · 하트 · 꾸벅 인사)이 생겼어요", "'가슴 튕기기 춤'을 출 수 있어요. 여럿이 같이 누르면 단체 춤!"]}, {"v": "2026.11.02e", "date": "11월 2일", "items": ["친구 돗자리 바로 옆에 내 돗자리를 붙여 펼 수 있어요. 옆에 서면 나란히 맞춰 펴져요"]}, {"v": "2026.11.02d", "date": "11월 2일", "items": ["오리배 선착장에 이용 안내 표지판이 생겼어요", "자전거 대여소 옆에 '한강 소식판'이 생겼어요. 업데이트 내역을 언제든 볼 수 있어요"]}, {"v": "2026.11.02c", "date": "11월 2일", "items": ["앉아 있을 때 '한강통닭'에 치킨 배달을 시킬 수 있어요. 2분쯤 뒤 오토바이 기사님이 자리까지 가져다 드려요", "배달 전용 '한강통닭 반마리'(배달비 포함 6,000원)가 생겼어요"]}, {"v": "2026.11.02b", "date": "11월 2일", "items": ["강 건너편 잔디에 '한강 자전거 대여소'가 생겼어요. 10분에 1,000원, 같은 곳에 반납해요", "자전거를 타는 동안 '따르릉' 벨을 울릴 수 있어요", "길가에 '돗자리 대여소'가 생겼어요. 오늘 첫 대여는 무료, 그다음은 500원이에요", "돗자리 없이도 잔디에 그냥 앉거나 누울 수 있어요"]}, {"v": "2026.11.02", "date": "11월 2일", "items": ["앉아서 가만히 있으면 화면이 비워지는 '물멍 모드'가 생겼어요", "강가에서 한마디 적은 종이배를 띄울 수 있어요", "매일 밤 9시, 4분 동안 한강 불꽃놀이가 열려요. 맑은 밤엔 별똥별도 지나가요", "음료를 든 채 가까이 앉으면 '짠' 할 수 있어요", "라면은 편의점에서 봉지라면을 사 와서 기계로 끓여요", "찍은 사진을 휴대폰 사진 앱에 바로 저장할 수 있어요", "새 버전이 나오면 화면 위에 알려 드려요"]}];
+const APP_VERSION = "2026.11.03", UPDATES = [{"v": "2026.11.03", "date": "11월 3일", "items": ["편의점 냉장고에서 한강소주·캔맥주·생맥주 잔을 팔아요 (19세 이상)", "냉장고 옆 셀프 생맥주 기계에서 맥주와 거품을 7:3으로 맞춰 따라 보세요", "한두 잔 마시면 볼이 살짝 빨개져요", "낚시 데크와 낚싯대 대여함(30분 1,000원)이 생겼어요. 9가지를 낚고 방생하면 용돈을 받아요 (하루 4,000원까지)", "잡은 물고기는 '내 낚시 도감'에 기록돼요"]}, {"v": "2026.11.02i", "date": "11월 2일", "items": ["스파클러 불꽃이 더 크고 화려해졌어요", "분수 폭죽과 연발 폭죽이 하늘 높이 올라가요", "화면을 아래로 끌면 하늘을 올려다볼 수 있어요"]}, {"v": "2026.11.02h", "date": "11월 2일", "items": ["강가에 '한강 불꽃 가게'가 생겼어요. 밤 8시~10시에만 열어요", "스파클러(500원)는 손에 들고, 분수 폭죽(1,500원)과 연발 폭죽(3,000원)은 잔디에 놓고 즐겨요", "불붙은 스파클러를 든 사람 곁에서 불을 옮겨 받을 수 있어요", "카메라 버튼에서 혼자·둘이·단체 포즈를 골라 앞에서 사진을 찍어요. 같이 찍은 사람도 사진을 받아요"]}, {"v": "2026.11.02g", "date": "11월 2일", "items": ["가슴 튕기기 춤을 출 때 오른팔을 몸 앞에 가로로 받쳐요", "설정 화면 맨 아래에서 지금 버전을 확인할 수 있어요"]}, {"v": "2026.11.02f", "date": "11월 2일", "items": ["말하기 메뉴에 '감정 표현'(손 흔들기 · 박수 · 만세 · 하트 · 꾸벅 인사)이 생겼어요", "'가슴 튕기기 춤'을 출 수 있어요. 여럿이 같이 누르면 단체 춤!"]}, {"v": "2026.11.02e", "date": "11월 2일", "items": ["친구 돗자리 바로 옆에 내 돗자리를 붙여 펼 수 있어요. 옆에 서면 나란히 맞춰 펴져요"]}, {"v": "2026.11.02d", "date": "11월 2일", "items": ["오리배 선착장에 이용 안내 표지판이 생겼어요", "자전거 대여소 옆에 '한강 소식판'이 생겼어요. 업데이트 내역을 언제든 볼 수 있어요"]}, {"v": "2026.11.02c", "date": "11월 2일", "items": ["앉아 있을 때 '한강통닭'에 치킨 배달을 시킬 수 있어요. 2분쯤 뒤 오토바이 기사님이 자리까지 가져다 드려요", "배달 전용 '한강통닭 반마리'(배달비 포함 6,000원)가 생겼어요"]}, {"v": "2026.11.02b", "date": "11월 2일", "items": ["강 건너편 잔디에 '한강 자전거 대여소'가 생겼어요. 10분에 1,000원, 같은 곳에 반납해요", "자전거를 타는 동안 '따르릉' 벨을 울릴 수 있어요", "길가에 '돗자리 대여소'가 생겼어요. 오늘 첫 대여는 무료, 그다음은 500원이에요", "돗자리 없이도 잔디에 그냥 앉거나 누울 수 있어요"]}, {"v": "2026.11.02", "date": "11월 2일", "items": ["앉아서 가만히 있으면 화면이 비워지는 '물멍 모드'가 생겼어요", "강가에서 한마디 적은 종이배를 띄울 수 있어요", "매일 밤 9시, 4분 동안 한강 불꽃놀이가 열려요. 맑은 밤엔 별똥별도 지나가요", "음료를 든 채 가까이 앉으면 '짠' 할 수 있어요", "라면은 편의점에서 봉지라면을 사 와서 기계로 끓여요", "찍은 사진을 휴대폰 사진 앱에 바로 저장할 수 있어요", "새 버전이 나오면 화면 위에 알려 드려요"]}];
 "use strict";
 const $ = id => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -1318,6 +1370,7 @@ function updateAvatar(av, dt, t, o = {}) {
     if (u.bowl.userData.tip) u.bowl.userData.tip.visible = !!o.lit;
   }
   v.roll = 0;
+  if (o.rod) rodPose(v, o.fs);
   if (o.emote) emotePose(v, o.emote.i, o.emote.t, u.pose === "stand", u, o.emote.s); else if (u.vR) u.vR.visible = false;
   u.torso.scale.y = 1 + Math.sin(ph * 2.1) * .012;
   if (o.mat === false) v.matP = 0;
@@ -1411,6 +1464,10 @@ const PRODUCTS = {
   banana: { name: "바나나우유", price: 1700, cat: "drink", color: "#f6dc5c", eat: 5 },
   cider: { name: "사이다", price: 1500, cat: "drink", color: "#4fbf6a", eat: 5 },
   coffee: { name: "캔커피", price: 1400, cat: "drink", color: "#6b4a3a", eat: 5 },
+  soju: { name: "한강소주", price: 1500, cat: "drink", color: "#2f8f55", eat: 6, alc: true },
+  canbeer: { name: "캔맥주", price: 2000, cat: "drink", color: "#e8b23a", eat: 6, alc: true },
+  beercup: { name: "생맥주 잔", price: 3000, cat: "drink", color: "#f4e6c0", eat: 0, alc: true, tap: true },
+  beer: { name: "생맥주", price: 3000, cat: "drink", color: "#f0b23a", eat: 7, alc: true },
   icebar: { name: "아이스바", price: 2500, cat: "ice", color: "#8fd3ff", eat: 7 },
   cone: { name: "콘 아이스크림", price: 3000, cat: "ice", color: "#f7c6d9", eat: 8 },
   mochi: { name: "찹쌀떡 아이스", price: 3500, cat: "ice", color: "#f3efe4", eat: 7 },
@@ -1423,7 +1480,7 @@ const PRODUCTS = {
 };
 const CATS = {
   snack: { title: "과자 진열대", verb: "과자 고르기", items: ["chips", "shrimp", "choco", "jelly", "rpack"] },
-  drink: { title: "음료 냉장고", verb: "음료 고르기", items: ["water", "banana", "cider", "coffee"] },
+  drink: { title: "음료 냉장고", verb: "음료 고르기", items: ["water", "banana", "cider", "coffee", "soju", "canbeer", "beercup"] },
   ice: { title: "아이스크림 냉동고", verb: "아이스크림 고르기", items: ["icebar", "cone", "mochi"] },
   chicken: { title: "따끈한 치킨", verb: "치킨 고르기", items: ["gangjeong", "chicken"] }
 };
@@ -1524,6 +1581,27 @@ const ART = {
     x.strokeStyle = "rgba(255,255,255,.75)"; x.lineWidth = 2; [-14, 0, 14].forEach(o => { x.beginPath(); x.moveTo(w / 2 + o, 80); x.bezierCurveTo(w / 2 + o - 6, 72, w / 2 + o + 6, 68, w / 2 + o, 60); x.stroke(); });
     label(x, "얼큰한 맛", w / 2, h - 30, 13, "#fff3c4");
   },
+  soju(x, w, h) {
+    x.fillStyle = "#e9f6ee"; rr(x, 8, 6, w - 16, h - 12, 8); x.fill();
+    const g = x.createLinearGradient(40, 0, 88, 0); g.addColorStop(0, "#1f7a45"); g.addColorStop(.5, "#5cc489"); g.addColorStop(1, "#1f7a45");
+    x.fillStyle = g; rr(x, 48, 14, 32, 30, 4); x.fill(); rr(x, 38, 40, 52, 112, 12); x.fill();
+    x.fillStyle = "#fbfbf5"; rr(x, 42, 74, 44, 46, 4); x.fill();
+    label(x, "한강", w / 2, 88, 15, "#1f7a45"); label(x, "소주", w / 2, 106, 15, "#1f7a45");
+    x.fillStyle = "rgba(255,255,255,.35)"; x.fillRect(44, 44, 6, 100);
+  },
+  canbeer(x, w, h) {
+    const g = x.createLinearGradient(20, 0, 108, 0); g.addColorStop(0, "#b9861c"); g.addColorStop(.45, "#ffd66b"); g.addColorStop(1, "#b9861c");
+    x.fillStyle = g; rr(x, 22, 14, w - 44, h - 28, 14); x.fill();
+    x.fillStyle = "#c8ccd2"; x.fillRect(22, 14, w - 44, 10); x.fillRect(22, h - 24, w - 44, 10);
+    x.fillStyle = "#1d3c78"; x.fillRect(22, 58, w - 44, 40); label(x, "한강", w / 2, 70, 15, "#fff3c4"); label(x, "라거", w / 2, 88, 15, "#fff3c4");
+    label(x, "캔맥주", w / 2, 122, 13, "#5a3d08");
+  },
+  beercup(x, w, h) {
+    x.fillStyle = "#fff8ea"; rr(x, 8, 6, w - 16, h - 12, 8); x.fill();
+    x.fillStyle = "#f2b33a"; rr(x, 34, 56, 50, 80, 6); x.fill(); x.fillStyle = "#fffdf6"; rr(x, 30, 36, 58, 26, 12); x.fill();
+    x.strokeStyle = "#d9c9a8"; x.lineWidth = 5; x.strokeRect(34, 46, 50, 90); x.beginPath(); x.arc(90, 90, 14, -Math.PI / 2, Math.PI / 2); x.stroke();
+    label(x, "셀프 생맥주", w / 2, 22, 13, "#7a4a10");
+  },
   sparkler(x, w, h) {
     const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "#1d2b5a"); g.addColorStop(1, "#3a2a6a"); x.fillStyle = g; rr(x, 14, 8, w - 28, h - 16, 10); x.fill();
     for (let i = 0; i < 5; i++) { x.strokeStyle = "#c9ccd2"; x.lineWidth = 3; x.beginPath(); x.moveTo(34 + i * 15, 150); x.lineTo(34 + i * 15, 70); x.stroke(); x.fillStyle = "#6b6f78"; x.fillRect(32 + i * 15, 70, 5, 34); }
@@ -1557,7 +1635,7 @@ const ART = {
 };
 for (const k in PRODUCTS) {
   const c = document.createElement("canvas"); c.width = 128; c.height = 160; const x = c.getContext("2d");
-  (ART[k] || ART.chips)(x, 128, 160);
+  (ART[k] || (k === "beer" ? ART.beercup : ART.chips))(x, 128, 160);
   PRODUCT_IMG[k] = c;
   try { PRODUCT_URL[k] = c.toDataURL("image/png"); } catch (e) { PRODUCT_URL[k] = ""; }
   const t = new THREE.CanvasTexture(c); t.anisotropy = 4; PRODUCT_TEX[k] = t;
@@ -1613,6 +1691,7 @@ const FIX = {
   gondolaA: { x0: -4.2, x1: 1.0, z0: -1.0, z1: -0.2 },
   gondolaB: { x0: -4.2, x1: 1.0, z0: -2.9, z1: -2.1 },
   fridge: { x0: -5.8, x1: 2.0, z0: -4.4, z1: -3.7 },
+  beer: { x0: 2.15, x1: 3.1, z0: -4.4, z1: -3.75 },
   freezer: { x0: 3.2, x1: 5.2, z0: -3.6, z1: -2.6 },
   counter: { x0: 0.9, x1: 5.8, z0: 2.2, z1: 2.9 },
   counterSide: { x0: 0.9, x1: 1.3, z0: 2.9, z1: 4.4 },
@@ -1650,7 +1729,9 @@ function makeHeld(kind) {
   const art = new THREE.MeshLambertMaterial({ map: PRODUCT_TEX[kind] }), side = mat(col);
   if (P.cat === "snack") { const b = add(new THREE.BoxGeometry(.16, .2, .05), [side, side, side, side, art, art], 0, .12, 0); b.rotation.y = Math.PI; }
   else if (P.cat === "drink") {
-    if (kind === "banana") { const b = add(new THREE.BoxGeometry(.1, .14, .1), [art, art, side, side, art, art], 0, .09, 0); b.rotation.y = Math.PI; add(new THREE.CylinderGeometry(.015, .015, .04, 8), mat(0xffffff), .02, .18, 0); }
+    if (kind === "soju") { const glass = new THREE.MeshPhongMaterial({ color: 0x2f9a5c, transparent: true, opacity: .85, shininess: 80 }); add(new THREE.CylinderGeometry(.042, .042, .15, 14), glass, 0, .09, 0); add(new THREE.CylinderGeometry(.016, .04, .05, 12), glass, 0, .19, 0); add(new THREE.CylinderGeometry(.017, .017, .04, 10), glass, 0, .23, 0); add(new THREE.CylinderGeometry(.043, .043, .06, 14, 1, true), mat(0xfbfbf5, { side: THREE.DoubleSide }), 0, .09, 0); }
+    else if (kind === "beer") { add(new THREE.CylinderGeometry(.06, .055, .16, 14), new THREE.MeshPhongMaterial({ color: 0xf2b33a, transparent: true, opacity: .9, shininess: 90 }), 0, .09, 0); add(new THREE.CylinderGeometry(.062, .062, .04, 14), mat(0xfffdf4), 0, .19, 0); const hd = add(new THREE.TorusGeometry(.04, .012, 6, 12, Math.PI), new THREE.MeshPhongMaterial({ color: 0xe8f4ff, transparent: true, opacity: .6 }), .06, .1, 0); hd.rotation.z = -Math.PI / 2; }
+    else if (kind === "banana") { const b = add(new THREE.BoxGeometry(.1, .14, .1), [art, art, side, side, art, art], 0, .09, 0); b.rotation.y = Math.PI; add(new THREE.CylinderGeometry(.015, .015, .04, 8), mat(0xffffff), .02, .18, 0); }
     else { const c = add(new THREE.CylinderGeometry(.045, .045, .18, 16), [art, side, side], 0, .1, 0); c.rotation.y = Math.PI / 2; add(new THREE.CylinderGeometry(.02, .02, .03, 8), mat(kind === "coffee" ? 0xd8d8d8 : 0x2f6fd8), 0, .205, 0); }
   } else if (P.cat === "ice") {
     if (kind === "cone") { const c = add(new THREE.ConeGeometry(.055, .16, 12), mat(0xd9a35e), 0, .1, 0); c.rotation.x = Math.PI; add(new THREE.SphereGeometry(.065, 12, 8), mat(0xfff4f8), 0, .2, 0); add(new THREE.SphereGeometry(.02, 8, 6), mat(0xe94d8a), .03, .25, -.02); }
@@ -1721,6 +1802,14 @@ function makeHeld(kind) {
     box(w, 2.2, f.z1 - f.z0, mat(0x3a4048), cx, 1.1, cz);
     add(new THREE.PlaneGeometry(w - .1, 1.9), lit(0xffffff, packShelf(CATS.drink.items, 1536, 384, 5, 77, { bg: "#1d2228", rail: "#8a959f", frames: 8, tags: true })), cx, 1.1, f.z1 + .005);
     add(new THREE.PlaneGeometry(1.6, .32), lit(0xffffff, canvasTex(256, 52, (x, w2, h2) => { x.fillStyle = "#2f7fd8"; x.fillRect(0, 0, w2, h2); x.fillStyle = "#fff"; x.font = "bold 30px 'Gowun Dodum', sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("시원한 음료", w2 / 2, h2 / 2); }, 1, 1)), cx, 2.5, f.z1 - .3); }
+  // self-service draft beer tap
+  { const f = FIX.beer, cx = (f.x0 + f.x1) / 2, cz = (f.z0 + f.z1) / 2;
+    box(f.x1 - f.x0, .95, f.z1 - f.z0, mat(0x2f3338), cx, .475, cz);
+    box(.5, .5, .22, mat(0xc9ced4), cx, 1.2, cz - .05);
+    [-.12, .12].forEach(k => { add(new THREE.CylinderGeometry(.025, .025, .12, 8), mat(0xb8bdc4), cx + k, 1.08, cz + .1); const hnd = add(new THREE.CylinderGeometry(.022, .03, .22, 8), mat(0x1d1f22), cx + k, 1.37, cz + .1); hnd.rotation.x = -.2; });
+    add(new THREE.BoxGeometry(.6, .03, .22), mat(0x8a9097), cx, .97, cz + .12);
+    add(new THREE.PlaneGeometry(.9, .26), lit(0xffffff, canvasTex(256, 74, (x, w2, h2) => { x.fillStyle = "#f2b33a"; x.fillRect(0, 0, w2, h2); x.fillStyle = "#3a2508"; x.font = "bold 30px 'Gowun Dodum', sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("셀프 생맥주", w2 / 2, h2 / 2); }, 1, 1)), cx, 1.68, cz - .14);
+  }
   // ice cream chest freezer
   { const f = FIX.freezer, w = f.x1 - f.x0, d = f.z1 - f.z0, cx = (f.x0 + f.x1) / 2, cz = (f.z0 + f.z1) / 2;
     box(w, .85, d, mat(0xffffff), cx, .425, cz);
@@ -1762,7 +1851,7 @@ function makeHeld(kind) {
   const wb = (x0, x1, z0, z1) => OBST.push({ x0: S.x + x0, x1: S.x + x1, z0: S.z + z0, z1: S.z + z1 });
   wb(-6.1, 6.1, -4.6, -4.4); wb(-6.1, -5.9, -4.6, 4.6); wb(5.9, 6.1, -4.6, 4.6);
   wb(-6.1, STORE_DOOR.lx - STORE_DOOR.half, 4.4, 4.6); wb(STORE_DOOR.lx + STORE_DOOR.half, 6.1, 4.4, 4.6);
-  ["gondolaA", "gondolaB", "fridge", "freezer", "counter", "counterSide"].forEach(k => { const f = FIX[k]; wb(f.x0, f.x1, f.z0, f.z1); });
+  ["gondolaA", "gondolaB", "fridge", "beer", "freezer", "counter", "counterSide"].forEach(k => { const f = FIX[k]; wb(f.x0, f.x1, f.z0, f.z1); });
   wb(1.1, 5.9, 3.9, 4.4);
   OBST.push({ x: S.x + FIX.basket.x, z: S.z + FIX.basket.z, r: .25 });
 }
@@ -2058,6 +2147,10 @@ function cleanPresence(p) {
     q: num(p.q, 0, 1e15, 0), bk: Number.isInteger(p.bk) ? clamp(p.bk, -1, 30) : -1,
     ch: num(p.ch, 0, 1e15, 0), pb: null, mt: p.mt === 1, bl: num(p.bl, 0, 1e15, 0)
   };
+  o.fr = p.fr === 1;
+  if (p.fs && typeof p.fs === "object" && ["idle", "cast", "bite", "catch"].includes(p.fs.s) && typeof p.fs.at === "number") o.fs = { s: p.fs.s, at: p.fs.at, bx: num(p.fs.bx, WORLD.x0, WORLD.x1, 0), bz: num(p.fs.bz, -40, 1, -4), k: FISH_BY[p.fs.k] ? p.fs.k : null, cm: num(p.fs.cm, 0, 200, 0) };
+  o.rd = Number.isInteger(p.rd) ? clamp(p.rd, 0, 3) : 0;
+  if (p.bq && typeof p.bq === "object" && typeof p.bq.at === "number") o.bq = { at: p.bq.at, q: p.bq.q === 2 ? 2 : p.bq.q === 0 ? 0 : 1 };
   o.lt = num(p.lt, 0, 1e15, 0); o.tw = num(p.tw, 0, 1e15, 0);
   if (p.gf && typeof p.gf === "object" && (p.gf.k === "fountain" || p.gf.k === "rocket") && typeof p.gf.at === "number") o.gf = { k: p.gf.k, at: p.gf.at, x: num(p.gf.x, WORLD.x0, WORLD.x1, 0), z: num(p.gf.z, 0, WORLD.z1, 10) };
   if (p.em && typeof p.em === "object" && Number.isInteger(p.em.i) && p.em.i >= 0 && p.em.i < EMOTES.length && typeof p.em.at === "number") o.em = { i: p.em.i, at: p.em.at, s: p.em.s === -1 ? -1 : 1 };
@@ -2110,7 +2203,7 @@ function syncPeers(peers) {
 })();
 let lastPub = 0, lastPubKey = "", mySay = null;
 function presenceObj() {
-  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id, at: me.bt.at } : null, say: mySay, rm: me.rm, hr: me.hold ? 1 : 0, hi: me.hold || null, ea: me.eat || 0, q: me.q || 0, bk: me.basket ? me.basket.length : -1, ch: me.ch || 0, pb: me.pb || null, mt: me.mat ? 1 : 0, bl: me.bl || 0, dv: me.dv ? { k: me.dv.k, at: me.dv.at } : null, em: me.em || null, lt: me.lit || 0, tw: me.tw || 0, gf: me.gf || null, ph: me.ph || null, pj: me.pj || null };
+  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id, at: me.bt.at } : null, say: mySay, rm: me.rm, hr: me.hold ? 1 : 0, hi: me.hold || null, ea: me.eat || 0, q: me.q || 0, bk: me.basket ? me.basket.length : -1, ch: me.ch || 0, pb: me.pb || null, mt: me.mat ? 1 : 0, bl: me.bl || 0, dv: me.dv ? { k: me.dv.k, at: me.dv.at } : null, em: me.em || null, lt: me.lit || 0, tw: me.tw || 0, gf: me.gf || null, ph: me.ph || null, pj: me.pj || null, rd: redness(), bq: me.bq || null, fr: me.rod ? 1 : 0, fs: me.fs || null };
   if (boarded && boarded.driver) { o.bx = +boatLocal.x.toFixed(2); o.bz = +boatLocal.z.toFixed(2); o.br = +boatLocal.r.toFixed(2); }
   else { o.bx = null; o.bz = null; o.br = null; }
   return o;
@@ -2299,6 +2392,8 @@ function refreshActions() {
   boardActions(acts);
   status = fireActions(acts, status);
   status = photoActions(acts, status);
+  status = beerActions(acts, status);
+  status = fishActions(acts, status);
   if ($("status").textContent !== status) { $("status").textContent = status; $("status").hidden = !status; }
   // rebuild the buttons only when they change, so a running timer in the status line never eats a tap
   const key = JSON.stringify(acts); if (key === actKey) return; actKey = key;
@@ -2307,7 +2402,7 @@ function refreshActions() {
 }
 $("actRow").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return; const a = b.dataset.act;
-  if (storeClick(a) || rentalClick(a) || deliveryClick(a) || boardClick(a) || fireClick(a) || photoClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
+  if (storeClick(a) || rentalClick(a) || deliveryClick(a) || boardClick(a) || fireClick(a) || photoClick(a) || beerClick(a) || fishClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
   if (a === "sit" || a === "lie") {
     if (me.st === "walk") {
       if (!canSpread()) { toast("잔디나 대교 위에서만 돗자리를 펼 수 있습니다"); return; }
@@ -2501,8 +2596,8 @@ function refreshShopFoot() { $("shopSum").textContent = `장바구니 ${me.baske
 $("shopGrid").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b || !me.basket) return;
   if (me.basket.length >= BASKET_MAX) { toast("장바구니가 가득 찼어요"); return; }
-  me.basket.push(b.dataset.k); refreshShopFoot(); if (audio.ready) audio.click();
-  toast(PRODUCTS[b.dataset.k].name + "을(를) 담았어요"); publish(true); actKey = "";
+  const k = b.dataset.k, put = () => { if (!me.basket) return; me.basket.push(k); refreshShopFoot(); if (audio.ready) audio.click(); toast(PRODUCTS[k].name + "을(를) 담았어요"); publish(true); actKey = ""; };
+  if (PRODUCTS[k].alc) askAge(put); else put();
 });
 function openBag() {
   $("bagMoney").textContent = "내 돈 " + won(wallet.money);
@@ -2510,7 +2605,7 @@ function openBag() {
   $("basketSec").hidden = !me.basket;
   (me.basket || []).forEach((k, i) => bl.appendChild(bagRow(PRODUCTS[k].name + " · " + won(PRODUCTS[k].price), "빼기", "drop", i, k)));
   if (me.basket && !me.basket.length) bl.appendChild(Object.assign(document.createElement("p"), { className: "empty", textContent: "아직 담은 물건이 없어요" }));
-  wallet.bag.forEach((k, i) => gl.appendChild(PRODUCTS[k].fire ? bagRow(PRODUCTS[k].name, PRODUCTS[k].fire === "hand" ? "꺼내기" : "설치하기", "fire", i, k) : PRODUCTS[k].cook ? bagRow(PRODUCTS[k].name, "라면 기계에서 끓여요", "none", i, k) : bagRow(PRODUCTS[k].name, PRODUCTS[k].cat === "drink" ? "꺼내기" : "먹기", "eat", i, k)));
+  wallet.bag.forEach((k, i) => gl.appendChild(PRODUCTS[k].fire ? bagRow(PRODUCTS[k].name, PRODUCTS[k].fire === "hand" ? "꺼내기" : "설치하기", "fire", i, k) : PRODUCTS[k].tap ? bagRow(PRODUCTS[k].name, "생맥주 기계에서 따라요", "none", i, k) : PRODUCTS[k].cook ? bagRow(PRODUCTS[k].name, "라면 기계에서 끓여요", "none", i, k) : bagRow(PRODUCTS[k].name, PRODUCTS[k].cat === "drink" ? "꺼내기" : "먹기", "eat", i, k)));
   if (!wallet.bag.length) gl.appendChild(Object.assign(document.createElement("p"), { className: "empty", textContent: "산 물건이 없어요. 한강 편의점에 들러 보세요" }));
   $("bagModal").hidden = false;
 }
@@ -2525,11 +2620,12 @@ $("bagModal").addEventListener("click", e => {
   if (e.target === $("bagModal")) { $("bagModal").hidden = true; return; }
   const b = e.target.closest("button[data-act]"); if (!b) return; const i = +b.dataset.i;
   if (b.dataset.act === "drop" && me.basket) { me.basket.splice(i, 1); publish(true); actKey = ""; openBag(); return; }
+  if (me.rod && (b.dataset.act === "fire" || b.dataset.act === "eat")) { toast("낚싯대를 든 채로는 꺼낼 수 없어요. 반납한 뒤에 꺼내 주세요"); return; }
   if (b.dataset.act === "fire") { fireFromBag(i); return; }
   if (b.dataset.act === "eat") {
     if (me.hold) { toast("들고 있는 걸 먼저 다 먹어 주세요"); return; }
     if (me.st === "swim" || me.st === "lie" || boarded) { toast("지금은 먹을 수 없어요"); return; }
-    if (!PRODUCTS[wallet.bag[i]] || PRODUCTS[wallet.bag[i]].cook) return;
+    if (!PRODUCTS[wallet.bag[i]] || PRODUCTS[wallet.bag[i]].cook || PRODUCTS[wallet.bag[i]].tap) return;
     const k = wallet.bag.splice(i, 1)[0]; saveWallet();
     const drink = PRODUCTS[k].cat === "drink";
     me.hold = k; me.eat = drink ? 0 : Date.now(); u_lastBite.me = -1; $("bagModal").hidden = true;
@@ -2609,7 +2705,7 @@ $("leaveModal").addEventListener("click", e => { if (e.target === $("leaveModal"
 addEventListener("keydown", e => { if (e.key === "Escape" && !$("leaveModal").hidden) $("leaveModal").hidden = true; });
 $("leaveBtn").addEventListener("click", async () => {
   $("leaveModal").hidden = true;
-  started = false; me.bt = null; boarded = null; me.rm = null; me.hold = false; me.eat = 0; me.basket = null; me.q = 0; payState = null; me.ch = 0; me.pb = null; me.mat = false; me.bike = null; me.em = null; me.lit = 0; me.tw = 0; me.gf = null; me.ph = null; me.pj = null; if (shoot) shoot.done = true; if (me.dv && !me.dv.got && Date.now() - me.dv.at < DV_RIDE_IN * 1000) { wallet.money += PRODUCTS[me.dv.k].price + DV_FEE; saveWallet(); } me.dv = null; if (me.st === "bike") me.st = "walk"; exitMung();
+  started = false; me.bt = null; boarded = null; me.rm = null; me.hold = false; me.eat = 0; me.basket = null; me.q = 0; payState = null; me.ch = 0; me.pb = null; me.mat = false; me.bike = null; me.em = null; me.lit = 0; me.tw = 0; me.gf = null; me.ph = null; me.pj = null; if (shoot) shoot.done = true; me.rod = null; me.fs = null; $("fishModal").hidden = true; if (me.dv && !me.dv.got && Date.now() - me.dv.at < DV_RIDE_IN * 1000) { wallet.money += PRODUCTS[me.dv.k].price + DV_FEE; saveWallet(); } me.dv = null; if (me.st === "bike") me.st = "walk"; exitMung();
   try { if (room) { await room.presence({ n: null, st: null, bt: null, rm: null }); if (typeof room.leave === "function") await room.leave(); } } catch (e) {}
   room = null;
   if (myAvatar) { scene.remove(myAvatar); myAvatar = null; }
@@ -2726,7 +2822,7 @@ function pushOut(x, z, rad) {
   }
   return [x, z];
 }
-function onDock(x, z) { return Math.abs(x - DOCK.x) < 8.5 && z > -2.2 && z < BOUND.landZ0 + 0.1; }
+function onDock(x, z) { return (Math.abs(x - DOCK.x) < 8.5 && z > -2.2 && z < BOUND.landZ0 + 0.1) || onFishDeck(x, z); }
 function stepPlayer(dt) {
   if (anim) {
     anim.t += dt; const u = Math.min(1, anim.t / anim.dur);
@@ -3139,6 +3235,7 @@ function rentalClick(a) {
   if (a === "bikerent") {
     if (me.hold) { toast("먹을 걸 든 채로는 자전거를 탈 수 없어요"); return true; }
     if (me.basket) { toast("장바구니를 든 채로는 자전거를 탈 수 없어요"); return true; }
+    if (me.rod) { toast("낚싯대를 든 채로는 자전거를 탈 수 없어요"); return true; }
     if (BIKE_ST.n - bikesOut() <= 0) { toast("남은 자전거가 없어요"); return true; }
     if (wallet.money < BIKE_FEE) { toast("돈이 모자라요. 자전거는 10분에 1,000원이에요"); return true; }
     wallet.money -= BIKE_FEE; saveWallet();
@@ -3307,7 +3404,7 @@ function updateDeliveries(dt) {
 }
 function receiveDelivery() {
   const k = me.dv.k; me.dv.got = true;
-  const canHold = !me.hold && !boarded && (me.st === "walk" || me.st === "sit" || me.st === "bench" || me.st === "stool") && me.level === "ground";
+  const canHold = !me.hold && !me.rod && !boarded && (me.st === "walk" || me.st === "sit" || me.st === "bench" || me.st === "stool") && me.level === "ground";
   if (canHold) { me.hold = k; me.eat = 0; toast(PRODUCTS[k].name + " 도착! '먹기'를 누르면 먹을 수 있어요"); }
   else { if (wallet.bag.length < BAG_MAX) wallet.bag.push(k); saveWallet(); toast(PRODUCTS[k].name + " 도착! 가방에 넣어 두었어요"); }
   if (audio.ready) audio.ding();
@@ -3597,10 +3694,10 @@ function frame() {
       myAvatar.rotation.y = lerpAngle(myAvatar.rotation.y, tr, 1 - Math.exp(-dt * 14));
     }
     const myEat = me.eat ? (Date.now() - me.eat) / 1000 : -1;
-    updateAvatar(myAvatar, dt, T, { moving: me.moving, speed: me.speed, crank: boarded ? boats[boarded.id].crank + (mySeat === 1 ? Math.PI / 2 : 0) : me.crank || 0, seat: mySeat, hold: me.hold, mat: !!me.mat, eatT: myEat, basket: me.basket ? me.basket.length : -1, cheer: cheerOf("me"), emote: activeEmote(me.em), lit: litOf(me.hold, me.lit), spin: me.hold === "sparkler" && me.lit ? spinOf(me.tw) : null });
+    updateAvatar(myAvatar, dt, T, { moving: me.moving, speed: me.speed, crank: boarded ? boats[boarded.id].crank + (mySeat === 1 ? Math.PI / 2 : 0) : me.crank || 0, seat: mySeat, hold: me.hold, mat: !!me.mat, eatT: myEat, basket: me.basket ? me.basket.length : -1, cheer: cheerOf("me"), emote: activeEmote(me.em), rod: !!me.rod, fs: me.fs, lit: litOf(me.hold, me.lit), spin: me.hold === "sparkler" && me.lit ? spinOf(me.tw) : null });
     avatarRental(myAvatar, me.st === "bike", me.crank || 0, me.speed, !!me.mat && me.st !== "sit" && me.st !== "lie" && myAvatar.userData.cur.matP < .05, dt);
     eatingFx(myAvatar, "me", myEat, 0, me.hold);
-    if (me.eat && myEat >= eatTime(me.hold)) { toast(me.hold === "ramen" ? "잘 먹었습니다! 국물까지 싹 비웠어요" : `${PRODUCTS[me.hold] ? PRODUCTS[me.hold].name : "간식"} 맛있게 먹었어요!`); me.hold = false; me.eat = 0; publish(true); actKey = ""; }
+    if (me.eat && myEat >= eatTime(me.hold)) { noteDrink(me.hold); toast(me.hold === "ramen" ? "잘 먹었습니다! 국물까지 싹 비웠어요" : `${PRODUCTS[me.hold] ? PRODUCTS[me.hold].name : "간식"} 맛있게 먹었어요!`); me.hold = false; me.eat = 0; publish(true); actKey = ""; }
     const showGhost = me.st === "walk" && !anim && !me.moving && !me.bt && !!me.mat && canSpread();
     ghost.visible = showGhost;
     if (showGhost) { const sn = me.level === "ground" ? matSnap(me.x, me.z) : null, gx = sn ? sn[0] : me.x, gz = sn ? sn[1] : me.z; ghost.position.set(gx, me.y + 0.05, gz + POSES.sit.matZ); ghost.material.color.set(matConflict(gx, gz) ? 0xff8a7a : 0x9be3a0); }
@@ -3632,7 +3729,7 @@ function frame() {
     o.x += (tx - o.x) * k; o.z += (tz - o.z) * k; o.r = lerpAngle(o.r, tr, k);
     o.obj.position.set(o.x, ty, o.z); o.obj.rotation.y = o.r;
     const oEat = p.hi && p.ea ? (Date.now() - p.ea) / 1000 : -1, oE = oEat >= 0 && oEat < eatTime(p.hi) ? oEat : -1;
-    updateAvatar(o.obj, dt, T, { moving, speed: 3.6, seat, crank, hold: p.hi, eatT: oE, basket: p.bk, cheer: cheerOf(peer), mat: !!p.mt, emote: activeEmote(p.em), lit: litOf(p.hi, p.lt), spin: litOf(p.hi, p.lt) ? spinOf(p.tw) : null });
+    updateAvatar(o.obj, dt, T, { moving, speed: 3.6, seat, crank, hold: p.hi, eatT: oE, basket: p.bk, cheer: cheerOf(peer), mat: !!p.mt, emote: activeEmote(p.em), rod: !!p.fr, fs: p.fs, lit: litOf(p.hi, p.lt), spin: litOf(p.hi, p.lt) ? spinOf(p.tw) : null });
     avatarRental(o.obj, p.st === "bike", crank, stepD / Math.max(dt, 1e-3), !!p.mt && p.st !== "sit" && p.st !== "lie" && o.obj.userData.cur.matP < .05, dt);
     eatingFx(o.obj, peer, oE, Math.hypot(o.x - cam.tx, o.z - cam.tz), p.hi);
   }
@@ -3713,6 +3810,8 @@ function frame() {
   updateEmotes();
   updateFireShop(dt);
   updatePhoto();
+  updateBeer();
+  updateFishing();
   // bubbles follow their owners
   for (let i = bubbles.length - 1; i >= 0; i--) {
     const b = bubbles[i], o = b.getObj();
@@ -4138,6 +4237,312 @@ function updatePhoto() {
     heartMesh.lookAt(camera.position); heartMesh.scale.setScalar(1.2 + Math.sin(T * 6) * .08);
   } else if (heartMesh) heartMesh.visible = false;
 }
+/* ================= 주류: 19세 확인 · 셀프 생맥주 · 볼 빨개짐 ================= */
+const ADULT_KEY = "hangang-adult";
+function adultOk() { try { return localStorage.getItem(ADULT_KEY) === "1"; } catch (e) { return false; } }
+let ageThen = null;
+function askAge(then) { if (adultOk()) { then(); return; } ageThen = then; $("ageModal").hidden = false; }
+$("ageYes").addEventListener("click", () => { try { localStorage.setItem(ADULT_KEY, "1"); } catch (e) {} $("ageModal").hidden = true; const f = ageThen; ageThen = null; if (f) f(); });
+$("ageNo").addEventListener("click", () => { $("ageModal").hidden = true; ageThen = null; toast("주류는 19세 이상만 살 수 있어요. 음료는 언제든 괜찮아요!"); });
+
+/* the tap */
+const nearBeerTap = () => started && me.st === "walk" && insideStore(me.x, me.z) && boxDist(me.x - STORE.x, me.z - STORE.z, FIX.beer) < 1.1;
+function beerActions(acts, status) {
+  if (!nearBeerTap() || anim || me.q) return status;
+  if (wallet.bag.includes("beercup")) { if (!me.hold) acts.unshift(["pour", "생맥주 따르기", "primary"]); else status = "손에 든 걸 먼저 다 먹어 주세요"; }
+  else status = "셀프 생맥주 · 냉장고에서 '생맥주 잔'을 사서 계산하면 따를 수 있어요";
+  return status;
+}
+function beerClick(a) { if (a !== "pour") return false; openPour(); return true; }
+
+const pour = { b: 0, f: 0, hold: null, open: false, last: 0, done: false };
+audio.pourOn = function (on) {
+  const ac = this.ac, t = ac.currentTime;
+  if (!this.pourG) { const s = ac.createBufferSource(); s.buffer = this.pink; s.loop = true; const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 700; bp.Q.value = .7; this.pourG = ac.createGain(); this.pourG.gain.value = 0; s.connect(bp); bp.connect(this.pourG); this.pourG.connect(this.sfx); s.start(); }
+  this.pourG.gain.setTargetAtTime(on ? .35 : 0, t, .05);
+};
+function openPour() {
+  Object.assign(pour, { b: 0, f: 0, hold: null, open: true, last: performance.now(), done: false });
+  $("pourMsg").textContent = "맥주를 먼저 따르고, 거품을 올려 7:3을 맞춰 보세요"; drawPour(); $("pourModal").hidden = false; requestAnimationFrame(pourTick);
+}
+function drawPour() {
+  $("pourBeer").style.height = Math.min(100, pour.b * 100) + "%";
+  $("pourFoam").style.bottom = Math.min(100, pour.b * 100) + "%"; $("pourFoam").style.height = Math.max(0, Math.min(100 - pour.b * 100, pour.f * 100)) + "%";
+}
+function pourTick(now) {
+  if (!pour.open) return;
+  const dt = Math.min(.25, (now - pour.last) / 1000); pour.last = now;
+  if (pour.hold === "b") { pour.b += .3 * dt; pour.f += .025 * dt; }
+  else if (pour.hold === "f") pour.f += .22 * dt;
+  else if (pour.f > 0) pour.f = Math.max(0, pour.f - .01 * dt); // foam settles a little
+  drawPour();
+  if (pour.b + pour.f > 1.07 && !pour.done) { finishPour(true); return; }
+  requestAnimationFrame(pourTick);
+}
+["pourB", "pourF"].forEach(id => {
+  const el = $(id), kind = id === "pourB" ? "b" : "f";
+  el.addEventListener("pointerdown", e => { e.preventDefault(); pour.hold = kind; el.classList.add("on"); if (audio.ready) audio.pourOn(true); });
+  const up = () => { if (pour.hold === kind) pour.hold = null; el.classList.remove("on"); if (audio.ready) audio.pourOn(false); };
+  ["pointerup", "pointerleave", "pointercancel"].forEach(ev => el.addEventListener(ev, up));
+});
+$("pourDone").addEventListener("click", () => finishPour(false));
+$("pourClose").addEventListener("click", () => { pour.open = false; pour.hold = null; if (audio.ready) audio.pourOn(false); $("pourModal").hidden = true; });
+function finishPour(overflow) {
+  if (pour.done) return; pour.done = true; pour.open = false; pour.hold = null; if (audio.ready) audio.pourOn(false);
+  const total = pour.b + pour.f, ratio = total > 0 ? pour.f / total : 0;
+  if (total < .15) { pour.done = false; toast("잔이 아직 비어 있어요. 버튼을 꾹 눌러 따라 보세요"); pour.open = true; pour.last = performance.now(); requestAnimationFrame(pourTick); return; }
+  let q, msg;
+  if (overflow) { q = 0; msg = "앗, 거품이 넘쳤어요…"; }
+  else if (total >= .9 && ratio >= .22 && ratio <= .38) { q = 2; msg = "완벽한 7:3! 🍺"; }
+  else if (total < .75) { q = 1; msg = "조금 덜 찼지만 시원해요"; }
+  else { q = 1; msg = ratio < .22 ? "거품이 조금 아쉬운 한 잔" : "거품이 풍성한 한 잔"; }
+  const i = wallet.bag.indexOf("beercup"); if (i >= 0) { wallet.bag.splice(i, 1); saveWallet(); }
+  me.hold = "beer"; me.eat = 0; me.bq = { at: Date.now(), q };
+  $("pourMsg").textContent = msg;
+  setTimeout(() => { $("pourModal").hidden = true; }, 1100);
+  showBubble(() => myAvatar, msg, 2.6, "me"); if (audio.ready) (q === 2 ? audio.ding() : audio.pop());
+  publish(true); actKey = ""; refreshActions();
+}
+
+/* cheeks get a little red after a drink or two */
+const ALC_WINDOW = 40 * 60000;
+function noteDrink(k) { if (PRODUCTS[k] && PRODUCTS[k].alc) { me.drinks = (me.drinks || []).filter(t => Date.now() - t < ALC_WINDOW); me.drinks.push(Date.now()); } }
+function redness() { return Math.min(3, (me.drinks || []).filter(t => Date.now() - t < ALC_WINDOW).length); }
+function blushAvatar(av, rd) {
+  const u = av.userData;
+  if (rd > 0 && !u.redM) {
+    const m = new THREE.MeshBasicMaterial({ color: 0xff4d5e, transparent: true, opacity: 0, depthWrite: false });
+    u.redM = m; [-1, 1].forEach(k => { const s = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), m); s.position.set(k * .25, -.13, -.36); s.scale.set(.1, .06, .03); u.head.add(s); });
+  }
+  if (u.redM) u.redM.opacity = [0, .28, .45, .6][rd] || 0;
+}
+const seenBq = new Map();
+function updateBeer() {
+  if (myAvatar) blushAvatar(myAvatar, redness());
+  for (const [peer, o] of others) {
+    blushAvatar(o.obj, o.p.rd || 0);
+    const bq = o.p.bq; if (!bq || seenBq.get(peer) === bq.at) continue; seenBq.set(peer, bq.at);
+    if (Date.now() - bq.at < 4000) { const id = peer, msg = ["거품이 넘쳤어요…", "생맥주 한 잔!", "완벽한 7:3! 🍺"][bq.q] || "생맥주 한 잔!"; showBubble(() => (others.get(id) || {}).obj, msg, 2.4, id); }
+  }
+}
+/* ================= 한강 낚시: 데크 · 대여 · 던지기 · 챔질 · 도감 ================= */
+const FISH_DECK = { x: 120, half: 6, z0: -2.6 }, ROD_FEE = 1000, ROD_TIME = 30 * 60000, FISH_DAY_CAP = 4000;
+const FISH = [
+  { k: "bung", name: "붕어", rare: 0, w: 20, cm: [15, 32], col: 0x8a7a4a, pay: 200 },
+  { k: "ing", name: "잉어", rare: 0, w: 20, cm: [30, 72], col: 0xb08a40, pay: 200 },
+  { k: "nuchi", name: "누치", rare: 0, w: 20, cm: [25, 48], col: 0x9aa0a8, pay: 200 },
+  { k: "megi", name: "메기", rare: 1, w: 8, cm: [30, 75], col: 0x55504a, pay: 600 },
+  { k: "junchi", name: "강준치", rare: 1, w: 8, cm: [40, 85], col: 0xc8d0d8, pay: 600 },
+  { k: "sogari", name: "쏘가리", rare: 1, w: 8, cm: [20, 42], col: 0xb89040, pay: 600 },
+  { k: "gold", name: "황금 잉어", rare: 2, w: 2, cm: [55, 95], col: 0xffcf3a, pay: 3000 },
+  { k: "boot", name: "장화", rare: 3, w: 7, cm: [0, 0], col: 0x3a4a3a, pay: 100 },
+  { k: "can", name: "깡통", rare: 3, w: 7, cm: [0, 0], col: 0xb0b6bc, pay: 100 }
+];
+const FISH_BY = Object.fromEntries(FISH.map(f => [f.k, f]));
+const RARE_LABEL = ["흔해요", "가끔 잡혀요", "아주 드물어요", "강 청소"];
+const onFishDeck = (x, z) => Math.abs(x - FISH_DECK.x) < FISH_DECK.half && z > FISH_DECK.z0 && z < BOUND.landZ0 + .1;
+
+/* the deck and the rod rental box */
+{
+  const D = FISH_DECK, wood = mat(0x8a6a48);
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(D.half * 2, .3, 3.4), wood); deck.position.set(D.x, -.15, -1.1); deck.receiveShadow = true; scene.add(deck);
+  for (let x = -D.half + .5; x <= D.half - .5; x += 2.5) { const p = new THREE.Mesh(new THREE.CylinderGeometry(.13, .13, 1.6, 6), wood); p.position.set(D.x + x, -.6, -2.6); scene.add(p); }
+  [-1, 1].forEach(s => { const r = new THREE.Mesh(new THREE.BoxGeometry(.08, .5, 3.2), mat(0x6b4f35)); r.position.set(D.x + s * (D.half - .05), .25, -1.1); r.castShadow = true; scene.add(r); });
+  const bx = D.x - D.half - 1.4, bz = 2.4;
+  const box = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.3, .6), mat(0x2f6fb0)); box.position.set(bx, .65, bz); box.castShadow = true; scene.add(box);
+  for (let i = 0; i < 4; i++) { const rod = new THREE.Mesh(new THREE.CylinderGeometry(.012, .02, 1.7, 5), mat(0x3a2a1a)); rod.position.set(bx - .35 + i * .23, 1.3, bz + .32); rod.rotation.x = .12; scene.add(rod); }
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.9, .55), signMat(signTex([["낚싯대 대여", 44, .38], ["30분 1,000원 · 낚시 데크에서", 24, .78]], "#2f6fb0", "#ffffff"))); sign.position.set(bx, 2.35, bz + .31); scene.add(sign);
+  const post = new THREE.Mesh(new THREE.BoxGeometry(.08, 1.1, .08), mat(0x3a3d44)); post.position.set(bx, 1.75, bz + .25); scene.add(post);
+  OBST.push({ x0: bx - .6, x1: bx + .6, z0: bz - .35, z1: bz + .35 });
+  FISH_DECK.box = [bx, bz];
+}
+const nearRodBox = () => me.level === "ground" && me.st === "walk" && Math.hypot(me.x - FISH_DECK.box[0], me.z - (FISH_DECK.box[1] + 1.1)) < 1.4;
+
+/* dex and daily rewards (this browser) */
+const DEX_KEY = "hangang-fishdex";
+const dex = (() => { try { return JSON.parse(localStorage.getItem(DEX_KEY) || "{}") || {}; } catch (e) { return {}; } })();
+function saveDex() { try { localStorage.setItem(DEX_KEY, JSON.stringify(dex)); } catch (e) {} }
+function fishEarnedToday() { return wallet.fishDay === todayKey() ? (wallet.fishEarn || 0) : 0; }
+
+/* rod rental */
+function fishActions(acts, status) {
+  if (!started || anim || boarded) return status;
+  if (me.rod && Date.now() - me.rod.at > ROD_TIME) { endRod("30분이 지나 낚싯대를 반납했어요"); }
+  if (nearRodBox()) {
+    if (!me.rod) { acts.unshift(["rodrent", "낚싯대 빌리기 · 1,000원", "primary"]); status = "낚싯대 대여 · 30분 1,000원 · 데크 끝에서 던져 보세요"; }
+    else acts.unshift(["rodret", "낚싯대 반납하기", ""]);
+  }
+  if (me.rod && me.st === "walk") {
+    if (onFishDeck(me.x, me.z)) acts.unshift(["fish", "낚시하기", "primary"]);
+    else if (!status) status = `낚싯대 대여 중 · ${fmt(Math.max(0, (ROD_TIME - (Date.now() - me.rod.at)) / 1000))} 남음 · 낚시 데크로 가 보세요`;
+  }
+  return status;
+}
+function fishClick(a) {
+  if (a === "rodrent") {
+    if (me.hold) { toast("손에 든 걸 먼저 다 먹어 주세요"); return true; }
+    if (me.basket) { toast("장바구니를 든 채로는 빌릴 수 없어요"); return true; }
+    if (wallet.money < ROD_FEE) { toast("돈이 모자라요. 낚싯대는 30분에 1,000원이에요"); return true; }
+    wallet.money -= ROD_FEE; saveWallet(); me.rod = { at: Date.now() }; me.fs = null;
+    toast("낚싯대를 빌렸어요! 낚시 데크 끝으로 가서 '낚시하기'를 눌러 보세요"); return true;
+  }
+  if (a === "rodret") { endRod("낚싯대를 반납했어요"); return true; }
+  if (a === "fish") { openFish(); return true; }
+  return false;
+}
+function endRod(msg) { me.rod = null; me.fs = null; closeFish(); toast(msg); publish(true); actKey = ""; }
+
+/* the fishing panel: hold to cast, wait, strike, release */
+const fishing = { st: "ready", power: 0, pDir: 1, castAt: 0, biteAt: 0, catch: null, raf: 0 };
+function openFish() {
+  if (!me.rod) return; me.r = 0; fishing.st = "ready"; fishing.catch = null;
+  $("fishModal").hidden = false; $("dexBox").hidden = true; drawFish(); fishLoop();
+}
+function closeFish() {
+  $("fishModal").hidden = true; fishing.st = "ready"; cancelAnimationFrame(fishing.raf);
+  if (me.fs && me.fs.s !== "catch") { me.fs = null; publish(true); }
+}
+function setFs(s, extra) { me.fs = Object.assign({ s, at: Date.now() }, extra || {}); publish(true); }
+function drawFish() {
+  const st = fishing.st, btn = $("fishBtn"), msg = $("fishMsg"), card = $("fishCard");
+  card.hidden = st !== "caught"; $("fishPower").hidden = st !== "charge" && st !== "ready";
+  $("fishPowerBar").style.width = Math.round(fishing.power * 100) + "%";
+  btn.className = "fish-btn" + (st === "bite" ? " bite" : "");
+  btn.hidden = st === "caught"; $("fishRelease").hidden = st !== "caught";
+  if (st === "ready") { msg.textContent = "버튼을 꾹 눌렀다가 떼면 찌를 던져요"; btn.textContent = "꾹 눌러 던지기"; }
+  else if (st === "charge") { msg.textContent = "적당할 때 손을 떼세요!"; btn.textContent = "던질 힘 모으는 중…"; }
+  else if (st === "wait") { msg.textContent = "찌를 보고 있어요… 입질이 오면 바로 눌러요"; btn.textContent = "기다리는 중 (누르면 걷어 올려요)"; }
+  else if (st === "bite") { msg.textContent = "찌가 쏙 들어갔어요!"; btn.textContent = "지금! 챔질!"; }
+  else if (st === "caught" && fishing.catch) {
+    const F = FISH_BY[fishing.catch.k], earned = fishEarnedToday(), pay = Math.min(F.pay, Math.max(0, FISH_DAY_CAP - earned));
+    msg.textContent = F.rare === 3 ? "물고기가 아니라…" : F.rare === 2 ? "✨ 대박! 황금 잉어예요!" : "잡았어요!";
+    $("fishName").textContent = F.name + (F.rare === 3 ? "" : ` ${fishing.catch.cm}cm`);
+    $("fishRare").textContent = RARE_LABEL[F.rare] + (fishing.catch.isNew ? " · 도감에 새로 기록!" : "");
+    $("fishIcon").style.background = "#" + F.col.toString(16).padStart(6, "0");
+    $("fishRelease").textContent = (F.rare === 3 ? "쓰레기 버리기" : "방생하기") + (pay > 0 ? ` (+${won(pay)})` : " (오늘 보상은 다 받았어요)");
+  }
+}
+function fishLoop() {
+  cancelAnimationFrame(fishing.raf);
+  let last = performance.now();
+  const tick = () => {
+    if ($("fishModal").hidden) return;
+    const now = Date.now(), pn = performance.now(), dt = Math.min(.25, (pn - last) / 1000); last = pn;
+    if (fishing.st === "charge") { fishing.power += fishing.pDir * dt * 1.1; if (fishing.power >= 1) { fishing.power = 1; fishing.pDir = -1; } if (fishing.power <= 0) { fishing.power = 0; fishing.pDir = 1; } $("fishPowerBar").style.width = Math.round(fishing.power * 100) + "%"; }
+    if (fishing.st === "wait" && now >= fishing.biteAt) { fishing.st = "bite"; fishing.biteEnd = now + 1500; setFs("bite", { bx: me.fs.bx, bz: me.fs.bz }); if (audio.ready) { audio.tone(audio.sfx, "sine", 520, 260, .18, .3); if (navigator.vibrate) try { navigator.vibrate(120); } catch (e) {} } drawFish(); }
+    if (fishing.st === "bite" && now > fishing.biteEnd) { fishing.st = "ready"; toast("놓쳤어요… 다시 던져 보세요"); setFs("idle"); drawFish(); }
+    if ((fishing.st === "wait" || fishing.st === "bite") && (me.moving || me.st !== "walk" || !onFishDeck(me.x, me.z))) { fishing.st = "ready"; setFs("idle"); closeFish(); toast("움직여서 낚싯줄을 걷었어요"); return; }
+    fishing.raf = requestAnimationFrame(tick);
+  };
+  fishing.raf = requestAnimationFrame(tick);
+}
+$("fishBtn").addEventListener("pointerdown", e => {
+  e.preventDefault();
+  if (fishing.st === "ready") { fishing.st = "charge"; fishing.power = 0; fishing.pDir = 1; drawFish(); }
+  else if (fishing.st === "wait") { fishing.st = "ready"; setFs("idle"); toast("낚싯줄을 걷어 올렸어요"); drawFish(); }
+  else if (fishing.st === "bite") strike();
+});
+const castRelease = () => {
+  if (fishing.st !== "charge") return;
+  const d = 3 + fishing.power * 9; me.r = 0;
+  const bx = clamp(me.x - Math.sin(me.r) * d, BOUND.x0, BOUND.x1), bz = Math.min(FISH_DECK.z0 - 1, me.z - Math.cos(me.r) * d);
+  fishing.st = "wait"; fishing.castAt = Date.now(); fishing.biteAt = fishing.castAt + 5000 + Math.random() * 17000;
+  setFs("cast", { bx: +bx.toFixed(2), bz: +bz.toFixed(2) }); if (audio.ready) audio.tone(audio.sfx, "sine", 900, 300, .25, .08);
+  setTimeout(() => { if (audio.ready) audio.paddle(); }, 600);
+  drawFish();
+};
+["pointerup", "pointerleave", "pointercancel"].forEach(ev => $("fishBtn").addEventListener(ev, castRelease));
+function rollFish() {
+  const total = FISH.reduce((s, f) => s + f.w, 0); let r = Math.random() * total;
+  for (const f of FISH) { r -= f.w; if (r <= 0) return f; } return FISH[0];
+}
+function strike() {
+  const F = rollFish(), cm = F.cm[1] ? Math.round(F.cm[0] + Math.pow(Math.random(), 1.6) * (F.cm[1] - F.cm[0])) : 0;
+  const prev = dex[F.k], isNew = !prev;
+  dex[F.k] = { n: (prev ? prev.n : 0) + 1, best: Math.max(prev ? prev.best : 0, cm) }; saveDex();
+  fishing.catch = { k: F.k, cm, isNew }; fishing.st = "caught";
+  setFs("catch", { k: F.k, cm });
+  showBubble(() => myAvatar, F.rare === 3 ? `${F.name}…?` : `${F.name} ${cm}cm!`, 3, "me");
+  if (audio.ready) (F.rare === 2 ? audio.ding() : audio.pop());
+  drawFish();
+}
+$("fishRelease").addEventListener("click", () => {
+  if (!fishing.catch) return; const F = FISH_BY[fishing.catch.k];
+  const pay = Math.min(F.pay, Math.max(0, FISH_DAY_CAP - fishEarnedToday()));
+  if (pay > 0) { if (wallet.fishDay !== todayKey()) { wallet.fishDay = todayKey(); wallet.fishEarn = 0; } wallet.fishEarn += pay; wallet.money += pay; saveWallet(); }
+  toast(F.rare === 3 ? `강이 조금 더 깨끗해졌어요${pay ? " · +" + won(pay) : ""}` : `${F.name}를 강으로 돌려보냈어요${pay ? " · +" + won(pay) : ""}`);
+  if (audio.ready) audio.paddle();
+  fishing.catch = null; fishing.st = "ready"; fishing.power = 0; setFs("idle"); drawFish();
+});
+$("fishDexBtn").addEventListener("click", () => {
+  const box = $("dexBox"); box.hidden = !box.hidden; if (box.hidden) return; box.textContent = "";
+  FISH.forEach(F => {
+    const d = dex[F.k], cell = document.createElement("div"); cell.className = "dex" + (d ? "" : " unknown");
+    const dot = document.createElement("i"); dot.style.background = d ? "#" + F.col.toString(16).padStart(6, "0") : "#555";
+    const t = document.createElement("span"); t.textContent = d ? `${F.name}${F.cm[1] ? " · 최고 " + d.best + "cm" : ""} · ${d.n}번` : "??? · " + RARE_LABEL[F.rare];
+    cell.append(dot, t); box.appendChild(cell);
+  });
+});
+$("fishClose").addEventListener("click", closeFish);
+
+/* everyone's rods, lines, bobbers and catches */
+function makeFishMesh(k) {
+  const F = FISH_BY[k] || FISH[0], g = new THREE.Group(), m = F.rare === 2 ? new THREE.MeshLambertMaterial({ color: F.col, emissive: 0x8a5a00, emissiveIntensity: .6 }) : mat(F.col);
+  if (F.rare === 3) {
+    if (k === "boot") { const a = new THREE.Mesh(new THREE.BoxGeometry(.14, .3, .14), m); a.position.y = .15; g.add(a); const b = new THREE.Mesh(new THREE.BoxGeometry(.14, .1, .26), m); b.position.set(0, .05, -.06); g.add(b); }
+    else { const c = new THREE.Mesh(new THREE.CylinderGeometry(.07, .07, .2, 12), m); c.position.y = .1; g.add(c); }
+    return g;
+  }
+  const body = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 10), m); body.scale.set(.09, .1, .3); g.add(body);
+  const tail = new THREE.Mesh(new THREE.ConeGeometry(.09, .16, 4), m); tail.rotation.x = Math.PI / 2; tail.position.z = .34; tail.scale.set(.25, 1, 1); g.add(tail);
+  const eye = new THREE.Mesh(new THREE.SphereGeometry(.018, 6, 4), new THREE.MeshBasicMaterial({ color: 0x111111 })); eye.position.set(.07, .03, -.2); g.add(eye);
+  g.rotation.x = -Math.PI / 2.3; return g;
+}
+function rodFor(av) {
+  const u = av.userData;
+  if (!u.rodG) {
+    const g = new THREE.Group(), rod = new THREE.Mesh(new THREE.CylinderGeometry(.015, .03, 1.9, 6), mat(0x2a2e3a)); rod.position.y = .95; g.add(rod);
+    const tip = new THREE.Object3D(); tip.position.y = 1.9; g.add(tip);
+    g.position.set(.2, .15, -.32); g.rotation.x = -.85; u.torso.add(g); u.rodG = g; u.rodTip = tip;
+    const lineGeo = new THREE.BufferGeometry(); lineGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(6), 3));
+    u.line = new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ color: 0xeeeeee, transparent: true, opacity: .7 })); u.line.frustumCulled = false; scene.add(u.line);
+    u.bobber = new THREE.Mesh(new THREE.SphereGeometry(.11, 12, 8), new THREE.MeshLambertMaterial({ color: 0xff3b30, emissive: 0xff3b30, emissiveIntensity: .5 })); scene.add(u.bobber);
+  }
+  return u;
+}
+const tipW = new THREE.Vector3();
+function showRod(av, has, fs) {
+  const u = av.userData;
+  if (!has) { if (u.rodG) { u.rodG.visible = false; u.line.visible = false; u.bobber.visible = false; if (u.fishM) u.fishM.visible = false; } return; }
+  rodFor(av); u.rodG.visible = true;
+  const s = fs && fs.s, inWater = s === "cast" || s === "bite";
+  u.line.visible = u.bobber.visible = inWater;
+  if (inWater) {
+    const fly = clamp((Date.now() - fs.at) / 600, 0, 1), dip = s === "bite" ? .12 + Math.sin(T * 30) * .03 : 0;
+    u.rodTip.getWorldPosition(tipW);
+    const by = -.58 + Math.sin(T * 2.2 + av.id) * .02 - dip;
+    const bx = s === "cast" ? tipW.x + (fs.bx - tipW.x) * fly : fs.bx, bz = s === "cast" ? tipW.z + (fs.bz - tipW.z) * fly : fs.bz, byy = s === "cast" ? tipW.y + (by - tipW.y) * fly + Math.sin(fly * Math.PI) * 1.5 : by;
+    u.bobber.position.set(bx, byy, bz);
+    const a = u.line.geometry.attributes.position.array; a[0] = tipW.x; a[1] = tipW.y; a[2] = tipW.z; a[3] = bx; a[4] = byy + .06; a[5] = bz; u.line.geometry.attributes.position.needsUpdate = true;
+  }
+  // the catch, held up for a few seconds
+  const showing = s === "catch" && Date.now() - fs.at < 6000;
+  if (showing && (!u.fishM || u.fishK !== fs.k)) { if (u.fishM) u.torso.remove(u.fishM); u.fishM = makeFishMesh(fs.k); u.fishK = fs.k; u.fishM.position.set(0, .55, -.38); u.torso.add(u.fishM); }
+  if (u.fishM) { u.fishM.visible = showing; if (showing) { const sc = clamp((fs.cm || 30) / 45, .6, 1.8); u.fishM.scale.setScalar(FISH_BY[fs.k] && FISH_BY[fs.k].rare === 3 ? 1 : sc); u.fishM.rotation.z = Math.sin(T * 9) * .2; } }
+}
+const seenCatch = new Map();
+function updateFishing() {
+  if (myAvatar) showRod(myAvatar, !!me.rod, me.fs);
+  for (const [peer, o] of others) {
+    showRod(o.obj, !!o.p.fr, o.p.fs);
+    const fs = o.p.fs; if (fs && fs.s === "catch" && seenCatch.get(peer) !== fs.at) {
+      seenCatch.set(peer, fs.at); const F = FISH_BY[fs.k];
+      if (F && Date.now() - fs.at < 4000) { const id = peer; showBubble(() => (others.get(id) || {}).obj, F.rare === 3 ? `${F.name}…?` : `${F.name} ${fs.cm}cm!`, 3, id); }
+    }
+  }
+}
+// rod pose: both hands forward on the grip
+function rodPose(v, fs) { v.arR = 1.15; v.azR = -.25; v.arL = 1.0; v.azL = -.35; if (fs && fs.s === "catch" && Date.now() - fs.at < 6000) { v.arL = v.arR = 2.2; v.azL = v.azR = .1; } }
 })();
 </script>
 
