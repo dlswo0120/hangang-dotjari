@@ -163,6 +163,10 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
 .upd-btns{display:flex;gap:6px}
 .upd-btns button{border-radius:999px;padding:8px 12px;font-size:13px;border:1px solid var(--line);background:rgba(255,255,255,.07);white-space:nowrap}
 .upd-btns .go{background:#f2b46b;color:#2a1d0f;border-color:transparent}
+.mat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.matpick{aspect-ratio:3/4;border-radius:10px;border:2px solid transparent;background-size:cover;background-position:center;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.matpick:hover,.matpick:focus-visible{border-color:#f2b46b}
+.modal-btns.one{grid-template-columns:1fr}
 </style>
 
 </head>
@@ -269,6 +273,15 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
     <input id="paperText" class="paper-in" maxlength="30" autocomplete="off" placeholder="오늘 하고 싶었던 말">
     <div class="modal-btns"><button type="button" id="paperCancel">그만두기</button><button type="submit" class="leave paper-go">띄우기</button></div>
   </form>
+</div>
+
+<div class="modal" id="matModal" hidden role="dialog" aria-modal="true" aria-labelledby="matTitle">
+  <div class="card">
+    <h2 id="matTitle">돗자리 무늬 고르기</h2>
+    <p id="matFee">오늘 첫 대여라 무료예요</p>
+    <div class="mat-grid" id="matGrid"></div>
+    <div class="modal-btns one"><button type="button" id="matClose">그만두기</button></div>
+  </div>
 </div>
 
 <div class="modal" id="newsModal" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
@@ -503,7 +516,7 @@ window.HANGANG_CONFIG = {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
-const APP_VERSION = "2026.11.02", UPDATES = [{"v": "2026.11.02", "date": "11월 2일", "items": ["앉아서 가만히 있으면 화면이 비워지는 '물멍 모드'가 생겼어요", "강가에서 한마디 적은 종이배를 띄울 수 있어요", "매일 밤 9시, 4분 동안 한강 불꽃놀이가 열려요. 맑은 밤엔 별똥별도 지나가요", "음료를 든 채 가까이 앉으면 '짠' 할 수 있어요", "라면은 편의점에서 봉지라면을 사 와서 기계로 끓여요", "찍은 사진을 휴대폰 사진 앱에 바로 저장할 수 있어요", "새 버전이 나오면 화면 위에 알려 드려요"]}];
+const APP_VERSION = "2026.11.02b", UPDATES = [{"v": "2026.11.02b", "date": "11월 2일", "items": ["강 건너편 잔디에 '한강 자전거 대여소'가 생겼어요. 10분에 1,000원, 같은 곳에 반납해요", "자전거를 타는 동안 '따르릉' 벨을 울릴 수 있어요", "길가에 '돗자리 대여소'가 생겼어요. 오늘 첫 대여는 무료, 그다음은 500원이에요", "돗자리 없이도 잔디에 그냥 앉거나 누울 수 있어요"]}, {"v": "2026.11.02", "date": "11월 2일", "items": ["앉아서 가만히 있으면 화면이 비워지는 '물멍 모드'가 생겼어요", "강가에서 한마디 적은 종이배를 띄울 수 있어요", "매일 밤 9시, 4분 동안 한강 불꽃놀이가 열려요. 맑은 밤엔 별똥별도 지나가요", "음료를 든 채 가까이 앉으면 '짠' 할 수 있어요", "라면은 편의점에서 봉지라면을 사 와서 기계로 끓여요", "찍은 사진을 휴대폰 사진 앱에 바로 저장할 수 있어요", "새 버전이 나오면 화면 위에 알려 드려요"]}];
 "use strict";
 const $ = id => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -1253,6 +1266,7 @@ function updateAvatar(av, dt, t, o = {}) {
     u.bowl.position.set(0, by, bz);
   }
   u.torso.scale.y = 1 + Math.sin(ph * 2.1) * .012;
+  if (o.mat === false) v.matP = 0;
   applyRig(av, v);
 }
 function applyRig(av, v) {
@@ -1942,7 +1956,7 @@ const seen = new Set();
 const num = (v, lo, hi, d) => (typeof v === "number" && isFinite(v) ? clamp(v, lo, hi) : d);
 function cleanPresence(p) {
   if (!p || typeof p !== "object" || typeof p.n !== "string") return null;
-  const st = ["walk", "sit", "lie", "swim", "boat", "bench", "stool"].includes(p.st) ? p.st : "walk";
+  const st = ["walk", "sit", "lie", "swim", "boat", "bench", "stool", "bike"].includes(p.st) ? p.st : "walk";
   const o = {
     n: p.n.replace(/[\u0000-\u001f\u200b-\u200f\u202a-\u202e]/g, "").slice(0, 10) || "손님",
     g: p.g === "f" ? "f" : "m", c: Number.isInteger(p.c) ? Math.abs(p.c) % SHIRTS.length : 0, m: Number.isInteger(p.m) ? Math.abs(p.m) % MAT_STYLES.length : 0,
@@ -1951,7 +1965,7 @@ function cleanPresence(p) {
     rm: null, hr: p.hr === 1, ea: num(p.ea, 0, 1e15, 0),
     hi: typeof p.hi === "string" && (p.hi === "ramen" || PRODUCTS[p.hi]) ? p.hi : (p.hr === 1 ? "ramen" : null),
     q: num(p.q, 0, 1e15, 0), bk: Number.isInteger(p.bk) ? clamp(p.bk, -1, 30) : -1,
-    ch: num(p.ch, 0, 1e15, 0), pb: null
+    ch: num(p.ch, 0, 1e15, 0), pb: null, mt: p.mt === 1, bl: num(p.bl, 0, 1e15, 0)
   };
   if (p.pb && typeof p.pb === "object" && typeof p.pb.t === "string" && typeof p.pb.at === "number") o.pb = { t: cleanWords(p.pb.t), at: p.pb.at, x: num(p.pb.x, WORLD.x0, WORLD.x1, 0) };
   if (p.rm && typeof p.rm === "object" && Number.isInteger(p.rm.m) && p.rm.m >= 0 && p.rm.m < 3) o.rm = { m: p.rm.m, at: num(p.rm.at, 0, 1e15, 0) };
@@ -1999,7 +2013,7 @@ function syncPeers(peers) {
 })();
 let lastPub = 0, lastPubKey = "", mySay = null;
 function presenceObj() {
-  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id, at: me.bt.at } : null, say: mySay, rm: me.rm, hr: me.hold ? 1 : 0, hi: me.hold || null, ea: me.eat || 0, q: me.q || 0, bk: me.basket ? me.basket.length : -1, ch: me.ch || 0, pb: me.pb || null };
+  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id, at: me.bt.at } : null, say: mySay, rm: me.rm, hr: me.hold ? 1 : 0, hi: me.hold || null, ea: me.eat || 0, q: me.q || 0, bk: me.basket ? me.basket.length : -1, ch: me.ch || 0, pb: me.pb || null, mt: me.mat ? 1 : 0, bl: me.bl || 0 };
   if (boarded && boarded.driver) { o.bx = +boatLocal.x.toFixed(2); o.bz = +boatLocal.z.toFixed(2); o.br = +boatLocal.r.toFixed(2); }
   else { o.bx = null; o.bz = null; o.br = null; }
   return o;
@@ -2066,7 +2080,7 @@ function leaveBoat(forced) {
 function onGrass(x, z) { return (z > 3.1 && z < 26.8) || (z > 34.2 && z <= BOUND.landZ1); }
 function onPath(z) { return z >= 26.8 && z <= 34.2; }
 function matConflict(x, z) {
-  for (const o of others.values()) if ((o.p.st === "sit" || o.p.st === "lie") && Math.hypot(o.p.x - x, o.p.z - z) < 3.2) return o.p.n;
+  for (const o of others.values()) if ((o.p.st === "sit" || o.p.st === "lie") && o.p.mt && Math.hypot(o.p.x - x, o.p.z - z) < 3.2) return o.p.n;
   return null;
 }
 function canSpread() { return (me.level === "ground" && onGrass(me.x, me.z) && !underRoof(me.x, me.z)) || me.level === "bridge"; }
@@ -2115,7 +2129,7 @@ const fmt = s => Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(
 function dropRamen(reason) {
   if (!me.hold) return; me.hold = false; me.eat = 0; toast(reason); publish(true);
 }
-let actKey = "";
+let actKey = "", matHinted = false;
 function eatLabel() { return PRODUCTS[me.hold] && PRODUCTS[me.hold].cat === "drink" ? "마시기" : "먹기"; }
 function refreshActions() {
   if (!started) return;
@@ -2167,19 +2181,22 @@ function refreshActions() {
     if (bo.squeeze != null) acts.push(["squeeze", "끼어 타기 (3명)", "duck"]);
   }
   status = storeActions(acts, status);
-  const key = JSON.stringify([acts, status]); if (key === actKey) return; actKey = key;
+  status = rentalActions(acts, status);
+  if ($("status").textContent !== status) { $("status").textContent = status; $("status").hidden = !status; }
+  // rebuild the buttons only when they change, so a running timer in the status line never eats a tap
+  const key = JSON.stringify(acts); if (key === actKey) return; actKey = key;
   const row = $("actRow"); row.textContent = "";
   acts.forEach(([id, label, cls]) => { const b = document.createElement("button"); b.className = "act " + cls; b.textContent = label; b.dataset.act = id; row.appendChild(b); });
-  $("status").textContent = status; $("status").hidden = !status;
 }
 $("actRow").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return; const a = b.dataset.act;
-  if (storeClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
+  if (storeClick(a) || rentalClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
   if (a === "sit" || a === "lie") {
     if (me.st === "walk") {
       if (!canSpread()) { toast("잔디나 대교 위에서만 돗자리를 펼 수 있습니다"); return; }
-      const who = matConflict(me.x, me.z);
+      const who = me.mat && matConflict(me.x, me.z);
       if (who) { toast(who + "님 돗자리와 너무 가깝습니다. 조금만 떨어져 주세요"); return; }
+      if (!me.mat && !matHinted && me.level === "ground") { matHinted = true; toast("잔디에 그냥 앉았어요. 돗자리는 돗자리 대여소에서 빌릴 수 있어요"); }
       me.r = 0;
     }
     me.st = a; rebuildMe(); cam.tPitch = a === "lie" ? 0.42 : 0.22; cam.tDist = a === "lie" ? 7.5 : 6.5;
@@ -2472,7 +2489,7 @@ $("leaveModal").addEventListener("click", e => { if (e.target === $("leaveModal"
 addEventListener("keydown", e => { if (e.key === "Escape" && !$("leaveModal").hidden) $("leaveModal").hidden = true; });
 $("leaveBtn").addEventListener("click", async () => {
   $("leaveModal").hidden = true;
-  started = false; me.bt = null; boarded = null; me.rm = null; me.hold = false; me.eat = 0; me.basket = null; me.q = 0; payState = null; me.ch = 0; me.pb = null; exitMung();
+  started = false; me.bt = null; boarded = null; me.rm = null; me.hold = false; me.eat = 0; me.basket = null; me.q = 0; payState = null; me.ch = 0; me.pb = null; me.mat = false; me.bike = null; if (me.st === "bike") me.st = "walk"; exitMung();
   try { if (room) { await room.presence({ n: null, st: null, bt: null, rm: null }); if (typeof room.leave === "function") await room.leave(); } } catch (e) {}
   room = null;
   if (myAvatar) { scene.remove(myAvatar); myAvatar = null; }
@@ -2545,7 +2562,7 @@ function checkNews() {
   let seen = null; try { seen = localStorage.getItem(SEEN_KEY); } catch (e) {}
   try { localStorage.setItem(SEEN_KEY, APP_VERSION); } catch (e) {}
   if (seen === APP_VERSION || (!seen && !RETURNING)) return; // first visit: nothing to announce
-  const idx = UPDATES.findIndex(u => u.v === seen), fresh = UPDATES.slice(0, idx < 0 ? 1 : Math.min(idx, 3));
+  const idx = UPDATES.findIndex(u => u.v === seen), fresh = UPDATES.slice(0, idx < 0 ? 2 : Math.min(idx, 3));
   if (!fresh.length) return;
   fillNews(fresh); $("newsModal").hidden = false;
 }
@@ -2609,6 +2626,7 @@ function stepPlayer(dt) {
   }
   if (me.st === "sit" || me.st === "lie" || me.st === "bench" || me.st === "stool") { me.moving = false; return; }
   if (me.q && me.st === "walk") { queueWalk(dt); return; }
+  if (me.st === "bike") { bikeStep(dt, inp); return; }
   if (!me.moving) { me.speed = 0; return; }
   dx /= Math.max(mag, 1); dz /= Math.max(mag, 1);
   const base = me.st === "swim" ? (me.tube ? 1.4 : 1.8) : inp.run ? 7 : 3.6;
@@ -2907,6 +2925,193 @@ function updateCheers(dt) {
 function updateExtras(dt) {
   updateMung(dt); updatePaper(); updateFireworks(dt); updateStars(dt); updateCheers(dt);
 }
+/* ================= 대여소: 한강 자전거 · 돗자리 ================= */
+const BIKE_ST = { x: 11.5, z: 35.6, n: 6, x0: 8.5, step: 1.2 }, BIKE_FEE = 1000, BIKE_SLOT = 600000;
+const MAT_ST = { x: 1.5, z: 24 }, MAT_FEE = 500;
+const BIKE_COLOR = 0xf08a4b;
+
+function signTex(lines, bg, fg, w = 512, h = 128) {
+  return canvasTex(w, h, (x, W, H) => {
+    x.fillStyle = bg; x.fillRect(0, 0, W, H); x.fillStyle = fg; x.textAlign = "center"; x.textBaseline = "middle";
+    lines.forEach(([t, size, y]) => { x.font = `bold ${size}px 'Gowun Dodum', sans-serif`; x.fillText(t, W / 2, H * y); });
+  }, 1, 1);
+}
+const signMat = tex => new THREE.MeshLambertMaterial({ map: tex, emissive: 0xffffff, emissiveIntensity: .25, emissiveMap: tex });
+
+/* ---------- bike station: racks, bikes, kiosk ---------- */
+const stationBikes = [];
+{
+  const S = BIKE_ST, add = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; o.receiveShadow = true; scene.add(o); return o; };
+  const steel = mat(0x8b949c), dark = mat(0x2a2d31);
+  add(new THREE.BoxGeometry(S.n * S.step + .6, .04, 2.2), mat(0x9aa3ab), S.x0 + (S.n - 1) * S.step / 2, .02, S.z);
+  for (let i = 0; i < S.n; i++) {
+    const x = S.x0 + i * S.step;
+    add(new THREE.BoxGeometry(.12, .7, .12), steel, x + .35, .35, S.z - .55);
+    add(new THREE.BoxGeometry(.06, .06, .5), steel, x + .35, .5, S.z - .55);
+    const b = makeBike(BIKE_COLOR); b.position.set(x, 0, S.z); b.traverse(m => { if (m.isMesh) m.castShadow = true; }); scene.add(b); stationBikes.push(b);
+  }
+  // kiosk
+  const kx = S.x0 - 1.6;
+  add(new THREE.BoxGeometry(.7, 1.5, .45), mat(BIKE_COLOR), kx, .75, S.z - .2);
+  const scr = add(new THREE.PlaneGeometry(.46, .34), new THREE.MeshBasicMaterial({ color: 0x9fe0ff }), kx, 1.18, S.z - .43); scr.rotation.y = Math.PI;
+  add(new THREE.BoxGeometry(.1, 2.6, .1), dark, kx, 1.3, S.z + .1);
+  const sign = add(new THREE.PlaneGeometry(2.2, .55), signMat(signTex([["한강 자전거 대여소", 46, .4], ["10분 1,000원 · 여기서 반납", 28, .78]], "#f08a4b", "#ffffff")), kx, 2.55, S.z + .1 - .06);
+  sign.castShadow = false; sign.rotation.y = Math.PI;
+  const sign2 = sign.clone(); sign2.rotation.y = 0; sign2.position.z = S.z + .16; scene.add(sign2);
+  OBST.push({ x0: S.x0 - .55, x1: S.x0 + (S.n - 1) * S.step + .6, z0: S.z - .85, z1: S.z + .95 }, { x0: kx - .4, x1: kx + .4, z0: S.z - .45, z1: S.z + .2 });
+}
+
+/* ---------- mat rental booth ---------- */
+{
+  const S = MAT_ST, add = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; o.receiveShadow = true; scene.add(o); return o; };
+  add(new THREE.BoxGeometry(3, .95, .7), mat(0xf4efe4), S.x, .475, S.z + .25);
+  add(new THREE.BoxGeometry(3.1, .06, .8), mat(0x3f8f6b), S.x, .97, S.z + .25);
+  [-1.45, 1.45].forEach(k => add(new THREE.BoxGeometry(.08, 2.4, .08), mat(0xdedad0), S.x + k, 1.2, S.z - .3));
+  const roof = add(new THREE.BoxGeometry(3.4, .08, 1.6), mat(0x3f8f6b), S.x, 2.42, S.z);
+  const stripe = new THREE.MeshLambertMaterial({ color: 0xffffff });
+  for (let i = 0; i < 6; i++) add(new THREE.BoxGeometry(.28, .3, .04), i % 2 ? stripe : mat(0x3f8f6b), S.x - 1.4 + i * .56, 2.25, S.z + .8);
+  const sign = add(new THREE.PlaneGeometry(2.6, .5), signMat(signTex([["돗자리 대여소", 48, .42], ["오늘 첫 대여 무료 · 그다음 500원", 26, .8]], "#3f8f6b", "#fffbe8")), S.x, 1.9, S.z + .82);
+  sign.castShadow = false;
+  // rolled mats on the counter and stacked behind
+  MAT_STYLES.forEach((_, i) => {
+    const mm = new THREE.MeshLambertMaterial({ map: matTex[i] });
+    const r = add(new THREE.CylinderGeometry(.11, .11, .9, 12), mm, S.x - 1.1 + i * .55, 1.12, S.z + .2); r.rotation.x = Math.PI / 2;
+    const s2 = add(new THREE.CylinderGeometry(.12, .12, 1.1, 12), mm, S.x - 1.1 + i * .55, .62, S.z - .35); s2.rotation.z = Math.PI / 2;
+  });
+  OBST.push({ x0: S.x - 1.6, x1: S.x + 1.6, z0: S.z - .5, z1: S.z + .65 });
+}
+
+/* ---------- state ---------- */
+const nearBikeStation = () => me.level === "ground" && Math.abs(me.x - (BIKE_ST.x0 + (BIKE_ST.n - 1) * BIKE_ST.step / 2)) < BIKE_ST.n * BIKE_ST.step / 2 + 2 && me.z > 32.8 && me.z < BIKE_ST.z - .7;
+const nearMatBooth = () => me.level === "ground" && me.st === "walk" && Math.abs(me.x - MAT_ST.x) < 2.2 && me.z > MAT_ST.z + .6 && me.z < MAT_ST.z + 2.6;
+function bikesOut() { let n = me.st === "bike" ? 1 : 0; for (const o of others.values()) if (o.p.st === "bike") n++; return n; }
+function todayKey() { const k = kst(); return k.getFullYear() + "-" + (k.getMonth() + 1) + "-" + k.getDate(); }
+const matFee = () => wallet.matDay === todayKey() ? MAT_FEE : 0;
+
+function rentalActions(acts, status) {
+  if (!started || anim || boarded) return status;
+  if (me.st === "bike") {
+    acts.length = 0;
+    if (nearBikeStation()) acts.push(["bikeret", "자전거 반납하기", "primary"]);
+    acts.push(["bell", "따르릉", acts.length ? "" : "primary"]);
+    const left = Math.max(0, me.bike.paid * BIKE_SLOT - (Date.now() - me.bike.at)) / 1000;
+    return `자전거 타는 중 · 다음 요금까지 ${fmt(left)}` + (touchy ? "" : " · W 달리기 · A/D 방향 · S 멈추기");
+  }
+  if (me.st !== "walk" || me.q) return status;
+  if (nearBikeStation()) {
+    const free = BIKE_ST.n - bikesOut();
+    if (free > 0) acts.unshift(["bikerent", "자전거 빌리기 · 1,000원", "primary"]);
+    status = free > 0 ? `한강 자전거 · 10분에 1,000원 · 남은 자전거 ${free}대` : "지금은 남은 자전거가 없어요. 조금 뒤에 와 주세요";
+  }
+  if (nearMatBooth()) {
+    if (me.mat) acts.unshift(["matret", "돗자리 반납하기", ""]);
+    else acts.unshift(["matrent", matFee() ? "돗자리 빌리기 · 500원" : "돗자리 빌리기 · 오늘 무료", "primary"]);
+    status = me.mat ? "돗자리를 들고 있어요. 잔디에서 앉으면 펼쳐져요" : "돗자리 대여소 · 오늘 첫 대여는 무료예요";
+  }
+  return status;
+}
+function rentalClick(a) {
+  if (a === "bikerent") {
+    if (me.hold) { toast("먹을 걸 든 채로는 자전거를 탈 수 없어요"); return true; }
+    if (me.basket) { toast("장바구니를 든 채로는 자전거를 탈 수 없어요"); return true; }
+    if (BIKE_ST.n - bikesOut() <= 0) { toast("남은 자전거가 없어요"); return true; }
+    if (wallet.money < BIKE_FEE) { toast("돈이 모자라요. 자전거는 10분에 1,000원이에요"); return true; }
+    wallet.money -= BIKE_FEE; saveWallet();
+    me.bike = { at: Date.now(), paid: 1 }; me.st = "bike"; me.r = 0; me.speed = 0; me.crank = 0;
+    me.x = clamp(me.x, BIKE_ST.x0 - 1, BIKE_ST.x0 + BIKE_ST.n * BIKE_ST.step); me.z = 33.6;
+    rebuildMe(); cam.tPitch = .3; cam.tDist = 7.5;
+    if (audio.ready) audio.bell(.8);
+    toast("자전거를 빌렸어요! 10분마다 1,000원이 나가요. 여기로 돌아와 반납해 주세요");
+    return true;
+  }
+  if (a === "bikeret") { returnBike("자전거를 반납했어요. 즐거운 라이딩이었어요!"); return true; }
+  if (a === "bell") {
+    me.bl = Date.now(); if (audio.ready) audio.bell(.9);
+    showBubble(() => myAvatar, "따르릉~", 1.4, "bell-me"); return true;
+  }
+  if (a === "matrent") { openMatPicker(); return true; }
+  if (a === "matret") { me.mat = false; rebuildMe(); toast("돗자리를 반납했어요"); return true; }
+  return false;
+}
+function returnBike(msg) {
+  if (me.st !== "bike") return;
+  me.st = "walk"; me.bike = null; me.speed = 0; me.moving = false; me.z = Math.min(me.z, 34.0); rebuildMe(); cam.tPitch = .26; cam.tDist = 6.5;
+  toast(msg); publish(true); actKey = "";
+}
+
+/* mat picker */
+{
+  const grid = $("matGrid");
+  MAT_STYLES.forEach((_, i) => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "matpick"; b.dataset.i = i; b.setAttribute("aria-label", "돗자리 무늬 " + (i + 1));
+    try { b.style.backgroundImage = `url(${matTex[i].image.toDataURL()})`; } catch (e) { b.style.background = MAT_STYLES[i][0]; }
+    grid.appendChild(b);
+  });
+}
+function openMatPicker() {
+  $("matFee").textContent = matFee() ? "500원이 나가요 · 내 돈 " + won(wallet.money) : "오늘 첫 대여라 무료예요";
+  $("matModal").hidden = false;
+}
+$("matGrid").addEventListener("click", e => {
+  const b = e.target.closest(".matpick"); if (!b) return;
+  const fee = matFee();
+  if (fee && wallet.money < fee) { toast("돈이 모자라요"); return; }
+  wallet.money -= fee; wallet.matDay = todayKey(); saveWallet();
+  me.m = +b.dataset.i; me.mat = true; $("matModal").hidden = true; rebuildMe(); publish(true); actKey = ""; refreshActions();
+  toast("돗자리를 빌렸어요! 잔디에서 '앉기'를 누르면 펼쳐져요");
+});
+$("matClose").addEventListener("click", () => { $("matModal").hidden = true; });
+$("matModal").addEventListener("click", e => { if (e.target === $("matModal")) $("matModal").hidden = true; });
+
+/* ---------- riding ---------- */
+function bikeStep(dt, inp) {
+  // W/S: pedal and brake, A/D: steer (the camera follows the bike, so steering is relative to the bike)
+  const want = inp.f > .05 ? (inp.run ? 10 : 7) * Math.min(1, inp.f) : 0;
+  me.speed += (want - me.speed) * Math.min(1, dt * (inp.f < -.05 ? 4.5 : want > me.speed ? 1.6 : 1.2));
+  me.r -= inp.r * dt * (1.1 + Math.min(me.speed, 7) * .12);
+  me.moving = me.speed > .3;
+  let nx = me.x - Math.sin(me.r) * me.speed * dt, nz = me.z - Math.cos(me.r) * me.speed * dt;
+  if (nx < BOUND.x0 || nx > BOUND.x1 || nz > BOUND.landZ1 - .3) { hitBound(); me.speed *= .3; }
+  nx = clamp(nx, BOUND.x0, BOUND.x1); nz = clamp(nz, BOUND.landZ0 + 1.2, BOUND.landZ1 - .3);
+  if (nz < BOUND.landZ0 + 1.25 && Math.cos(me.r) > .3) { const n = performance.now(); if (n - (me.edgeToast || 0) > 5000) { me.edgeToast = n; toast("앗, 강이에요! 자전거로는 더 갈 수 없어요"); } }
+  if (inStairs(nx, nz) || insideStore(nx, nz, -.6)) { nx = me.x; nz = me.z; me.speed *= .3; }
+  [nx, nz] = pushOut(nx, nz, .5);
+  me.crank = (me.crank || 0) + dt * me.speed * 1.3;
+  me.x = nx; me.z = nz; me.y = 0;
+}
+
+/* ---------- visuals for every avatar: bike under them, rolled mat on their back ---------- */
+function avatarRental(av, onBike, crank, speed, carryMat, dt) {
+  const u = av.userData;
+  if (onBike && !u.bikeM) { u.bikeM = makeBike(BIKE_COLOR); u.bikeM.position.set(0, -.84, -.08); u.bikeM.traverse(m => { if (m.isMesh) m.castShadow = true; }); av.add(u.bikeM); }
+  if (u.bikeM) { u.bikeM.visible = onBike; if (onBike) u.bikeM.userData.wheels.forEach(w => w.rotation.x -= dt * speed / .32); }
+  if (carryMat && !u.carry && u.roll) {
+    u.carry = new THREE.Mesh(new THREE.CylinderGeometry(.12, .12, .95, 12), u.roll.material); u.carry.rotation.z = Math.PI / 2; u.carry.position.set(0, .12, .2); u.carry.castShadow = true; u.torso.add(u.carry);
+  }
+  if (u.carry) u.carry.visible = carryMat;
+}
+const bikeOn = new Set(); // peers whose bell we already heard
+function updateRentals(dt) {
+  // per-slot billing
+  if (me.st === "bike" && me.bike) {
+    const slots = Math.floor((Date.now() - me.bike.at) / BIKE_SLOT) + 1;
+    if (slots > me.bike.paid) {
+      if (wallet.money >= BIKE_FEE) { wallet.money -= BIKE_FEE; me.bike.paid++; saveWallet(); toast("10분이 지나서 1,000원이 더 나갔어요"); }
+      else returnBike("돈이 모자라 자전거를 대여소로 돌려보냈어요");
+    }
+  }
+  // stations show fewer bikes while people ride
+  const out = bikesOut(); stationBikes.forEach((b, i) => { b.visible = i >= out; });
+  // bells from other riders
+  for (const [peer, o] of others) {
+    const bl = o.p.bl || 0;
+    if (o.lastBell === undefined) { o.lastBell = bl; continue; }
+    if (bl !== o.lastBell) {
+      o.lastBell = bl; const id = peer; showBubble(() => (others.get(id) || {}).obj, "따르릉~", 1.4, "bell-" + id);
+      if (audio.ready) { const d = Math.hypot(o.x - cam.tx, o.z - cam.tz); audio.bell(Math.pow(clamp(1 - d / 40, 0, 1), 2)); }
+    }
+  }
+}
 /* ================= main loop ================= */
 applyEnv(); setInterval(applyEnv, 30000);
 const clock = new THREE.Clock(); let T = 0, actTimer = 0, plantTimer = 0;
@@ -2970,17 +3175,18 @@ function frame() {
     let mySeat = -1;
     if (boarded) { const s = seatOf(boarded.id, myPeer); mySeat = s.idx; me.x = s.x; me.z = s.z; me.r = s.r; myAvatar.position.set(s.x, s.y, s.z); myAvatar.rotation.y = s.r; }
     else {
-      const baseY = me.st === "swim" ? (me.tube ? -0.95 : -0.85) + Math.sin(T * 2) * 0.04 : me.y;
+      const baseY = me.st === "swim" ? (me.tube ? -0.95 : -0.85) + Math.sin(T * 2) * 0.04 : me.st === "bike" ? me.y + .84 : me.y;
       tmpV.set(me.x, anim ? me.y : baseY, me.z);
       if (anim || tmpV.distanceTo(myAvatar.position) > 6) myAvatar.position.copy(tmpV); else myAvatar.position.lerp(tmpV, 1 - Math.exp(-dt * 16));
       const tr = me.st === "sit" || me.st === "lie" ? 0 : me.r;
       myAvatar.rotation.y = lerpAngle(myAvatar.rotation.y, tr, 1 - Math.exp(-dt * 14));
     }
     const myEat = me.eat ? (Date.now() - me.eat) / 1000 : -1;
-    updateAvatar(myAvatar, dt, T, { moving: me.moving, speed: me.speed, crank: boarded ? boats[boarded.id].crank + (mySeat === 1 ? Math.PI / 2 : 0) : 0, seat: mySeat, hold: me.hold, eatT: myEat, basket: me.basket ? me.basket.length : -1, cheer: cheerOf("me") });
+    updateAvatar(myAvatar, dt, T, { moving: me.moving, speed: me.speed, crank: boarded ? boats[boarded.id].crank + (mySeat === 1 ? Math.PI / 2 : 0) : me.crank || 0, seat: mySeat, hold: me.hold, mat: !!me.mat, eatT: myEat, basket: me.basket ? me.basket.length : -1, cheer: cheerOf("me") });
+    avatarRental(myAvatar, me.st === "bike", me.crank || 0, me.speed, !!me.mat && me.st !== "sit" && me.st !== "lie" && myAvatar.userData.cur.matP < .05, dt);
     eatingFx(myAvatar, "me", myEat, 0, me.hold);
     if (me.eat && myEat >= eatTime(me.hold)) { toast(me.hold === "ramen" ? "잘 먹었습니다! 국물까지 싹 비웠어요" : `${PRODUCTS[me.hold] ? PRODUCTS[me.hold].name : "간식"} 맛있게 먹었어요!`); me.hold = false; me.eat = 0; publish(true); actKey = ""; }
-    const showGhost = me.st === "walk" && !anim && !me.moving && !me.bt && canSpread();
+    const showGhost = me.st === "walk" && !anim && !me.moving && !me.bt && !!me.mat && canSpread();
     ghost.visible = showGhost;
     if (showGhost) { ghost.position.set(me.x, me.y + 0.05, me.z + POSES.sit.matZ); ghost.material.color.set(matConflict(me.x, me.z) ? 0xff8a7a : 0x9be3a0); }
     playerLight.position.set(me.x + 1.5, me.y + 4, me.z + 3);
@@ -3003,14 +3209,16 @@ function frame() {
     const p = o.p; let tx = p.x, tz = p.z, tr = p.r, ty = 0, onBoat = false, seat = -1, crank = 0;
     if (p.st === "boat" && p.bt) { const b = boats[p.bt.id]; if (b.crew && b.crew.includes(peer)) { const s = seatOf(p.bt.id, peer); tx = s.x; tz = s.z; tr = s.r; ty = s.y; onBoat = true; seat = s.idx; crank = b.crank + (seat === 1 ? Math.PI / 2 : 0); } }
     if (p.st === "sit" || p.st === "lie") tr = 0;
-    if (!onBoat) ty = p.y;
+    if (!onBoat) ty = p.y + (p.st === "bike" ? .84 : 0);
     if (p.st === "swim") ty = (p.tb ? -0.95 : -0.85) + Math.sin(T * 2 + p.x) * 0.04;
     const k = onBoat ? 1 : Math.min(1, dt * 10);
-    const moving = Math.hypot(tx - o.x, tz - o.z) > 0.03;
+    const moving = Math.hypot(tx - o.x, tz - o.z) > 0.03, stepD = Math.hypot(tx - o.x, tz - o.z) * k;
+    if (p.st === "bike") { o.crank = (o.crank || 0) + stepD * 1.3; crank = o.crank; }
     o.x += (tx - o.x) * k; o.z += (tz - o.z) * k; o.r = lerpAngle(o.r, tr, k);
     o.obj.position.set(o.x, ty, o.z); o.obj.rotation.y = o.r;
     const oEat = p.hi && p.ea ? (Date.now() - p.ea) / 1000 : -1, oE = oEat >= 0 && oEat < eatTime(p.hi) ? oEat : -1;
-    updateAvatar(o.obj, dt, T, { moving, speed: 3.6, seat, crank, hold: p.hi, eatT: oE, basket: p.bk, cheer: cheerOf(peer) });
+    updateAvatar(o.obj, dt, T, { moving, speed: 3.6, seat, crank, hold: p.hi, eatT: oE, basket: p.bk, cheer: cheerOf(peer), mat: !!p.mt });
+    avatarRental(o.obj, p.st === "bike", crank, stepD / Math.max(dt, 1e-3), !!p.mt && p.st !== "sit" && p.st !== "lie" && o.obj.userData.cur.matP < .05, dt);
     eatingFx(o.obj, peer, oE, Math.hypot(o.x - cam.tx, o.z - cam.tz), p.hi);
   }
 
@@ -3084,6 +3292,7 @@ function frame() {
 
   updateStore(dt);
   updateExtras(dt);
+  updateRentals(dt);
   // bubbles follow their owners
   for (let i = bubbles.length - 1; i >= 0; i--) {
     const b = bubbles[i], o = b.getObj();
@@ -3118,8 +3327,9 @@ function frame() {
     if (me.st === "swim" && !anim) cam.tPitch = Math.max(cam.tPitch, 0.45); // stay above the embankment wall
     const idle = performance.now() - cam.dragAt > 900;
     if (boarded && idle) cam.tYaw = lerpAngle(cam.tYaw, boats[boarded.id].r, Math.min(1, dt * 1.5));
+    if (me.st === "bike" && idle && me.speed > 1) cam.tYaw = lerpAngle(cam.tYaw, me.r, Math.min(1, dt * 1.2));
     cam.yaw = lerpAngle(cam.yaw, cam.tYaw, k); cam.pitch += (cam.tPitch - cam.pitch) * k; cam.dist += (cam.tDist - cam.dist) * k;
-    const head = boarded ? 0.8 : me.st === "swim" ? -0.5 : me.st === "lie" ? 0.6 : me.st === "bench" ? 1.45 : me.st === "stool" ? 1.3 : 1.25;
+    const head = boarded ? 0.8 : me.st === "bike" ? 2.0 : me.st === "swim" ? -0.5 : me.st === "lie" ? 0.6 : me.st === "bench" ? 1.45 : me.st === "stool" ? 1.3 : 1.25;
     const fk = 1 - Math.exp(-dt * 10), fy = (boarded ? 0 : anim ? me.y : me.y) + head;
     cam.tx += (me.x - cam.tx) * fk; cam.ty += (fy - cam.ty) * fk; cam.tz += (me.z - cam.tz) * fk;
     const cp = Math.cos(cam.pitch);
@@ -3135,7 +3345,7 @@ function frame() {
     plantTimer += dt;
     if (plantTimer > 0.5) {
       plantTimer = 0; const rects = [];
-      const addAv = av => { if (av && av.userData.cur.matP > 0.05) { const r = av.rotation.y; rects.push({ x: av.position.x - Math.sin(r) * av.userData.cur.matZ, z: av.position.z + Math.cos(r) * av.userData.cur.matZ }); } };
+      const addAv = av => { if (av && av.userData.cur.matP > 0.05 && av.userData.matG && av.userData.matG.visible) { const r = av.rotation.y; rects.push({ x: av.position.x - Math.sin(r) * av.userData.cur.matZ, z: av.position.z + Math.cos(r) * av.userData.cur.matZ }); } };
       addAv(myAvatar); others.forEach(o => addAv(o.obj));
       hidePlantsUnderMats(rects);
     }

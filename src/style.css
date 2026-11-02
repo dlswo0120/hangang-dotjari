@@ -151,3 +151,7 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
 .upd-btns{display:flex;gap:6px}
 .upd-btns button{border-radius:999px;padding:8px 12px;font-size:13px;border:1px solid var(--line);background:rgba(255,255,255,.07);white-space:nowrap}
 .upd-btns .go{background:#f2b46b;color:#2a1d0f;border-color:transparent}
+.mat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.matpick{aspect-ratio:3/4;border-radius:10px;border:2px solid transparent;background-size:cover;background-position:center;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.matpick:hover,.matpick:focus-visible{border-color:#f2b46b}
+.modal-btns.one{grid-template-columns:1fr}

@@ -13,7 +13,7 @@ function checkNews() {
   let seen = null; try { seen = localStorage.getItem(SEEN_KEY); } catch (e) {}
   try { localStorage.setItem(SEEN_KEY, APP_VERSION); } catch (e) {}
   if (seen === APP_VERSION || (!seen && !RETURNING)) return; // first visit: nothing to announce
-  const idx = UPDATES.findIndex(u => u.v === seen), fresh = UPDATES.slice(0, idx < 0 ? 1 : Math.min(idx, 3));
+  const idx = UPDATES.findIndex(u => u.v === seen), fresh = UPDATES.slice(0, idx < 0 ? 2 : Math.min(idx, 3));
   if (!fresh.length) return;
   fillNews(fresh); $("newsModal").hidden = false;
 }

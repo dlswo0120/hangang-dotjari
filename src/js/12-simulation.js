@@ -38,6 +38,7 @@ function stepPlayer(dt) {
   }
   if (me.st === "sit" || me.st === "lie" || me.st === "bench" || me.st === "stool") { me.moving = false; return; }
   if (me.q && me.st === "walk") { queueWalk(dt); return; }
+  if (me.st === "bike") { bikeStep(dt, inp); return; }
   if (!me.moving) { me.speed = 0; return; }
   dx /= Math.max(mag, 1); dz /= Math.max(mag, 1);
   const base = me.st === "swim" ? (me.tube ? 1.4 : 1.8) : inp.run ? 7 : 3.6;

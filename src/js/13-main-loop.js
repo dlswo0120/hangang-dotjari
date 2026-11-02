@@ -61,17 +61,18 @@ function frame() {
     let mySeat = -1;
     if (boarded) { const s = seatOf(boarded.id, myPeer); mySeat = s.idx; me.x = s.x; me.z = s.z; me.r = s.r; myAvatar.position.set(s.x, s.y, s.z); myAvatar.rotation.y = s.r; }
     else {
-      const baseY = me.st === "swim" ? (me.tube ? -0.95 : -0.85) + Math.sin(T * 2) * 0.04 : me.y;
+      const baseY = me.st === "swim" ? (me.tube ? -0.95 : -0.85) + Math.sin(T * 2) * 0.04 : me.st === "bike" ? me.y + .84 : me.y;
       tmpV.set(me.x, anim ? me.y : baseY, me.z);
       if (anim || tmpV.distanceTo(myAvatar.position) > 6) myAvatar.position.copy(tmpV); else myAvatar.position.lerp(tmpV, 1 - Math.exp(-dt * 16));
       const tr = me.st === "sit" || me.st === "lie" ? 0 : me.r;
       myAvatar.rotation.y = lerpAngle(myAvatar.rotation.y, tr, 1 - Math.exp(-dt * 14));
     }
     const myEat = me.eat ? (Date.now() - me.eat) / 1000 : -1;
-    updateAvatar(myAvatar, dt, T, { moving: me.moving, speed: me.speed, crank: boarded ? boats[boarded.id].crank + (mySeat === 1 ? Math.PI / 2 : 0) : 0, seat: mySeat, hold: me.hold, eatT: myEat, basket: me.basket ? me.basket.length : -1, cheer: cheerOf("me") });
+    updateAvatar(myAvatar, dt, T, { moving: me.moving, speed: me.speed, crank: boarded ? boats[boarded.id].crank + (mySeat === 1 ? Math.PI / 2 : 0) : me.crank || 0, seat: mySeat, hold: me.hold, mat: !!me.mat, eatT: myEat, basket: me.basket ? me.basket.length : -1, cheer: cheerOf("me") });
+    avatarRental(myAvatar, me.st === "bike", me.crank || 0, me.speed, !!me.mat && me.st !== "sit" && me.st !== "lie" && myAvatar.userData.cur.matP < .05, dt);
     eatingFx(myAvatar, "me", myEat, 0, me.hold);
     if (me.eat && myEat >= eatTime(me.hold)) { toast(me.hold === "ramen" ? "잘 먹었습니다! 국물까지 싹 비웠어요" : `${PRODUCTS[me.hold] ? PRODUCTS[me.hold].name : "간식"} 맛있게 먹었어요!`); me.hold = false; me.eat = 0; publish(true); actKey = ""; }
-    const showGhost = me.st === "walk" && !anim && !me.moving && !me.bt && canSpread();
+    const showGhost = me.st === "walk" && !anim && !me.moving && !me.bt && !!me.mat && canSpread();
     ghost.visible = showGhost;
     if (showGhost) { ghost.position.set(me.x, me.y + 0.05, me.z + POSES.sit.matZ); ghost.material.color.set(matConflict(me.x, me.z) ? 0xff8a7a : 0x9be3a0); }
     playerLight.position.set(me.x + 1.5, me.y + 4, me.z + 3);
@@ -94,14 +95,16 @@ function frame() {
     const p = o.p; let tx = p.x, tz = p.z, tr = p.r, ty = 0, onBoat = false, seat = -1, crank = 0;
     if (p.st === "boat" && p.bt) { const b = boats[p.bt.id]; if (b.crew && b.crew.includes(peer)) { const s = seatOf(p.bt.id, peer); tx = s.x; tz = s.z; tr = s.r; ty = s.y; onBoat = true; seat = s.idx; crank = b.crank + (seat === 1 ? Math.PI / 2 : 0); } }
     if (p.st === "sit" || p.st === "lie") tr = 0;
-    if (!onBoat) ty = p.y;
+    if (!onBoat) ty = p.y + (p.st === "bike" ? .84 : 0);
     if (p.st === "swim") ty = (p.tb ? -0.95 : -0.85) + Math.sin(T * 2 + p.x) * 0.04;
     const k = onBoat ? 1 : Math.min(1, dt * 10);
-    const moving = Math.hypot(tx - o.x, tz - o.z) > 0.03;
+    const moving = Math.hypot(tx - o.x, tz - o.z) > 0.03, stepD = Math.hypot(tx - o.x, tz - o.z) * k;
+    if (p.st === "bike") { o.crank = (o.crank || 0) + stepD * 1.3; crank = o.crank; }
     o.x += (tx - o.x) * k; o.z += (tz - o.z) * k; o.r = lerpAngle(o.r, tr, k);
     o.obj.position.set(o.x, ty, o.z); o.obj.rotation.y = o.r;
     const oEat = p.hi && p.ea ? (Date.now() - p.ea) / 1000 : -1, oE = oEat >= 0 && oEat < eatTime(p.hi) ? oEat : -1;
-    updateAvatar(o.obj, dt, T, { moving, speed: 3.6, seat, crank, hold: p.hi, eatT: oE, basket: p.bk, cheer: cheerOf(peer) });
+    updateAvatar(o.obj, dt, T, { moving, speed: 3.6, seat, crank, hold: p.hi, eatT: oE, basket: p.bk, cheer: cheerOf(peer), mat: !!p.mt });
+    avatarRental(o.obj, p.st === "bike", crank, stepD / Math.max(dt, 1e-3), !!p.mt && p.st !== "sit" && p.st !== "lie" && o.obj.userData.cur.matP < .05, dt);
     eatingFx(o.obj, peer, oE, Math.hypot(o.x - cam.tx, o.z - cam.tz), p.hi);
   }
 
@@ -175,6 +178,7 @@ function frame() {
 
   updateStore(dt);
   updateExtras(dt);
+  updateRentals(dt);
   // bubbles follow their owners
   for (let i = bubbles.length - 1; i >= 0; i--) {
     const b = bubbles[i], o = b.getObj();
@@ -209,8 +213,9 @@ function frame() {
     if (me.st === "swim" && !anim) cam.tPitch = Math.max(cam.tPitch, 0.45); // stay above the embankment wall
     const idle = performance.now() - cam.dragAt > 900;
     if (boarded && idle) cam.tYaw = lerpAngle(cam.tYaw, boats[boarded.id].r, Math.min(1, dt * 1.5));
+    if (me.st === "bike" && idle && me.speed > 1) cam.tYaw = lerpAngle(cam.tYaw, me.r, Math.min(1, dt * 1.2));
     cam.yaw = lerpAngle(cam.yaw, cam.tYaw, k); cam.pitch += (cam.tPitch - cam.pitch) * k; cam.dist += (cam.tDist - cam.dist) * k;
-    const head = boarded ? 0.8 : me.st === "swim" ? -0.5 : me.st === "lie" ? 0.6 : me.st === "bench" ? 1.45 : me.st === "stool" ? 1.3 : 1.25;
+    const head = boarded ? 0.8 : me.st === "bike" ? 2.0 : me.st === "swim" ? -0.5 : me.st === "lie" ? 0.6 : me.st === "bench" ? 1.45 : me.st === "stool" ? 1.3 : 1.25;
     const fk = 1 - Math.exp(-dt * 10), fy = (boarded ? 0 : anim ? me.y : me.y) + head;
     cam.tx += (me.x - cam.tx) * fk; cam.ty += (fy - cam.ty) * fk; cam.tz += (me.z - cam.tz) * fk;
     const cp = Math.cos(cam.pitch);
@@ -226,7 +231,7 @@ function frame() {
     plantTimer += dt;
     if (plantTimer > 0.5) {
       plantTimer = 0; const rects = [];
-      const addAv = av => { if (av && av.userData.cur.matP > 0.05) { const r = av.rotation.y; rects.push({ x: av.position.x - Math.sin(r) * av.userData.cur.matZ, z: av.position.z + Math.cos(r) * av.userData.cur.matZ }); } };
+      const addAv = av => { if (av && av.userData.cur.matP > 0.05 && av.userData.matG && av.userData.matG.visible) { const r = av.rotation.y; rects.push({ x: av.position.x - Math.sin(r) * av.userData.cur.matZ, z: av.position.z + Math.cos(r) * av.userData.cur.matZ }); } };
       addAv(myAvatar); others.forEach(o => addAv(o.obj));
       hidePlantsUnderMats(rects);
     }

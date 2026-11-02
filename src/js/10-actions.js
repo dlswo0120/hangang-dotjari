@@ -2,7 +2,7 @@
 function onGrass(x, z) { return (z > 3.1 && z < 26.8) || (z > 34.2 && z <= BOUND.landZ1); }
 function onPath(z) { return z >= 26.8 && z <= 34.2; }
 function matConflict(x, z) {
-  for (const o of others.values()) if ((o.p.st === "sit" || o.p.st === "lie") && Math.hypot(o.p.x - x, o.p.z - z) < 3.2) return o.p.n;
+  for (const o of others.values()) if ((o.p.st === "sit" || o.p.st === "lie") && o.p.mt && Math.hypot(o.p.x - x, o.p.z - z) < 3.2) return o.p.n;
   return null;
 }
 function canSpread() { return (me.level === "ground" && onGrass(me.x, me.z) && !underRoof(me.x, me.z)) || me.level === "bridge"; }
@@ -51,7 +51,7 @@ const fmt = s => Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(
 function dropRamen(reason) {
   if (!me.hold) return; me.hold = false; me.eat = 0; toast(reason); publish(true);
 }
-let actKey = "";
+let actKey = "", matHinted = false;
 function eatLabel() { return PRODUCTS[me.hold] && PRODUCTS[me.hold].cat === "drink" ? "마시기" : "먹기"; }
 function refreshActions() {
   if (!started) return;
@@ -103,19 +103,22 @@ function refreshActions() {
     if (bo.squeeze != null) acts.push(["squeeze", "끼어 타기 (3명)", "duck"]);
   }
   status = storeActions(acts, status);
-  const key = JSON.stringify([acts, status]); if (key === actKey) return; actKey = key;
+  status = rentalActions(acts, status);
+  if ($("status").textContent !== status) { $("status").textContent = status; $("status").hidden = !status; }
+  // rebuild the buttons only when they change, so a running timer in the status line never eats a tap
+  const key = JSON.stringify(acts); if (key === actKey) return; actKey = key;
   const row = $("actRow"); row.textContent = "";
   acts.forEach(([id, label, cls]) => { const b = document.createElement("button"); b.className = "act " + cls; b.textContent = label; b.dataset.act = id; row.appendChild(b); });
-  $("status").textContent = status; $("status").hidden = !status;
 }
 $("actRow").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return; const a = b.dataset.act;
-  if (storeClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
+  if (storeClick(a) || rentalClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
   if (a === "sit" || a === "lie") {
     if (me.st === "walk") {
       if (!canSpread()) { toast("잔디나 대교 위에서만 돗자리를 펼 수 있습니다"); return; }
-      const who = matConflict(me.x, me.z);
+      const who = me.mat && matConflict(me.x, me.z);
       if (who) { toast(who + "님 돗자리와 너무 가깝습니다. 조금만 떨어져 주세요"); return; }
+      if (!me.mat && !matHinted && me.level === "ground") { matHinted = true; toast("잔디에 그냥 앉았어요. 돗자리는 돗자리 대여소에서 빌릴 수 있어요"); }
       me.r = 0;
     }
     me.st = a; rebuildMe(); cam.tPitch = a === "lie" ? 0.42 : 0.22; cam.tDist = a === "lie" ? 7.5 : 6.5;
