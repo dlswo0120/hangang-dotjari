@@ -6,6 +6,9 @@ const EMOTES = [
   { id: "heart", name: "하트", icon: "💗", dur: 2.6, seat: true, say: "♥" },
   { id: "bow", name: "꾸벅 인사", icon: "🙇", dur: 1.8, seat: false },
   { id: "chest", name: "가슴 튕기기 춤", icon: "🕺", dur: 4.4, seat: false, dance: true, say: "♪" },
+  { id: "glide", name: "공중 미끄럼 걸음", icon: "🛼", dur: 6, seat: false, dance: true, bpm: 2.1, say: "슝~" },
+  { id: "thumbs", name: "엄지 흔들기 응원", icon: "👍", dur: 4.8, seat: true, dance: true, bpm: 2.5, say: "♪" },
+  { id: "stack", name: "손 탑 쌓기", icon: "✊", dur: 4.8, seat: true, dance: true, bpm: 2.5, say: "♪" },
   // photo poses (picked from the camera menu, held through the countdown)
   { id: "pv", name: "브이 볼콕", icon: "✌️", dur: 9, seat: true, photo: "solo" },
   { id: "pfist", name: "주먹 볼콕", icon: "🤜", dur: 9, seat: true, photo: "solo" },
@@ -32,8 +35,16 @@ function vSign(u, on) {
   }
   if (u.vR) u.vR.visible = on;
 }
+// thumbs on both fists; the arm points along its local -y, and local -z is "up" when the arm is held forward
+function thumbs(u, on) {
+  if (on && !u.thumbs) {
+    const sk = new THREE.MeshLambertMaterial({ color: 0xf2c9a0 });
+    u.thumbs = [0, 1].map(k => { const f = new THREE.Mesh(new THREE.CylinderGeometry(.04, .035, .17, 8), sk); f.rotation.x = Math.PI / 2; f.position.set(0, -.3, -.11); u.arms[k].add(f); return f; });
+  }
+  if (u.thumbs) u.thumbs.forEach(f => { f.visible = on; });
+}
 function emotePose(v, i, t, standing, u, side) {
-  if (u) vSign(u, false);
+  if (u) { vSign(u, false); thumbs(u, false); }
   const E = EMOTES[i]; if (!E || t < 0 || t > E.dur) return;
   const env = clamp(Math.min(t / .2, (E.dur - t) / .25), 0, 1), to = (k, val) => { v[k] += (val - v[k]) * env; };
   // arms are short next to the big head, so raises go out to the side where they stay visible
@@ -50,6 +61,34 @@ function emotePose(v, i, t, standing, u, side) {
     to("arR", 1.45); to("azR", -1.1); v.arR -= .6 * pop; // cancel the torso tilt so the arm stays level
     to("arL", .08); to("azL", .28);
     if (t > E.dur - 1) v.nod -= .15 * env; // finish looking up at the camera
+  }
+  else if (E.id === "glide") {
+    // hovering a little off the ground; the feet scrape back one after the other while the body drifts forward and back
+    const ph = t * E.bpm * Math.PI, sL = Math.sin(ph), drift = Math.sin(t * Math.PI * 2 / E.dur * 2);
+    if (standing) { v.lift += (.16 + Math.abs(Math.cos(ph)) * .03) * env; v.glz += drift * .45 * env; }
+    v.thL += (-.45 * Math.max(0, sL) + .12) * env; v.knL += (-.55 * Math.max(0, sL)) * env;
+    v.thR += (-.45 * Math.max(0, -sL) + .12) * env; v.knR += (-.55 * Math.max(0, -sL)) * env;
+    v.lean += .12 * env; v.nod -= .06 * env; v.roll = (v.roll || 0) + Math.sin(ph) * .05 * env;
+    to("arL", .25 + Math.sin(ph) * .25); to("arR", .25 - Math.sin(ph) * .25); to("azL", .3); to("azR", .3);
+  }
+  else if (E.id === "thumbs") {
+    // fists out front with thumbs up, swinging side to side together; shoulders bounce twice per swing
+    const ph = t * E.bpm * Math.PI, s = Math.sin(ph), b = Math.abs(Math.sin(ph * 2));
+    to("arL", 1.3 + b * .15); to("arR", 1.3 + b * .15); to("azR", .15 + s * .55); to("azL", .15 - s * .55);
+    v.roll = (v.roll || 0) - s * .1 * env; v.nod += (.05 - b * .08) * env;
+    if (standing) { v.lift += b * .05 * env; v.knL -= b * .15 * env; v.knR -= b * .15 * env; v.thL += b * .08 * env; v.thR += b * .08 * env; }
+    if (u) thumbs(u, env > .4);
+  }
+  else if (E.id === "stack") {
+    // fists stacked on top of each other, climbing: the lower hand jumps over the upper one on every beat
+    const beat = t * E.bpm, n = Math.floor(beat), f = beat - n, k = ease(clamp(f / .35, 0, 1));
+    // arms are short and would point at the viewer, so the fists climb up the sides of the face instead
+    const lvl = m => .5 + (Math.max(0, m) % 4) * .6; // height of the m-th fist in the stack (starts over after four)
+    const moving = lvl(n - 2) + (lvl(n) - lvl(n - 2)) * k, still = lvl(n - 1);
+    if (n % 2 === 0) { to("azR", moving); to("azL", still); } else { to("azL", moving); to("azR", still); }
+    to("arL", .35); to("arR", .35);
+    const hit = Math.exp(-f * 9); v.nod += (.08 * hit - .04) * env;
+    if (standing) { v.lift += hit * .04 * env; v.knL -= hit * .12 * env; v.knR -= hit * .12 * env; }
   }
   // photo poses (the arms are short, so hands go to the side of the big face)
   else if (E.id === "pv" || E.id === "pv2") { to("arR", .75); to("azR", 1.55); v.roll = (v.roll || 0) + .14 * env; v.nod += .05 * env; if (u) vSign(u, env > .5); }
@@ -87,9 +126,10 @@ function emoteSfx(key, a, dist) {
   if (!audio.ready || !a || dist > 22) return; const v = clamp(1 - dist / 22, 0, 1), E = EMOTES[a.i];
   let n = -1;
   if (E.id === "chest") n = Math.floor(a.t * CHEST_BPM);
+  else if (E.bpm) n = Math.floor(a.t * E.bpm);
   else if (E.id === "clap") n = Math.floor((a.t * 8 - Math.PI / 2) / Math.PI);
   if (n < 0 || emoteTick[key] === n) return; emoteTick[key] = n;
-  if (E.id === "chest") audio.beat(v, n % 2 === 0); else audio.clapHit(v);
+  if (E.id === "chest" || E.bpm) audio.beat(v, n % 2 === 0); else audio.clapHit(v);
 }
 
 /* menu inside the 말하기 panel */

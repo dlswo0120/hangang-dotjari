@@ -1,7 +1,7 @@
 /* ================= 한강 달리기 경주: 2~4명, 판돈, A·D 번갈아 ================= */
 const RACE = { x0: -138, len: 40, lanes: [6.5, 8.6, 10.7, 12.8], gate: [-141.5, 9.6] };
 const RACE_BETS = [500, 1000, 2000], RACE_SHARE = { 2: [.7, .3], 3: [.55, .3, .15], 4: [.5, .25, .15, .1] };
-const RACE_COUNT = 3500, RACE_LIMIT = 30000, TAP_MIN = 1000 / 12; // at most 12 steps a second
+const RACE_COUNT = 3000, RACE_LIMIT = 30000, TAP_MIN = 1000 / 12; // at most 12 steps a second
 
 /* the track */
 {

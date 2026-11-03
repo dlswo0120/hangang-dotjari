@@ -213,7 +213,7 @@ function updateAvatar(av, dt, t, o = {}) {
     u.bowl.position.set(bx, by, bz);
     if (u.bowl.userData.tip) u.bowl.userData.tip.visible = !!o.lit;
   }
-  v.roll = 0;
+  v.roll = 0; v.glz = 0;
   if (o.rod && o.fs) rodPose(v, o.fs);
   if (o.emote) emotePose(v, o.emote.i, o.emote.t, u.pose === "stand", u, o.emote.s); else if (u.vR) u.vR.visible = false;
   u.torso.scale.y = 1 + Math.sin(ph * 2.1) * .012;
@@ -222,7 +222,7 @@ function updateAvatar(av, dt, t, o = {}) {
 }
 function applyRig(av, v) {
   const u = av.userData;
-  u.inner.rotation.x = v.pitch; u.inner.rotation.z = v.roll || 0; u.inner.position.y = v.lift; u.hips.position.y = v.hipY;
+  u.inner.rotation.x = v.pitch; u.inner.rotation.z = v.roll || 0; u.inner.position.y = v.lift; u.inner.position.z = v.glz || 0; u.hips.position.y = v.hipY;
   u.torso.rotation.x = -v.lean; u.head.rotation.x = -v.nod;
   u.legs[0].rotation.x = v.thL; u.legs[1].rotation.x = v.thR; u.knees[0].rotation.x = v.knL; u.knees[1].rotation.x = v.knR;
   u.arms[0].rotation.set(v.arL, 0, -v.azL); u.arms[1].rotation.set(v.arR, 0, v.azR);
