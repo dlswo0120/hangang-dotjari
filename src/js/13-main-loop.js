@@ -61,7 +61,7 @@ function frame() {
     let mySeat = -1;
     if (boarded) { const s = seatOf(boarded.id, myPeer); mySeat = s.idx; me.x = s.x; me.z = s.z; me.r = s.r; myAvatar.position.set(s.x, s.y, s.z); myAvatar.rotation.y = s.r; }
     else {
-      const baseY = me.st === "swim" ? (me.tube ? -0.95 : -0.85) + Math.sin(T * 2) * 0.04 : me.st === "bike" ? me.y + .84 : me.y;
+      const baseY = me.st === "swim" ? (me.tube ? -0.95 : -0.85) + Math.sin(T * 2) * 0.04 : me.st === "bike" ? me.y + .84 : me.st === "ride" ? me.y + steedRideY(ride.k) : me.y;
       tmpV.set(me.x, anim ? me.y : baseY, me.z);
       if (anim || tmpV.distanceTo(myAvatar.position) > 6) myAvatar.position.copy(tmpV); else myAvatar.position.lerp(tmpV, 1 - Math.exp(-dt * 16));
       const tr = me.st === "sit" || me.st === "lie" ? 0 : me.r;
@@ -69,7 +69,8 @@ function frame() {
     }
     const myEat = me.eat ? (Date.now() - me.eat) / 1000 : -1;
     updateAvatar(myAvatar, dt, T, { moving: me.moving, speed: me.speed, crank: boarded ? boats[boarded.id].crank + (mySeat === 1 ? Math.PI / 2 : 0) : me.crank || 0, seat: mySeat, hold: me.hold, mat: !!me.mat, eatT: myEat, basket: me.basket ? me.basket.length : -1, cheer: cheerOf("me"), emote: activeEmote(me.em), rod: !!me.rod, fs: me.fs, lit: litOf(me.hold, me.lit), spin: me.hold === "sparkler" && me.lit ? spinOf(me.tw) : null });
-    avatarRental(myAvatar, me.st === "bike", me.crank || 0, me.speed, !!me.mat && me.st !== "sit" && me.st !== "lie" && myAvatar.userData.cur.matP < .05, dt);
+    avatarRental(myAvatar, me.st === "bike", me.crank || 0, me.speed, !!me.mat && me.st !== "sit" && me.st !== "lie" && me.st !== "ride" && myAvatar.userData.cur.matP < .05, dt);
+    avatarSteed(myAvatar, me.st === "ride" ? ride.k : null, me.speed, dt);
     eatingFx(myAvatar, "me", myEat, 0, me.hold);
     if (me.eat && myEat >= eatTime(me.hold)) { noteDrink(me.hold); toast(me.hold === "ramen" ? "잘 먹었습니다! 국물까지 싹 비웠어요" : `${PRODUCTS[me.hold] ? PRODUCTS[me.hold].name : "간식"} 맛있게 먹었어요!`); me.hold = false; me.eat = 0; publish(true); actKey = ""; }
     const showGhost = me.st === "walk" && !anim && !me.moving && !me.bt && !!me.mat && canSpread();
@@ -95,7 +96,8 @@ function frame() {
     const p = o.p; let tx = p.x, tz = p.z, tr = p.r, ty = 0, onBoat = false, seat = -1, crank = 0;
     if (p.st === "boat" && p.bt) { const b = boats[p.bt.id]; if (b.crew && b.crew.includes(peer)) { const s = seatOf(p.bt.id, peer); tx = s.x; tz = s.z; tr = s.r; ty = s.y; onBoat = true; seat = s.idx; crank = b.crank + (seat === 1 ? Math.PI / 2 : 0); } }
     if (p.st === "sit" || p.st === "lie") tr = 0;
-    if (!onBoat) ty = p.y + (p.st === "bike" ? .84 : 0);
+    const steedK = p.st === "ride" ? (p.ap ? p.ap.k : 1) : null;
+    if (!onBoat) ty = p.y + (p.st === "bike" ? .84 : steedK != null ? steedRideY(steedK) : 0);
     if (p.st === "swim") ty = (p.tb ? -0.95 : -0.85) + Math.sin(T * 2 + p.x) * 0.04;
     const k = onBoat ? 1 : Math.min(1, dt * 10);
     const moving = Math.hypot(tx - o.x, tz - o.z) > 0.03, stepD = Math.hypot(tx - o.x, tz - o.z) * k;
@@ -104,7 +106,8 @@ function frame() {
     o.obj.position.set(o.x, ty, o.z); o.obj.rotation.y = o.r;
     const oEat = p.hi && p.ea ? (Date.now() - p.ea) / 1000 : -1, oE = oEat >= 0 && oEat < eatTime(p.hi) ? oEat : -1;
     updateAvatar(o.obj, dt, T, { moving, speed: 3.6, seat, crank, hold: p.hi, eatT: oE, basket: p.bk, cheer: cheerOf(peer), mat: !!p.mt, emote: activeEmote(p.em), rod: !!p.fr, fs: p.fs, lit: litOf(p.hi, p.lt), spin: litOf(p.hi, p.lt) ? spinOf(p.tw) : null });
-    avatarRental(o.obj, p.st === "bike", crank, stepD / Math.max(dt, 1e-3), !!p.mt && p.st !== "sit" && p.st !== "lie" && o.obj.userData.cur.matP < .05, dt);
+    avatarRental(o.obj, p.st === "bike", crank, stepD / Math.max(dt, 1e-3), !!p.mt && p.st !== "sit" && p.st !== "lie" && p.st !== "ride" && o.obj.userData.cur.matP < .05, dt);
+    avatarSteed(o.obj, steedK, stepD / Math.max(dt, 1e-3), dt);
     eatingFx(o.obj, peer, oE, Math.hypot(o.x - cam.tx, o.z - cam.tz), p.hi);
   }
 
@@ -196,6 +199,8 @@ function frame() {
   updateRace();
   updateDuel();
   updateBoatRace(dt);
+  updateBeg();
+  updateCircuit(dt);
   // bubbles follow their owners
   for (let i = bubbles.length - 1; i >= 0; i--) {
     const b = bubbles[i], o = b.getObj();
@@ -230,9 +235,9 @@ function frame() {
     if (me.st === "swim" && !anim) cam.tPitch = Math.max(cam.tPitch, 0.45); // stay above the embankment wall
     const idle = performance.now() - cam.dragAt > 900;
     if (boarded && idle) cam.tYaw = lerpAngle(cam.tYaw, boats[boarded.id].r, Math.min(1, dt * 1.5));
-    if (me.st === "bike" && idle && me.speed > 1) cam.tYaw = lerpAngle(cam.tYaw, me.r, Math.min(1, dt * 1.2));
+    if ((me.st === "bike" || me.st === "ride") && idle && me.speed > 1) cam.tYaw = lerpAngle(cam.tYaw, me.r, Math.min(1, dt * 1.2));
     cam.yaw = lerpAngle(cam.yaw, cam.tYaw, k); cam.pitch += (cam.tPitch - cam.pitch) * k; cam.dist += (cam.tDist - cam.dist) * k;
-    const head = boarded ? 0.8 : me.st === "bike" ? 2.0 : me.st === "swim" ? -0.5 : me.st === "lie" ? 0.6 : me.st === "bench" ? 1.45 : me.st === "stool" ? 1.3 : 1.25;
+    const head = boarded ? 0.8 : me.st === "bike" ? 2.0 : me.st === "ride" ? 2.4 : me.st === "swim" ? -0.5 : me.st === "lie" ? 0.6 : me.st === "bench" ? 1.45 : me.st === "stool" ? 1.3 : 1.25;
     const fk = 1 - Math.exp(-dt * 10), fy = (boarded ? 0 : anim ? me.y : me.y) + head;
     cam.tx += (me.x - cam.tx) * fk; cam.ty += (fy - cam.ty) * fk; cam.tz += (me.z - cam.tz) * fk;
     const cp = Math.cos(cam.pitch);

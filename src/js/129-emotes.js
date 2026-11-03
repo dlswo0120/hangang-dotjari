@@ -5,6 +5,7 @@ const EMOTES = [
   { id: "hurray", name: "만세", icon: "🙌", dur: 2.0, seat: true, say: "만세!" },
   { id: "heart", name: "하트", icon: "💗", dur: 2.6, seat: true, say: "♥" },
   { id: "bow", name: "꾸벅 인사", icon: "🙇", dur: 1.8, seat: false },
+  { id: "beg", name: "용돈 구걸", icon: "🥺", dur: 600, seat: true, beg: true }, // only offered while broke (see 140-beg.js)
   { id: "chest", name: "가슴 튕기기 춤", icon: "🕺", dur: 4.4, seat: false, dance: true, say: "♪" },
   { id: "glide", name: "공중 미끄럼 걸음", icon: "🛼", dur: 6, seat: false, dance: true, bpm: 2.1, say: "슝~" },
   { id: "thumbs", name: "엄지 흔들기 응원", icon: "👍", dur: 4.8, seat: true, dance: true, bpm: 2.5, say: "♪" },
@@ -21,7 +22,8 @@ const EMOTES = [
   { id: "pfight", name: "다 같이 파이팅", icon: "✊", dur: 9, seat: true, photo: "group", say: "화이팅!" },
   // poses used by other features (not in the menu)
   { id: "rail", name: "난간에 기대기", dur: 900, hidden: true },
-  { id: "dive", name: "다이빙", dur: 2.4, hidden: true }
+  { id: "dive", name: "다이빙", dur: 2.4, hidden: true },
+  { id: "thanks", name: "감사 인사", dur: 2.2, seat: true, hidden: true, say: "감사합니다! 🙇" }
 ];
 const PHOTO_SHOT_AT = { solo: 3.2, duo: 6.2, group: 6.2 }; // seconds from the start until the shutter
 const CHEST_BPM = 2.25; // beats per second
@@ -43,8 +45,20 @@ function thumbs(u, on) {
   }
   if (u.thumbs) u.thumbs.forEach(f => { f.visible = on; });
 }
+// an empty tin can in front of someone asking for pocket money
+function begCan(u, on) {
+  if (on && !u.can) {
+    const g = new THREE.Group(), tin = new THREE.Mesh(new THREE.CylinderGeometry(.11, .1, .17, 14, 1, true), new THREE.MeshPhongMaterial({ color: 0xb8bec6, shininess: 80, side: THREE.DoubleSide }));
+    tin.position.y = .085; g.add(tin);
+    const bot = new THREE.Mesh(new THREE.CircleGeometry(.1, 14), mat(0x8a9099)); bot.rotation.x = -Math.PI / 2; bot.position.y = .01; g.add(bot);
+    const coin = new THREE.Mesh(new THREE.CylinderGeometry(.045, .045, .012, 12), new THREE.MeshPhongMaterial({ color: 0xf2c14e, shininess: 90 })); coin.position.set(.02, .025, .01); coin.rotation.z = .3; g.add(coin);
+    g.userData.coin = coin; g.position.set(0, 0, -.72); g.traverse(m => { if (m.isMesh) m.castShadow = true; });
+    u.inner.parent.add(g); u.can = g;
+  }
+  if (u.can) u.can.visible = on;
+}
 function emotePose(v, i, t, standing, u, side) {
-  if (u) { vSign(u, false); thumbs(u, false); }
+  if (u) { vSign(u, false); thumbs(u, false); begCan(u, false); }
   const E = EMOTES[i]; if (!E || t < 0 || t > E.dur) return;
   const env = clamp(Math.min(t / .2, (E.dur - t) / .25), 0, 1), to = (k, val) => { v[k] += (val - v[k]) * env; };
   // arms are short next to the big head, so raises go out to the side where they stay visible
@@ -52,6 +66,14 @@ function emotePose(v, i, t, standing, u, side) {
   else if (E.id === "clap") { const c = Math.abs(Math.sin(t * 8)); to("arL", 1.2); to("arR", 1.2); to("azL", .25 - .55 * c); to("azR", .25 - .55 * c); }
   else if (E.id === "hurray") { to("arL", .25); to("arR", .25); to("azL", 2.45); to("azR", 2.45); if (standing) v.lift += Math.abs(Math.sin(t * 7)) * .12 * env; }
   else if (E.id === "heart") { to("arL", 1.25); to("arR", 1.25); to("azL", -.42); to("azR", -.42); v.nod += .1 * env; }
+  else if (E.id === "beg") {
+    // kneel (when standing), cupped hands held out, little pleading nods
+    if (standing) { to("hipY", .3); to("thL", .25); to("thR", .25); to("knL", -1.75); to("knR", -1.75); }
+    to("arL", 1.2 + Math.sin(t * 2.2) * .08); to("arR", 1.2 + Math.sin(t * 2.2) * .08); to("azL", -.38); to("azR", -.38);
+    v.lean += (standing ? .35 : .15) * env; v.nod += (.12 + Math.sin(t * 2.2) * .1) * env; v.roll = (v.roll || 0) + Math.sin(t * 1.1) * .06 * env;
+    if (u) begCan(u, env > .3);
+  }
+  else if (E.id === "thanks") { const b = Math.sin(Math.PI * clamp(t / E.dur, 0, 1)); v.lean += .5 * b; v.nod += .35 * b; to("arL", 1.0); to("arR", 1.0); to("azL", -.42); to("azR", -.42); }
   else if (E.id === "bow") { const b = Math.sin(Math.PI * clamp(t / E.dur, 0, 1)); v.lean += .8 * b; v.nod += .35 * b; to("arL", .12); to("arR", .12); to("azL", .05); to("azR", .05); }
   else if (E.id === "chest") {
     // right arm held flat across the front of the body like a shelf, the chest pops above it
@@ -135,7 +157,7 @@ function emoteSfx(key, a, dist) {
 /* menu inside the 말하기 panel */
 {
   const mk = (E, i) => { const b = document.createElement("button"); b.dataset.e = i; const s = document.createElement("span"); s.textContent = E.icon; s.className = "emo"; b.append(s, E.name); return b; };
-  EMOTES.forEach((E, i) => { if (!E.photo && !E.hidden) (E.dance ? $("danceGrid") : $("emoteGrid")).appendChild(mk(E, i)); });
+  EMOTES.forEach((E, i) => { if (E.photo || E.hidden) return; const b = mk(E, i); if (E.beg) { b.id = "begBtn"; b.hidden = true; } (E.dance ? $("danceGrid") : $("emoteGrid")).appendChild(b); });
   [$("emoteGrid"), $("danceGrid")].forEach(g => g.addEventListener("click", e => {
     const b = e.target.closest("button"); if (!b) return; playEmote(+b.dataset.e);
     $("chatPanel").hidden = true; $("chatBtn").setAttribute("aria-expanded", "false");
@@ -143,6 +165,7 @@ function emoteSfx(key, a, dist) {
 }
 function playEmote(i) {
   const E = EMOTES[i]; if (!started || !myAvatar || !E) return;
+  if (E.beg && !canBeg()) return;
   const standing = me.st === "walk" && !me.moving && !anim && !boarded;
   const seated = me.st === "sit" || me.st === "bench" || me.st === "stool";
   if (!(standing || (E.seat && seated))) { toast(E.seat ? "서 있거나 앉아 있을 때 할 수 있어요" : "멈춰 서 있을 때 할 수 있어요"); return; }

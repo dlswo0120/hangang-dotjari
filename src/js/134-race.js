@@ -95,7 +95,7 @@ const BET_FN = {};
 function openBet(kind) { betFor = kind; const [t, p, tb] = BET_INFO[kind]; $("raceBetTitle").textContent = t; $("raceBetDesc").textContent = p; $("raceBetTable").textContent = tb; $("raceBetModal").hidden = false; }
 $("raceBetGrid").addEventListener("click", e => {
   const b = e.target.closest("button[data-bet]"); if (!b) return; const bet = +b.dataset.bet;
-  if (wallet.money < bet) { toast("판돈이 모자라요"); return; }
+  if (wallet.money < bet) { toast(betFor === "gift" ? "돈이 모자라요" : "판돈이 모자라요"); return; }
   if (betFor !== "race") { $("raceBetModal").hidden = true; BET_FN[betFor](bet); return; }
   wallet.money -= bet; saveWallet(); me.rc = { id: Date.now(), bet, st: "open" }; me.rj = null; me.rp = null; $("raceBetModal").hidden = true; standAtLane(0);
   toast(`${won(bet)}을 걸고 경주를 열었어요. 근처 사람들이 참가할 수 있어요`); publish(true); actKey = ""; refreshActions();

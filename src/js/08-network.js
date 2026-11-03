@@ -5,7 +5,7 @@ const seen = new Set();
 const num = (v, lo, hi, d) => (typeof v === "number" && isFinite(v) ? clamp(v, lo, hi) : d);
 function cleanPresence(p) {
   if (!p || typeof p !== "object" || typeof p.n !== "string") return null;
-  const st = ["walk", "sit", "lie", "swim", "boat", "bench", "stool", "bike"].includes(p.st) ? p.st : "walk";
+  const st = ["walk", "sit", "lie", "swim", "boat", "bench", "stool", "bike", "ride"].includes(p.st) ? p.st : "walk";
   const o = {
     n: p.n.replace(/[\u0000-\u001f\u200b-\u200f\u202a-\u202e]/g, "").slice(0, 10) || "손님",
     g: p.g === "f" ? "f" : "m", c: Number.isInteger(p.c) ? Math.abs(p.c) % SHIRTS.length : 0, m: Number.isInteger(p.m) ? Math.abs(p.m) % MAT_STYLES.length : 0,
@@ -22,6 +22,11 @@ function cleanPresence(p) {
   if (p.bp && typeof p.bp === "object" && typeof p.bp.id === "number") o.bp = { id: p.bp.id };
   if (p.bf && typeof p.bf === "object" && typeof p.bf.id === "number") o.bf = { id: p.bf.id, turn: p.bf.turn ? 1 : 0, f: num(p.bf.f, 0, 600000, 0) };
   o.bpw = num(p.bpw, 0, 1, 0);
+  if (p.gv && typeof p.gv === "object" && typeof p.gv.to === "string" && typeof p.gv.id === "number" && RACE_BETS.includes(p.gv.a)) o.gv = { to: p.gv.to.slice(0, 80), id: p.gv.id, a: p.gv.a };
+  o.gr = num(p.gr, 0, RECV_DAY_MAX, 0);
+  if (p.ac && typeof p.ac === "object" && typeof p.ac.id === "number" && RACE_BETS.includes(p.ac.bet)) o.ac = { id: p.ac.id, bet: p.ac.bet, st: p.ac.st === "go" ? "go" : "open", go: num(p.ac.go, 0, 1e15, 0) };
+  if (p.aj && typeof p.aj === "object" && typeof p.aj.h === "string" && typeof p.aj.id === "number") o.aj = { h: p.aj.h.slice(0, 80), id: p.aj.id, at: num(p.aj.at, 0, 1e15, 0) };
+  if (p.ap && typeof p.ap === "object" && typeof p.ap.id === "number") o.ap = { id: p.ap.id, s: num(p.ap.s, -20, 2000, 0), f: num(p.ap.f, 0, 600000, 0), k: Number.isInteger(p.ap.k) ? clamp(p.ap.k, 0, STEEDS.length - 1) : 1 };
   if (p.fd && typeof p.fd === "object" && typeof p.fd.id === "number" && RACE_BETS.includes(p.fd.bet)) o.fd = { id: p.fd.id, bet: p.fd.bet, st: p.fd.st === "go" ? "go" : "open", go: num(p.fd.go, 0, 1e15, 0) };
   if (p.fj && typeof p.fj === "object" && typeof p.fj.h === "string" && typeof p.fj.id === "number") o.fj = { h: p.fj.h.slice(0, 80), id: p.fj.id, at: num(p.fj.at, 0, 1e15, 0) };
   if (p.fsc && typeof p.fsc === "object" && typeof p.fsc.id === "number") o.fsc = { id: p.fsc.id, s: num(p.fsc.s, 0, 1e6, 0), n: num(p.fsc.n, 0, 999, 0) };
@@ -83,7 +88,7 @@ function syncPeers(peers) {
 })();
 let lastPub = 0, lastPubKey = "", mySay = null;
 function presenceObj() {
-  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id, at: me.bt.at } : null, say: mySay, rm: me.rm, hr: me.hold ? 1 : 0, hi: me.hold || null, ea: me.eat || 0, q: me.q || 0, bk: me.basket ? me.basket.length : -1, ch: me.ch || 0, pb: me.pb || null, mt: me.mat ? 1 : 0, bl: me.bl || 0, dv: me.dv ? { k: me.dv.k, at: me.dv.at } : null, em: me.em || null, lt: me.lit || 0, tw: me.tw || 0, gf: me.gf || null, ph: me.ph || null, pj: me.pj || null, rd: redness(), bq: me.bq || null, fr: me.rod ? 1 : 0, fs: me.fs || null, rc: me.rc || null, rj: me.rj ? { h: me.rj.h, id: me.rj.id, at: me.rj.at } : null, rp: me.rp || null, fd: me.fd || null, fj: me.fj ? { h: me.fj.h, id: me.fj.id, at: me.fj.at } : null, fsc: me.fsc || null, bh: me.bh || null, bj: me.bj ? { h: me.bj.h, id: me.bj.id, at: me.bj.at } : null, bp: me.bp ? { id: me.bp.id } : null, bf: me.bf || null, bpw: me.bpw || 0 };
+  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id, at: me.bt.at } : null, say: mySay, rm: me.rm, hr: me.hold ? 1 : 0, hi: me.hold || null, ea: me.eat || 0, q: me.q || 0, bk: me.basket ? me.basket.length : -1, ch: me.ch || 0, pb: me.pb || null, mt: me.mat ? 1 : 0, bl: me.bl || 0, dv: me.dv ? { k: me.dv.k, at: me.dv.at } : null, em: me.em || null, lt: me.lit || 0, tw: me.tw || 0, gf: me.gf || null, ph: me.ph || null, pj: me.pj || null, rd: redness(), bq: me.bq || null, fr: me.rod ? 1 : 0, fs: me.fs || null, rc: me.rc || null, rj: me.rj ? { h: me.rj.h, id: me.rj.id, at: me.rj.at } : null, rp: me.rp || null, fd: me.fd || null, fj: me.fj ? { h: me.fj.h, id: me.fj.id, at: me.fj.at } : null, fsc: me.fsc || null, bh: me.bh || null, bj: me.bj ? { h: me.bj.h, id: me.bj.id, at: me.bj.at } : null, bp: me.bp ? { id: me.bp.id } : null, bf: me.bf || null, bpw: me.bpw || 0, gv: me.gv || null, gr: me.gr || 0, ac: me.ac || null, aj: me.aj ? { h: me.aj.h, id: me.aj.id, at: me.aj.at } : null, ap: me.ap || null };
   if (boarded && boarded.driver) { o.bx = +boatLocal.x.toFixed(2); o.bz = +boatLocal.z.toFixed(2); o.br = +boatLocal.r.toFixed(2); }
   else { o.bx = null; o.bz = null; o.br = null; }
   return o;

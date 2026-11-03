@@ -28,6 +28,7 @@ const POSES = {
   stool: { hipY: .46, pitch: 0, lift: 0, thL: 1.5, thR: 1.5, knL: -1.35, knR: -1.35, arL: .7, arR: .7, azL: .1, azR: .1, lean: .05, nod: .05, matZ: -.15, matP: 0, tube: 0, label: 2.05 },
   bench: { hipY: .6, pitch: 0, lift: 0, thL: 1.5, thR: 1.5, knL: -1.45, knR: -1.45, arL: .45, arR: .45, azL: .15, azR: .15, lean: -.08, nod: 0, matZ: -.15, matP: 0, tube: 0, label: 2.2 },
   boat: { hipY: .06, pitch: 0, lift: 0, thL: 1.35, thR: 1.35, knL: -.9, knR: -.9, arL: .5, arR: .5, azL: .2, azR: .2, lean: -.05, nod: 0, matZ: -.15, matP: 0, tube: 0, label: 1.85 },
+  ride: { hipY: 0, pitch: 0, lift: 0, thL: .75, thR: .75, knL: -.75, knR: -.75, arL: 1.15, arR: 1.15, azL: -.12, azR: -.12, lean: .22, nod: -.1, matZ: -.15, matP: 0, tube: 0, label: 1.6 },
   bike: { hipY: 0, pitch: 0, lift: 0, thL: 1.2, thR: 1.2, knL: -1, knR: -1, arL: 1.25, arR: 1.25, azL: .05, azR: .05, lean: .35, nod: -.2, matZ: -.15, matP: 0, tube: 0, label: 1.6 },
   swim: { hipY: .3, pitch: Math.PI / 2, lift: .3, thL: 0, thR: 0, knL: 0, knR: 0, arL: 0, arR: 0, azL: .3, azR: .3, lean: 0, nod: -.3, matZ: .5, matP: 0, tube: 0, label: .95 },
   tube: { hipY: .12, pitch: 0, lift: 0, thL: .3, thR: .3, knL: -.4, knR: -.4, arL: .2, arR: .2, azL: 1.15, azR: 1.15, lean: -.1, nod: -.1, matZ: -.15, matP: 0, tube: 1, label: 1.85 }
