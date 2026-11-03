@@ -106,7 +106,6 @@ function playEmote(i) {
   const standing = me.st === "walk" && !me.moving && !anim && !boarded;
   const seated = me.st === "sit" || me.st === "bench" || me.st === "stool";
   if (!(standing || (E.seat && seated))) { toast(E.seat ? "서 있거나 앉아 있을 때 할 수 있어요" : "멈춰 서 있을 때 할 수 있어요"); return; }
-  if (me.hold) { toast("손에 든 걸 먼저 다 먹어 주세요"); return; }
   me.em = { i, at: Date.now() };
   if (E.say) showBubble(() => myAvatar, E.say, Math.min(E.dur, 2.4), "me");
   if (audio.ready && (E.id === "hurray" || E.id === "heart" || E.id === "wave")) audio.pop();

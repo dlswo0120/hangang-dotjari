@@ -8,7 +8,7 @@ function eatTime(k) { return k === "ramen" || k === true ? EAT_TIME : (PRODUCTS[
 const EAT_WORDS = { ramen: ["후루릅~", "짭짭"], snack: ["바삭바삭", "와삭와삭"], drink: ["꿀꺽꿀꺽", "캬~"], ice: ["냠냠", "시원해~"], chicken: ["바삭!", "냠냠 쫄깃"] };
 function eatingFx(av, key, e, dist, kind) {
   if (e < 0) { u_lastBite[key] = -1; return; }
-  const bite = Math.floor(e * .9);
+  const chicken = PRODUCTS[kind] && PRODUCTS[kind].cat === "chicken", bite = Math.floor(e * (chicken ? .25 : .9));
   if (bite === u_lastBite[key]) return; u_lastBite[key] = bite;
   const cat = kind === "ramen" || kind === true || !PRODUCTS[kind] ? "ramen" : PRODUCTS[kind].cat, first = bite % 2 === 0;
   showBubble(() => av, EAT_WORDS[cat][first ? 0 : 1], 1.1, "eat-" + key);
@@ -166,7 +166,14 @@ function frame() {
   // lost the race for a machine?
   if (me.rm && myPeer && owners[me.rm.m] && !isMine(owners[me.rm.m])) { me.rm = null; toast("다른 분이 먼저 쓰고 있어요"); publish(true); }
   // steam from bowls people are holding
-  const bowlSteam = av => { if (av && av.userData.bowl && av.userData.bowl.visible) { av.userData.bowl.getWorldPosition(tmpV); tmpV.y += .14; emitSteam(tmpV, .85, dt); } };
+  // steam only from hot food: ramen and chicken (box or bucket)
+  const bowlSteam = av => {
+    if (!av) return; const u = av.userData;
+    if (u.chBox && u.chBox.visible) { u.chBox.getWorldPosition(tmpV); tmpV.y += .3; emitSteam(tmpV, .75, dt); return; }
+    if (!u.bowl || !u.bowl.visible) return; const k = u.heldKind;
+    if (k !== "ramen" && !(PRODUCTS[k] && PRODUCTS[k].cat === "chicken")) return;
+    u.bowl.getWorldPosition(tmpV); tmpV.y += k === "ramen" ? .14 : .3; emitSteam(tmpV, k === "ramen" ? .85 : .65, dt);
+  };
   bowlSteam(myAvatar); others.forEach(o => bowlSteam(o.obj));
   updateSteam(dt);
   if (started) {

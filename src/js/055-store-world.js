@@ -31,6 +31,12 @@ function setBasketCount(b, n) {
 // what someone holds while eating: the ramen bowl, or a snack from the store
 function makeHeld(kind) {
   if (kind === "ramen") return makeBowl();
+  if (kind === "drumstick") { // one piece in hand while the box sits in front
+    const g = new THREE.Group(), meat = new THREE.Mesh(new THREE.SphereGeometry(.07, 12, 8), new THREE.MeshLambertMaterial({ color: 0xc4702e, emissive: 0x5a2a08, emissiveIntensity: .35 })); meat.scale.set(1, 1.35, 1); meat.position.y = .12; g.add(meat);
+    const bone = new THREE.Mesh(new THREE.CylinderGeometry(.015, .015, .1, 6), mat(0xf4ead8)); bone.position.y = .02; g.add(bone);
+    const knob = new THREE.Mesh(new THREE.SphereGeometry(.025, 8, 6), mat(0xf4ead8)); knob.position.y = -.03; g.add(knob);
+    g.userData.base = 1.4; return g;
+  }
   if (kind === "sparkler") { // a wire stick; the glowing tip lights up while it burns
     const g = new THREE.Group(), wire = new THREE.Mesh(new THREE.CylinderGeometry(.006, .006, .46, 5), mat(0x9aa0a8)); wire.position.y = .25; g.add(wire);
     const coat = new THREE.Mesh(new THREE.CylinderGeometry(.013, .013, .2, 6), mat(0x55585e)); coat.position.y = .36; g.add(coat);
@@ -56,8 +62,20 @@ function makeHeld(kind) {
     add(new THREE.CylinderGeometry(.11, .085, .14, 16, 1, true), mat(0xffffff, { side: THREE.DoubleSide }), 0, .08, 0);
     add(new THREE.CylinderGeometry(.112, .112, .03, 16, 1, true), mat(0xd8322f, { side: THREE.DoubleSide }), 0, .12, 0);
     for (let i = 0; i < 6; i++) add(new THREE.SphereGeometry(.035, 8, 6), mat(col), Math.cos(i) * .05, .15 + (i % 2) * .02, Math.sin(i) * .05);
+    for (let i = 0; i < 4; i++) add(new THREE.SphereGeometry(.03, 8, 6), mat(col), Math.cos(i * 1.7) * .03, .19, Math.sin(i * 1.7) * .03);
+    g.userData.base = 1.9; // big enough that everyone can tell: chicken!
   }
   return g;
+}
+// an open chicken box set down in front of someone eating while seated; pieces disappear as they eat
+function makeChickenBox() {
+  const g = new THREE.Group(), red = mat(0xc0392b), white = mat(0xfff6e8);
+  const base = new THREE.Mesh(new THREE.BoxGeometry(.5, .14, .4), red); base.position.y = .07; g.add(base);
+  const inner = new THREE.Mesh(new THREE.BoxGeometry(.46, .02, .36), white); inner.position.y = .14; g.add(inner);
+  const lid = new THREE.Mesh(new THREE.BoxGeometry(.5, .02, .4), new THREE.MeshLambertMaterial({ map: dvLogo })); lid.position.set(0, .3, .2); lid.rotation.x = -1.2; g.add(lid);
+  const pieces = [], pm = new THREE.MeshLambertMaterial({ color: 0xc4702e, emissive: 0x5a2a08, emissiveIntensity: .35 });
+  for (let i = 0; i < 10; i++) { const p = new THREE.Mesh(new THREE.SphereGeometry(.055, 10, 8), pm); p.scale.set(1, .8, 1.25); p.position.set(-.16 + (i % 4) * .11, .18 + Math.floor(i / 4) * .04, -.11 + ((i * 3) % 3) * .1); p.rotation.y = i; g.add(p); pieces.push(p); }
+  g.scale.setScalar(1.5); g.traverse(m => { if (m.isMesh) m.castShadow = true; }); g.userData.pieces = pieces; return g;
 }
 {
   const S = STORE, G = new THREE.Group(); G.position.set(S.x, 0, S.z); scene.add(G);

@@ -169,8 +169,16 @@ function updateAvatar(av, dt, t, o = {}) {
     }
   }
   // carrying and eating: the ramen bowl or a snack from the store
-  const holdKind = o.hold === true ? "ramen" : (o.hold || null);
+  const realKind = o.hold === true ? "ramen" : (o.hold || null), isChicken = !!(PRODUCTS[realKind] && PRODUCTS[realKind].cat === "chicken");
+  // eating chicken while seated: the box goes down in front and a drumstick comes up in hand
+  const boxEat = isChicken && o.eatT >= 0 && (u.pose === "sit" || u.pose === "stool" || u.pose === "bench") && !u.queue.length;
+  const holdKind = boxEat ? "drumstick" : realKind;
   const holding = !!holdKind && u.pose !== "lie" && u.pose !== "swim" && u.pose !== "tube";
+  if (boxEat && !u.chBox) { u.chBox = makeChickenBox(); av.add(u.chBox); }
+  if (u.chBox) {
+    u.chBox.visible = boxEat;
+    if (boxEat) { u.chBox.position.set(0, .02, -.75); const left = 1 - Math.min(1, o.eatT / eatTime(realKind)); u.chBox.userData.pieces.forEach((p, i) => { p.visible = i < Math.ceil(left * 10); }); }
+  }
   if (holding && (!u.bowl || u.heldKind !== holdKind)) {
     if (u.bowl) u.torso.remove(u.bowl);
     u.bowl = makeHeld(holdKind); u.heldKind = holdKind; u.torso.add(u.bowl);
@@ -180,7 +188,7 @@ function updateAvatar(av, dt, t, o = {}) {
       u.arms[1].add(ch); u.chop = ch;
     }
   }
-  if (u.bowl) { u.bowl.visible = holding; u.chop.visible = holding && o.eatT >= 0 && (holdKind === "ramen" || holdKind === "gangjeong" || holdKind === "chicken"); }
+  if (u.bowl) { u.bowl.visible = holding; u.chop.visible = holding && o.eatT >= 0 && (holdKind === "ramen" || holdKind === "gangjeong" || holdKind === "chicken" || holdKind === "halfchk"); }
   const bk = typeof o.basket === "number" ? o.basket : -1;
   if (bk >= 0) {
     if (!u.basketM) { u.basketM = makeBasket(); u.arms[0].add(u.basketM); u.basketM.position.set(0, -.4, 0); }
@@ -192,14 +200,14 @@ function updateAvatar(av, dt, t, o = {}) {
     v.arL = 1.05; v.arR = 1.05; v.azL = -.28; v.azR = -.28;
     let by = .2, bz = -.34;
     if (o.eatT >= 0) {
-      const e = o.eatT, bite = (e * .9) % 1, lift = Math.max(0, Math.sin(bite * Math.PI * 2));
+      const e = o.eatT, bite = (e * (isChicken ? .25 : .9)) % 1, lift = Math.max(0, Math.sin(Math.min(1, bite * (isChicken ? 3 : 1)) * Math.PI * 2));
       v.arL = 1.35; v.azL = -.2; v.arR = 1.55 + lift * 1.0 + Math.sin(e * 22) * .05 * lift; v.azR = -.42;
       v.nod += .22 - lift * .12; v.lean += .12; by = .36; bz = -.3;
       if (u.bowl.userData.soup) u.bowl.userData.soup.position.y = .12 - Math.min(1, e / EAT_TIME) * .07;
     } else if (u.bowl.userData.soup) u.bowl.userData.soup.position.y = .12;
     if (o.cheer > 0 && !(o.eatT >= 0)) { const c = o.cheer; v.arL += (2.25 - v.arL) * c; v.arR += (2.25 - v.arR) * c; v.azL = v.azR = -.18; by += .5 * c; bz -= .12 * c; v.nod -= .15 * c; }
-    const left = o.eatT >= 0 && holdKind !== "ramen" ? 1 - Math.min(1, o.eatT / eatTime(holdKind)) * .6 : 1;
-    u.bowl.scale.setScalar(left);
+    const left = o.eatT >= 0 && holdKind !== "ramen" && holdKind !== "drumstick" ? 1 - Math.min(1, o.eatT / eatTime(holdKind)) * .6 : 1;
+    u.bowl.scale.setScalar(left * (u.bowl.userData.base || 1));
     let bx = 0;
     if (o.spin != null) { const a = o.spin; bx = Math.sin(a) * .28; by += .18 + Math.cos(a) * .28; v.arR = 1.6 + Math.cos(a) * .7; v.azR = -.2 + Math.sin(a) * .5; v.arL = .3; v.azL = .2; }
     u.bowl.position.set(bx, by, bz);

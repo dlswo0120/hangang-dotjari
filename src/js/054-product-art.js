@@ -18,9 +18,9 @@ const PRODUCTS = {
   icebar: { name: "아이스바", price: 2500, cat: "ice", color: "#8fd3ff", eat: 7 },
   cone: { name: "콘 아이스크림", price: 3000, cat: "ice", color: "#f7c6d9", eat: 8 },
   mochi: { name: "찹쌀떡 아이스", price: 3500, cat: "ice", color: "#f3efe4", eat: 7 },
-  gangjeong: { name: "닭강정 컵", price: 6500, cat: "chicken", color: "#c4632a", eat: 10 },
-  chicken: { name: "순살치킨", price: 8000, cat: "chicken", color: "#d9893a", eat: 11 },
-  halfchk: { name: "한강통닭 반마리", price: 5000, cat: "chicken", color: "#e0a046", eat: 9 },
+  gangjeong: { name: "닭강정 컵", price: 6500, cat: "chicken", color: "#c4632a", eat: 120 },
+  chicken: { name: "순살치킨", price: 8000, cat: "chicken", color: "#d9893a", eat: 120 },
+  halfchk: { name: "한강통닭 반마리", price: 5000, cat: "chicken", color: "#e0a046", eat: 120 },
   sparkler: { name: "스파클러", price: 500, cat: "fire", color: "#ffcf5a", eat: 0, fire: "hand" },
   fountain: { name: "분수 폭죽", price: 1500, cat: "fire", color: "#e94d8a", eat: 0, fire: "ground" },
   rocket: { name: "연발 폭죽", price: 3000, cat: "fire", color: "#3b6ea8", eat: 0, fire: "ground" }
