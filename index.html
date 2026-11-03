@@ -205,6 +205,16 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
 .fish-card b{display:block;font-size:17px}.fish-card span{font-size:12px;color:var(--ink-soft)}
 .dex-box{display:grid;gap:6px;max-height:40vh;overflow:auto}
 .dex{display:flex;gap:8px;align-items:center;font-size:13px}.dex i{width:22px;height:12px;border-radius:50%;flex:none}.dex.unknown{opacity:.55}
+.race-bets{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.race-bets button{border-radius:14px;padding:14px 6px;font-size:15px;font-weight:700;border:1px solid var(--line);background:rgba(255,255,255,.08)}
+.race-bets button:hover{background:#f2b46b;color:#2a1d0f}
+.race-table{font-size:12px!important;opacity:.75}
+.race-res .row{display:flex;justify-content:space-between;gap:8px;padding:9px 10px;border-radius:10px;background:rgba(255,255,255,.05);font-size:14px}
+.race-res .row.me{background:rgba(242,180,107,.22)}
+.race-res .row b{color:#f2b46b}
+.race-btns{position:fixed;left:0;right:0;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:12;display:flex;justify-content:space-between;padding:0 18px;pointer-events:none}
+.race-btns button{pointer-events:auto;width:38vw;max-width:170px;height:96px;border-radius:24px;border:0;font-size:20px;font-weight:800;background:rgba(193,84,63,.92);color:#fff;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.race-btns button:active{transform:scale(.95)}
 </style>
 
 </head>
@@ -337,6 +347,27 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
     <div class="dex-box" id="dexBox" hidden></div>
   </div>
 </div>
+
+<div class="modal" id="raceBetModal" hidden role="dialog" aria-modal="true" aria-labelledby="raceBetTitle">
+  <div class="card">
+    <h2 id="raceBetTitle">판돈을 골라 주세요</h2>
+    <p>참가하는 사람 모두 같은 금액을 걸어요. 1등이 가장 많이 가져가고, 꼴찌도 조금은 돌려받아요.</p>
+    <div class="race-bets" id="raceBetGrid"><button data-bet="500">500원</button><button data-bet="1000">1,000원</button><button data-bet="2000">2,000원</button></div>
+    <p class="race-table">2명 70·30% · 3명 55·30·15% · 4명 50·25·15·10%</p>
+    <div class="modal-btns one"><button type="button" id="raceBetClose">그만두기</button></div>
+  </div>
+</div>
+
+<div class="modal" id="raceResModal" hidden role="dialog" aria-modal="true" aria-labelledby="raceResTitle">
+  <div class="card news">
+    <h2 id="raceResTitle">경주 결과</h2>
+    <p id="raceResPot"></p>
+    <div class="list race-res" id="raceResList"></div>
+    <button class="news-ok" id="raceResOk">좋아요</button>
+  </div>
+</div>
+
+<div class="race-btns" id="raceBtns" hidden><button id="raceL">왼발</button><button id="raceR">오른발</button></div>
 
 <div class="modal" id="ageModal" hidden role="dialog" aria-modal="true" aria-labelledby="ageTitle">
   <div class="card">
@@ -617,7 +648,7 @@ window.HANGANG_CONFIG = {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
-const APP_VERSION = "2026.11.03", UPDATES = [{"v": "2026.11.03", "date": "11월 3일", "items": ["편의점 냉장고에서 한강소주·캔맥주·생맥주 잔을 팔아요 (19세 이상)", "냉장고 옆 셀프 생맥주 기계에서 맥주와 거품을 7:3으로 맞춰 따라 보세요", "한두 잔 마시면 볼이 살짝 빨개져요", "낚시 데크와 낚싯대 대여함(30분 1,000원)이 생겼어요. 9가지를 낚고 방생하면 용돈을 받아요 (하루 4,000원까지)", "잡은 물고기는 '내 낚시 도감'에 기록돼요"]}, {"v": "2026.11.02i", "date": "11월 2일", "items": ["스파클러 불꽃이 더 크고 화려해졌어요", "분수 폭죽과 연발 폭죽이 하늘 높이 올라가요", "화면을 아래로 끌면 하늘을 올려다볼 수 있어요"]}, {"v": "2026.11.02h", "date": "11월 2일", "items": ["강가에 '한강 불꽃 가게'가 생겼어요. 밤 8시~10시에만 열어요", "스파클러(500원)는 손에 들고, 분수 폭죽(1,500원)과 연발 폭죽(3,000원)은 잔디에 놓고 즐겨요", "불붙은 스파클러를 든 사람 곁에서 불을 옮겨 받을 수 있어요", "카메라 버튼에서 혼자·둘이·단체 포즈를 골라 앞에서 사진을 찍어요. 같이 찍은 사람도 사진을 받아요"]}, {"v": "2026.11.02g", "date": "11월 2일", "items": ["가슴 튕기기 춤을 출 때 오른팔을 몸 앞에 가로로 받쳐요", "설정 화면 맨 아래에서 지금 버전을 확인할 수 있어요"]}, {"v": "2026.11.02f", "date": "11월 2일", "items": ["말하기 메뉴에 '감정 표현'(손 흔들기 · 박수 · 만세 · 하트 · 꾸벅 인사)이 생겼어요", "'가슴 튕기기 춤'을 출 수 있어요. 여럿이 같이 누르면 단체 춤!"]}, {"v": "2026.11.02e", "date": "11월 2일", "items": ["친구 돗자리 바로 옆에 내 돗자리를 붙여 펼 수 있어요. 옆에 서면 나란히 맞춰 펴져요"]}, {"v": "2026.11.02d", "date": "11월 2일", "items": ["오리배 선착장에 이용 안내 표지판이 생겼어요", "자전거 대여소 옆에 '한강 소식판'이 생겼어요. 업데이트 내역을 언제든 볼 수 있어요"]}, {"v": "2026.11.02c", "date": "11월 2일", "items": ["앉아 있을 때 '한강통닭'에 치킨 배달을 시킬 수 있어요. 2분쯤 뒤 오토바이 기사님이 자리까지 가져다 드려요", "배달 전용 '한강통닭 반마리'(배달비 포함 6,000원)가 생겼어요"]}, {"v": "2026.11.02b", "date": "11월 2일", "items": ["강 건너편 잔디에 '한강 자전거 대여소'가 생겼어요. 10분에 1,000원, 같은 곳에 반납해요", "자전거를 타는 동안 '따르릉' 벨을 울릴 수 있어요", "길가에 '돗자리 대여소'가 생겼어요. 오늘 첫 대여는 무료, 그다음은 500원이에요", "돗자리 없이도 잔디에 그냥 앉거나 누울 수 있어요"]}, {"v": "2026.11.02", "date": "11월 2일", "items": ["앉아서 가만히 있으면 화면이 비워지는 '물멍 모드'가 생겼어요", "강가에서 한마디 적은 종이배를 띄울 수 있어요", "매일 밤 9시, 4분 동안 한강 불꽃놀이가 열려요. 맑은 밤엔 별똥별도 지나가요", "음료를 든 채 가까이 앉으면 '짠' 할 수 있어요", "라면은 편의점에서 봉지라면을 사 와서 기계로 끓여요", "찍은 사진을 휴대폰 사진 앱에 바로 저장할 수 있어요", "새 버전이 나오면 화면 위에 알려 드려요"]}];
+const APP_VERSION = "2026.11.03b", UPDATES = [{"v": "2026.11.03b", "date": "11월 3일", "items": ["공원 서쪽 끝에 '한강 달리기 대회' 트랙이 생겼어요. 2~4명이 판돈(500~2,000원)을 걸고 달려요", "A(왼발)·D(오른발)를 번갈아 눌러 달려요. 같은 발을 두 번 누르면 휘청! 휴대폰은 화면 버튼으로 달려요", "1등이 가장 많이 가져가고, 꼴찌도 조금은 돌려받아요"]}, {"v": "2026.11.03", "date": "11월 3일", "items": ["편의점 냉장고에서 한강소주·캔맥주·생맥주 잔을 팔아요 (19세 이상)", "냉장고 옆 셀프 생맥주 기계에서 맥주와 거품을 7:3으로 맞춰 따라 보세요", "한두 잔 마시면 볼이 살짝 빨개져요", "낚시 데크와 낚싯대 대여함(30분 1,000원)이 생겼어요. 9가지를 낚고 방생하면 용돈을 받아요 (하루 4,000원까지)", "잡은 물고기는 '내 낚시 도감'에 기록돼요"]}, {"v": "2026.11.02i", "date": "11월 2일", "items": ["스파클러 불꽃이 더 크고 화려해졌어요", "분수 폭죽과 연발 폭죽이 하늘 높이 올라가요", "화면을 아래로 끌면 하늘을 올려다볼 수 있어요"]}, {"v": "2026.11.02h", "date": "11월 2일", "items": ["강가에 '한강 불꽃 가게'가 생겼어요. 밤 8시~10시에만 열어요", "스파클러(500원)는 손에 들고, 분수 폭죽(1,500원)과 연발 폭죽(3,000원)은 잔디에 놓고 즐겨요", "불붙은 스파클러를 든 사람 곁에서 불을 옮겨 받을 수 있어요", "카메라 버튼에서 혼자·둘이·단체 포즈를 골라 앞에서 사진을 찍어요. 같이 찍은 사람도 사진을 받아요"]}, {"v": "2026.11.02g", "date": "11월 2일", "items": ["가슴 튕기기 춤을 출 때 오른팔을 몸 앞에 가로로 받쳐요", "설정 화면 맨 아래에서 지금 버전을 확인할 수 있어요"]}, {"v": "2026.11.02f", "date": "11월 2일", "items": ["말하기 메뉴에 '감정 표현'(손 흔들기 · 박수 · 만세 · 하트 · 꾸벅 인사)이 생겼어요", "'가슴 튕기기 춤'을 출 수 있어요. 여럿이 같이 누르면 단체 춤!"]}, {"v": "2026.11.02e", "date": "11월 2일", "items": ["친구 돗자리 바로 옆에 내 돗자리를 붙여 펼 수 있어요. 옆에 서면 나란히 맞춰 펴져요"]}, {"v": "2026.11.02d", "date": "11월 2일", "items": ["오리배 선착장에 이용 안내 표지판이 생겼어요", "자전거 대여소 옆에 '한강 소식판'이 생겼어요. 업데이트 내역을 언제든 볼 수 있어요"]}, {"v": "2026.11.02c", "date": "11월 2일", "items": ["앉아 있을 때 '한강통닭'에 치킨 배달을 시킬 수 있어요. 2분쯤 뒤 오토바이 기사님이 자리까지 가져다 드려요", "배달 전용 '한강통닭 반마리'(배달비 포함 6,000원)가 생겼어요"]}, {"v": "2026.11.02b", "date": "11월 2일", "items": ["강 건너편 잔디에 '한강 자전거 대여소'가 생겼어요. 10분에 1,000원, 같은 곳에 반납해요", "자전거를 타는 동안 '따르릉' 벨을 울릴 수 있어요", "길가에 '돗자리 대여소'가 생겼어요. 오늘 첫 대여는 무료, 그다음은 500원이에요", "돗자리 없이도 잔디에 그냥 앉거나 누울 수 있어요"]}, {"v": "2026.11.02", "date": "11월 2일", "items": ["앉아서 가만히 있으면 화면이 비워지는 '물멍 모드'가 생겼어요", "강가에서 한마디 적은 종이배를 띄울 수 있어요", "매일 밤 9시, 4분 동안 한강 불꽃놀이가 열려요. 맑은 밤엔 별똥별도 지나가요", "음료를 든 채 가까이 앉으면 '짠' 할 수 있어요", "라면은 편의점에서 봉지라면을 사 와서 기계로 끓여요", "찍은 사진을 휴대폰 사진 앱에 바로 저장할 수 있어요", "새 버전이 나오면 화면 위에 알려 드려요"]}];
 "use strict";
 const $ = id => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -2148,6 +2179,9 @@ function cleanPresence(p) {
     ch: num(p.ch, 0, 1e15, 0), pb: null, mt: p.mt === 1, bl: num(p.bl, 0, 1e15, 0)
   };
   o.fr = p.fr === 1;
+  if (p.rc && typeof p.rc === "object" && typeof p.rc.id === "number" && RACE_BETS.includes(p.rc.bet)) o.rc = { id: p.rc.id, bet: p.rc.bet, st: p.rc.st === "go" ? "go" : "open", go: num(p.rc.go, 0, 1e15, 0) };
+  if (p.rj && typeof p.rj === "object" && typeof p.rj.h === "string" && typeof p.rj.id === "number") o.rj = { h: p.rj.h.slice(0, 80), id: p.rj.id, at: num(p.rj.at, 0, 1e15, 0) };
+  if (p.rp && typeof p.rp === "object" && typeof p.rp.id === "number") o.rp = { id: p.rp.id, d: num(p.rp.d, 0, 100, 0), f: num(p.rp.f, 0, 600000, 0) };
   if (p.fs && typeof p.fs === "object" && ["idle", "cast", "bite", "catch"].includes(p.fs.s) && typeof p.fs.at === "number") o.fs = { s: p.fs.s, at: p.fs.at, bx: num(p.fs.bx, WORLD.x0, WORLD.x1, 0), bz: num(p.fs.bz, -40, 1, -4), k: FISH_BY[p.fs.k] ? p.fs.k : null, cm: num(p.fs.cm, 0, 200, 0) };
   o.rd = Number.isInteger(p.rd) ? clamp(p.rd, 0, 3) : 0;
   if (p.bq && typeof p.bq === "object" && typeof p.bq.at === "number") o.bq = { at: p.bq.at, q: p.bq.q === 2 ? 2 : p.bq.q === 0 ? 0 : 1 };
@@ -2203,7 +2237,7 @@ function syncPeers(peers) {
 })();
 let lastPub = 0, lastPubKey = "", mySay = null;
 function presenceObj() {
-  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id, at: me.bt.at } : null, say: mySay, rm: me.rm, hr: me.hold ? 1 : 0, hi: me.hold || null, ea: me.eat || 0, q: me.q || 0, bk: me.basket ? me.basket.length : -1, ch: me.ch || 0, pb: me.pb || null, mt: me.mat ? 1 : 0, bl: me.bl || 0, dv: me.dv ? { k: me.dv.k, at: me.dv.at } : null, em: me.em || null, lt: me.lit || 0, tw: me.tw || 0, gf: me.gf || null, ph: me.ph || null, pj: me.pj || null, rd: redness(), bq: me.bq || null, fr: me.rod ? 1 : 0, fs: me.fs || null };
+  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id, at: me.bt.at } : null, say: mySay, rm: me.rm, hr: me.hold ? 1 : 0, hi: me.hold || null, ea: me.eat || 0, q: me.q || 0, bk: me.basket ? me.basket.length : -1, ch: me.ch || 0, pb: me.pb || null, mt: me.mat ? 1 : 0, bl: me.bl || 0, dv: me.dv ? { k: me.dv.k, at: me.dv.at } : null, em: me.em || null, lt: me.lit || 0, tw: me.tw || 0, gf: me.gf || null, ph: me.ph || null, pj: me.pj || null, rd: redness(), bq: me.bq || null, fr: me.rod ? 1 : 0, fs: me.fs || null, rc: me.rc || null, rj: me.rj ? { h: me.rj.h, id: me.rj.id, at: me.rj.at } : null, rp: me.rp || null };
   if (boarded && boarded.driver) { o.bx = +boatLocal.x.toFixed(2); o.bz = +boatLocal.z.toFixed(2); o.br = +boatLocal.r.toFixed(2); }
   else { o.bx = null; o.bz = null; o.br = null; }
   return o;
@@ -2394,6 +2428,7 @@ function refreshActions() {
   status = photoActions(acts, status);
   status = beerActions(acts, status);
   status = fishActions(acts, status);
+  status = raceActions(acts, status);
   if ($("status").textContent !== status) { $("status").textContent = status; $("status").hidden = !status; }
   // rebuild the buttons only when they change, so a running timer in the status line never eats a tap
   const key = JSON.stringify(acts); if (key === actKey) return; actKey = key;
@@ -2402,7 +2437,7 @@ function refreshActions() {
 }
 $("actRow").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return; const a = b.dataset.act;
-  if (storeClick(a) || rentalClick(a) || deliveryClick(a) || boardClick(a) || fireClick(a) || photoClick(a) || beerClick(a) || fishClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
+  if (storeClick(a) || rentalClick(a) || deliveryClick(a) || boardClick(a) || fireClick(a) || photoClick(a) || beerClick(a) || fishClick(a) || raceClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
   if (a === "sit" || a === "lie") {
     if (me.st === "walk") {
       if (!canSpread()) { toast("잔디나 대교 위에서만 돗자리를 펼 수 있습니다"); return; }
@@ -2705,7 +2740,7 @@ $("leaveModal").addEventListener("click", e => { if (e.target === $("leaveModal"
 addEventListener("keydown", e => { if (e.key === "Escape" && !$("leaveModal").hidden) $("leaveModal").hidden = true; });
 $("leaveBtn").addEventListener("click", async () => {
   $("leaveModal").hidden = true;
-  started = false; me.bt = null; boarded = null; me.rm = null; me.hold = false; me.eat = 0; me.basket = null; me.q = 0; payState = null; me.ch = 0; me.pb = null; me.mat = false; me.bike = null; me.em = null; me.lit = 0; me.tw = 0; me.gf = null; me.ph = null; me.pj = null; if (shoot) shoot.done = true; me.rod = null; me.fs = null; $("fishModal").hidden = true; if (me.dv && !me.dv.got && Date.now() - me.dv.at < DV_RIDE_IN * 1000) { wallet.money += PRODUCTS[me.dv.k].price + DV_FEE; saveWallet(); } me.dv = null; if (me.st === "bike") me.st = "walk"; exitMung();
+  started = false; me.bt = null; boarded = null; me.rm = null; me.hold = false; me.eat = 0; me.basket = null; me.q = 0; payState = null; me.ch = 0; me.pb = null; me.mat = false; me.bike = null; me.em = null; me.lit = 0; me.tw = 0; me.gf = null; me.ph = null; me.pj = null; if (shoot) shoot.done = true; me.rod = null; me.fs = null; if ((me.rc && me.rc.st !== "go") || (me.rj && !inRaceNow())) { const rr = myRace(); if (rr) { wallet.money += rr.rc.bet; saveWallet(); } } me.rc = null; me.rj = null; me.rp = null; $("fishModal").hidden = true; if (me.dv && !me.dv.got && Date.now() - me.dv.at < DV_RIDE_IN * 1000) { wallet.money += PRODUCTS[me.dv.k].price + DV_FEE; saveWallet(); } me.dv = null; if (me.st === "bike") me.st = "walk"; exitMung();
   try { if (room) { await room.presence({ n: null, st: null, bt: null, rm: null }); if (typeof room.leave === "function") await room.leave(); } } catch (e) {}
   room = null;
   if (myAvatar) { scene.remove(myAvatar); myAvatar = null; }
@@ -2846,6 +2881,7 @@ function stepPlayer(dt) {
     return;
   }
   if (me.st === "sit" || me.st === "lie" || me.st === "bench" || me.st === "stool") { me.moving = false; return; }
+  if ((me.rc || me.rj) && me.st === "walk" && raceStep(dt)) return;
   if (me.q && me.st === "walk") { queueWalk(dt); return; }
   if (me.st === "bike") { bikeStep(dt, inp); return; }
   if (!me.moving) { me.speed = 0; return; }
@@ -3812,6 +3848,7 @@ function frame() {
   updatePhoto();
   updateBeer();
   updateFishing();
+  updateRace();
   // bubbles follow their owners
   for (let i = bubbles.length - 1; i >= 0; i--) {
     const b = bubbles[i], o = b.getObj();
@@ -4543,6 +4580,172 @@ function updateFishing() {
 }
 // rod pose: both hands forward on the grip
 function rodPose(v, fs) { v.arR = 1.15; v.azR = -.25; v.arL = 1.0; v.azL = -.35; if (fs && fs.s === "catch" && Date.now() - fs.at < 6000) { v.arL = v.arR = 2.2; v.azL = v.azR = .1; } }
+/* ================= 한강 달리기 경주: 2~4명, 판돈, A·D 번갈아 ================= */
+const RACE = { x0: -138, len: 40, lanes: [6.5, 8.6, 10.7, 12.8], gate: [-141.5, 9.6] };
+const RACE_BETS = [500, 1000, 2000], RACE_SHARE = { 2: [.7, .3], 3: [.55, .3, .15], 4: [.5, .25, .15, .1] };
+const RACE_COUNT = 3500, RACE_LIMIT = 30000, TAP_MIN = 1000 / 12; // at most 12 steps a second
+
+/* the track */
+{
+  const L = RACE, cx = L.x0 + L.len / 2, cz = (L.lanes[0] + L.lanes[3]) / 2, w = L.len + 6, d = 9.4;
+  const tex = canvasTex(1024, 220, (x, W, H) => {
+    x.fillStyle = "#c1543f"; x.fillRect(0, 0, W, H);
+    x.strokeStyle = "rgba(255,255,255,.85)"; x.lineWidth = 4;
+    for (let i = 0; i <= 4; i++) { const y = 10 + i * (H - 20) / 4; x.beginPath(); x.moveTo(0, y); x.lineTo(W, y); x.stroke(); }
+    const sx = W * 3 / (L.len + 6), fx = W * (3 + L.len) / (L.len + 6);
+    x.fillStyle = "#fff"; x.fillRect(sx - 3, 10, 6, H - 20);
+    for (let r = 0; r < 8; r++) for (let c = 0; c < 2; c++) { x.fillStyle = (r + c) % 2 ? "#fff" : "#222"; x.fillRect(fx - 10 + c * 10, 10 + r * (H - 20) / 8, 10, (H - 20) / 8); }
+    x.fillStyle = "rgba(255,255,255,.75)"; x.font = "bold 26px sans-serif"; x.textAlign = "center"; x.textBaseline = "middle";
+    for (let i = 0; i < 4; i++) x.fillText(String(i + 1), sx - 24, 10 + (i + .5) * (H - 20) / 4);
+  }, 1, 1);
+  const track = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshLambertMaterial({ map: tex })); track.rotation.x = -Math.PI / 2; track.position.set(cx, .04, cz); track.receiveShadow = true; scene.add(track);
+  // finish arch
+  const fx = L.x0 + L.len;
+  [-1, 1].forEach(s => { const p = new THREE.Mesh(new THREE.BoxGeometry(.18, 3, .18), mat(0xf2f2f2)); p.position.set(fx, 1.5, cz + s * 4.9); p.castShadow = true; scene.add(p); });
+  const ban = new THREE.Mesh(new THREE.PlaneGeometry(9.8, .7), signMat(signTex([["결승선 · FINISH", 46, .55]], "#1fae96", "#ffffff", 512, 64)));
+  ban.position.set(fx, 2.8, cz); ban.rotation.y = -Math.PI / 2; scene.add(ban); const ban2 = ban.clone(); ban2.rotation.y = Math.PI / 2; scene.add(ban2);
+  // start gate with a board
+  const [gx, gz] = L.gate;
+  const post = new THREE.Mesh(new THREE.BoxGeometry(.12, 2.4, .12), mat(0x3a3d44)); post.position.set(gx, 1.2, gz); scene.add(post);
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.1), signMat(signTex([["한강 달리기 대회", 44, .26], ["2~4명 · 판돈 500~2,000원", 26, .56], ["A·D(왼발·오른발)를 번갈아!", 26, .82]], "#c1543f", "#ffffff", 512, 256)));
+  sign.position.set(gx, 2.0, gz + .07); scene.add(sign); const s2 = sign.clone(); s2.rotation.y = Math.PI; s2.position.z = gz - .07; scene.add(s2);
+}
+const nearRaceGate = () => me.level === "ground" && me.st === "walk" && Math.hypot(me.x - RACE.gate[0], me.z - RACE.gate[1]) < 6;
+
+/* who is in which race (everything rides in presence) */
+// host: me.rc = { id, bet, st: "open" | "go" | "cancel", go }   joiner: me.rj = { h: hostPeer, id, at }   progress: me.rp = { id, d, f }
+function raceOf(hostKey) {
+  const host = hostKey === "me" ? { key: "me", peer: myPeer, rc: me.rc, n: me.name } : (() => { const o = others.get(hostKey); return o && o.p.rc ? { key: hostKey, peer: hostKey, rc: o.p.rc, n: o.p.n } : null; })();
+  if (!host || !host.rc) return null;
+  const list = [{ key: host.key, n: host.n, at: host.rc.id }];
+  if (host.key !== "me" && me.rj && me.rj.h === host.peer && me.rj.id === host.rc.id) list.push({ key: "me", n: me.name, at: me.rj.at });
+  for (const [peer, o] of others) if (peer !== host.key && o.p.rj && o.p.rj.h === host.peer && o.p.rj.id === host.rc.id) list.push({ key: peer, n: o.p.n, at: o.p.rj.at });
+  list.sort((a, b) => a.at - b.at || (a.key < b.key ? -1 : 1));
+  return { host, list: list.slice(0, 4), rc: host.rc };
+}
+function myRace() { if (me.rc) return raceOf("me"); if (me.rj) return raceOf(me.rj.h === myPeer ? "me" : me.rj.h); return null; }
+const progOf = key => key === "me" ? me.rp : (others.get(key) || { p: {} }).p.rp;
+
+/* actions */
+function openRaces() {
+  const out = [];
+  for (const [peer, o] of others) { const rc = o.p.rc; if (rc && rc.st === "open" && Date.now() - rc.id < 180000) { const r = raceOf(peer); if (r && r.list.length < 4) out.push(r); } }
+  return out;
+}
+function raceActions(acts, status) {
+  if (!started || anim || boarded) return status;
+  const r = myRace();
+  if (r) {
+    acts.length = 0;
+    const live = r.rc.st === "go";
+    if (!live) {
+      if (me.rc) { if (r.list.length >= 2) acts.push(["racego", `출발! (${r.list.length}명)`, "primary"]); acts.push(["racecancel", "경주 취소", ""]); }
+      else acts.push(["raceleave", "참가 취소", ""]);
+      return `한강 달리기 · 판돈 ${won(r.rc.bet)} · ${r.list.map(m => m.n).join(", ")} · ${r.list.length}/4명` + (me.rc && r.list.length < 2 ? " · 한 명 더 오면 출발할 수 있어요" : "");
+    }
+    return "";
+  }
+  if (me.st !== "walk" || !nearRaceGate()) return status;
+  const open = openRaces();
+  open.forEach(o => acts.unshift(["racejoin:" + o.host.key, `🏃 ${o.host.n}님 경주 참가 · ${won(o.rc.bet)}`, "primary"]));
+  if (!open.length) { acts.unshift(["raceopen", "경주 열기", "primary"]); status = "한강 달리기 대회 · 2~4명이 판돈을 걸고 달려요"; }
+  return status;
+}
+function raceClick(a) {
+  if (a === "raceopen") { if (me.hold || me.basket || me.rod) { toast("손을 비우고 와 주세요"); return true; } $("raceBetModal").hidden = false; return true; }
+  if (a.startsWith("racejoin:")) {
+    const r = raceOf(a.slice(9)); if (!r || r.rc.st !== "open" || r.list.length >= 4) { toast("이미 출발했거나 자리가 없어요"); return true; }
+    if (me.hold || me.basket || me.rod) { toast("손을 비우고 와 주세요"); return true; }
+    if (wallet.money < r.rc.bet) { toast("판돈이 모자라요"); return true; }
+    wallet.money -= r.rc.bet; saveWallet(); me.rj = { h: r.host.peer, id: r.rc.id, at: Date.now() }; me.rp = null; standAtLane(r.list.length);
+    toast(`${won(r.rc.bet)}을 걸고 참가했어요! 출발을 기다려요`); return true;
+  }
+  if (a === "racego") { const r = myRace(); if (!r || r.list.length < 2) return true; me.rc.st = "go"; me.rc.go = Date.now() + RACE_COUNT; return true; }
+  if (a === "racecancel") { refundRace("경주를 취소했어요. 판돈을 돌려받았어요"); me.rc = null; return true; }
+  if (a === "raceleave") { refundRace("참가를 취소했어요. 판돈을 돌려받았어요"); me.rj = null; return true; }
+  return false;
+}
+function refundRace(msg) { const r = myRace(); if (r && r.rc.st !== "go") { wallet.money += r.rc.bet; saveWallet(); toast(msg); } }
+$("raceBetGrid").addEventListener("click", e => {
+  const b = e.target.closest("button[data-bet]"); if (!b) return; const bet = +b.dataset.bet;
+  if (wallet.money < bet) { toast("판돈이 모자라요"); return; }
+  wallet.money -= bet; saveWallet(); me.rc = { id: Date.now(), bet, st: "open" }; me.rj = null; me.rp = null; $("raceBetModal").hidden = true; standAtLane(0);
+  toast(`${won(bet)}을 걸고 경주를 열었어요. 근처 사람들이 참가할 수 있어요`); publish(true); actKey = ""; refreshActions();
+});
+$("raceBetClose").addEventListener("click", () => { $("raceBetModal").hidden = true; });
+function standAtLane(i) { me.x = RACE.x0 - .6; me.z = RACE.lanes[Math.min(3, i)]; me.r = -Math.PI / 2; cam.tYaw = -Math.PI / 2; cam.tPitch = .22; }
+
+/* running */
+const run = { v: 0, d: 0, last: "", lastAt: 0, stumble: 0, id: 0, lane: 0, paid: 0 };
+const racing = () => { const r = myRace(); return r && r.rc.st === "go" && Date.now() >= r.rc.go && !(me.rp && me.rp.f) ? r : null; };
+const inRaceNow = () => { const r = myRace(); return !!(r && r.rc.st === "go"); };
+function raceTap(foot) {
+  const r = racing(); if (!r) return; const now = performance.now();
+  if (now - run.lastAt < TAP_MIN) return;
+  if (foot === run.last) { run.stumble = .45; run.v *= .3; run.last = ""; showBubble(() => myAvatar, "휘청!", .8, "me"); return; }
+  run.last = foot; run.lastAt = now; if (run.stumble > 0) return;
+  run.v = Math.min(7.5, run.v + .62); if (audio.ready) audio.step("path", foot === "R");
+}
+addEventListener("keydown", e => {
+  if (e.repeat || !inRaceNow()) return; const k = e.key.toLowerCase();
+  if (k === "a" || k === "arrowleft") raceTap("L"); else if (k === "d" || k === "arrowright") raceTap("R");
+});
+[["raceL", "L"], ["raceR", "R"]].forEach(([id, f]) => $(id).addEventListener("pointerdown", e => { e.preventDefault(); raceTap(f); }));
+function raceStep(dt) {
+  // called from stepPlayer while in a race: the race moves you, not the joystick
+  const r = myRace(); if (!r) return false;
+  if (r.rc.st !== "go") { me.moving = false; me.speed = 0; return true; }
+  const lane = Math.max(0, r.list.findIndex(m => m.key === "me"));
+  if (run.id !== r.rc.id) { Object.assign(run, { v: 0, d: 0, last: "", lastAt: 0, stumble: 0, id: r.rc.id, lane, paid: 0, t: 0 }); me.rp = { id: r.rc.id, d: 0, f: 0 }; }
+  me.z = RACE.lanes[lane]; me.r = -Math.PI / 2;
+  if (Date.now() < r.rc.go || (me.rp && me.rp.f)) { me.moving = false; me.speed = 0; if (!me.rp.f) me.x = RACE.x0 - .6; return true; }
+  // wall-clock time, so a slow phone runs as fast as a quick one
+  const pn = performance.now(); dt = Math.min(.25, run.t ? (pn - run.t) / 1000 : dt); run.t = pn;
+  run.stumble = Math.max(0, run.stumble - dt); run.v *= Math.exp(-dt * 1.9);
+  run.d = Math.min(RACE.len, run.d + run.v * dt); me.x = RACE.x0 + run.d; me.moving = run.v > .4; me.speed = run.v;
+  me.rp = { id: r.rc.id, d: +run.d.toFixed(2), f: 0 };
+  if (run.d >= RACE.len) { me.rp.f = Date.now() - r.rc.go; if (audio.ready) audio.ding(); showBubble(() => myAvatar, `도착! ${(me.rp.f / 1000).toFixed(2)}초`, 2.5, "me"); publish(true); }
+  return true;
+}
+
+/* countdown, results, payouts */
+let raceCdShown = "";
+function updateRace() {
+  const r = myRace(), cd = $("countdown"), btns = $("raceBtns");
+  if (!r) { if (btns && !btns.hidden) btns.hidden = true; if (me.rj && run.paid !== me.rj.id && !raceOf(me.rj.h === myPeer ? "me" : me.rj.h)) { toast("경주가 취소됐어요. 판돈을 돌려받았어요"); wallet.money += me.rj.bet || 0; saveWallet(); me.rj = null; } return; }
+  if (me.rj) me.rj.bet = r.rc.bet;
+  btns.hidden = !(r.rc.st === "go" && touchy && !(me.rp && me.rp.f));
+  if (r.rc.st !== "go") return;
+  const now = Date.now(), left = r.rc.go - now;
+  if (left > 0) { const n = String(Math.ceil(left / 1000)); if (raceCdShown !== r.rc.id + n) { raceCdShown = r.rc.id + n; cd.textContent = n; cd.hidden = false; cd.classList.remove("pop"); void cd.offsetWidth; cd.classList.add("pop"); if (audio.ready) audio.pop(); } }
+  else if (left > -900) { if (raceCdShown !== r.rc.id + "go") { raceCdShown = r.rc.id + "go"; cd.textContent = "출발!"; cd.hidden = false; cd.classList.remove("pop"); void cd.offsetWidth; cd.classList.add("pop"); if (audio.ready) audio.ding(); } }
+  else if (raceCdShown === r.rc.id + "go") { cd.hidden = true; raceCdShown = r.rc.id + "run"; }
+  // finished? everyone in, or time is up
+  const prog = r.list.map(m => ({ m, p: progOf(m.key) || { d: 0, f: 0 } }));
+  const allIn = prog.every(x => x.p.f > 0), timeUp = now - r.rc.go > RACE_LIMIT;
+  if (!(allIn || timeUp) || run.paid === r.rc.id) return;
+  run.paid = r.rc.id;
+  const order = prog.slice().sort((a, b) => (a.p.f || 1e9) - (b.p.f || 1e9) || (b.p.d || 0) - (a.p.d || 0));
+  const n = order.length, pot = r.rc.bet * n, share = RACE_SHARE[Math.max(2, Math.min(4, n))];
+  let given = 0; const pays = order.map((x, i) => { const p = i === n - 1 ? pot - given : Math.floor(pot * share[i] / 10) * 10; given += p; return p; });
+  const mine = order.findIndex(x => x.m.key === "me");
+  if (mine >= 0) { wallet.money += pays[mine]; saveWallet(); }
+  showRaceResult(order, pays, mine, pot);
+  setTimeout(() => { me.rc = null; me.rj = null; me.rp = null; publish(true); actKey = ""; refreshActions(); }, 4000);
+}
+function showRaceResult(order, pays, mine, pot) {
+  const box = $("raceResList"); box.textContent = "";
+  order.forEach((x, i) => {
+    const row = document.createElement("div"); row.className = "row" + (i === mine ? " me" : "");
+    const t = x.p.f ? (x.p.f / 1000).toFixed(2) + "초" : "완주 못 함";
+    const a = document.createElement("span"); a.textContent = `${i + 1}등 · ${x.m.n} · ${t}`; const b = document.createElement("b"); b.textContent = "+" + won(pays[i]);
+    row.append(a, b); box.appendChild(row);
+  });
+  $("raceResTitle").textContent = mine === 0 ? "🏆 1등이에요!" : mine > 0 ? `${mine + 1}등으로 들어왔어요` : "경주 결과";
+  $("raceResPot").textContent = `총 상금 ${won(pot)}`;
+  $("raceResModal").hidden = false; if (audio.ready && mine === 0) audio.ding();
+}
+$("raceResOk").addEventListener("click", () => { $("raceResModal").hidden = true; });
 })();
 </script>
 

@@ -37,6 +37,7 @@ function stepPlayer(dt) {
     return;
   }
   if (me.st === "sit" || me.st === "lie" || me.st === "bench" || me.st === "stool") { me.moving = false; return; }
+  if ((me.rc || me.rj) && me.st === "walk" && raceStep(dt)) return;
   if (me.q && me.st === "walk") { queueWalk(dt); return; }
   if (me.st === "bike") { bikeStep(dt, inp); return; }
   if (!me.moving) { me.speed = 0; return; }

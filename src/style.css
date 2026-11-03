@@ -193,3 +193,13 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
 .fish-card b{display:block;font-size:17px}.fish-card span{font-size:12px;color:var(--ink-soft)}
 .dex-box{display:grid;gap:6px;max-height:40vh;overflow:auto}
 .dex{display:flex;gap:8px;align-items:center;font-size:13px}.dex i{width:22px;height:12px;border-radius:50%;flex:none}.dex.unknown{opacity:.55}
+.race-bets{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.race-bets button{border-radius:14px;padding:14px 6px;font-size:15px;font-weight:700;border:1px solid var(--line);background:rgba(255,255,255,.08)}
+.race-bets button:hover{background:#f2b46b;color:#2a1d0f}
+.race-table{font-size:12px!important;opacity:.75}
+.race-res .row{display:flex;justify-content:space-between;gap:8px;padding:9px 10px;border-radius:10px;background:rgba(255,255,255,.05);font-size:14px}
+.race-res .row.me{background:rgba(242,180,107,.22)}
+.race-res .row b{color:#f2b46b}
+.race-btns{position:fixed;left:0;right:0;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:12;display:flex;justify-content:space-between;padding:0 18px;pointer-events:none}
+.race-btns button{pointer-events:auto;width:38vw;max-width:170px;height:96px;border-radius:24px;border:0;font-size:20px;font-weight:800;background:rgba(193,84,63,.92);color:#fff;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.race-btns button:active{transform:scale(.95)}

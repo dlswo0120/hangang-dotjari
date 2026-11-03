@@ -128,6 +128,27 @@
   </div>
 </div>
 
+<div class="modal" id="raceBetModal" hidden role="dialog" aria-modal="true" aria-labelledby="raceBetTitle">
+  <div class="card">
+    <h2 id="raceBetTitle">판돈을 골라 주세요</h2>
+    <p>참가하는 사람 모두 같은 금액을 걸어요. 1등이 가장 많이 가져가고, 꼴찌도 조금은 돌려받아요.</p>
+    <div class="race-bets" id="raceBetGrid"><button data-bet="500">500원</button><button data-bet="1000">1,000원</button><button data-bet="2000">2,000원</button></div>
+    <p class="race-table">2명 70·30% · 3명 55·30·15% · 4명 50·25·15·10%</p>
+    <div class="modal-btns one"><button type="button" id="raceBetClose">그만두기</button></div>
+  </div>
+</div>
+
+<div class="modal" id="raceResModal" hidden role="dialog" aria-modal="true" aria-labelledby="raceResTitle">
+  <div class="card news">
+    <h2 id="raceResTitle">경주 결과</h2>
+    <p id="raceResPot"></p>
+    <div class="list race-res" id="raceResList"></div>
+    <button class="news-ok" id="raceResOk">좋아요</button>
+  </div>
+</div>
+
+<div class="race-btns" id="raceBtns" hidden><button id="raceL">왼발</button><button id="raceR">오른발</button></div>
+
 <div class="modal" id="ageModal" hidden role="dialog" aria-modal="true" aria-labelledby="ageTitle">
   <div class="card">
     <h2 id="ageTitle">19세 이상인가요?</h2>
