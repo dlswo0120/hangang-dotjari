@@ -70,10 +70,10 @@ function raceActions(acts, status) {
   return status;
 }
 function raceClick(a) {
-  if (a === "raceopen") { if (me.hold || me.basket || me.rod) { toast("손을 비우고 와 주세요"); return true; } openBet("race"); return true; }
+  if (a === "raceopen") { if (me.hold || me.basket) { toast("손을 비우고 와 주세요"); return true; } openBet("race"); return true; }
   if (a.startsWith("racejoin:")) {
     const r = raceOf(a.slice(9)); if (!r || r.rc.st !== "open" || r.list.length >= 4) { toast("이미 출발했거나 자리가 없어요"); return true; }
-    if (me.hold || me.basket || me.rod) { toast("손을 비우고 와 주세요"); return true; }
+    if (me.hold || me.basket) { toast("손을 비우고 와 주세요"); return true; }
     if (wallet.money < r.rc.bet) { toast("판돈이 모자라요"); return true; }
     wallet.money -= r.rc.bet; saveWallet(); me.rj = { h: r.host.peer, id: r.rc.id, at: Date.now() }; me.rp = null; standAtLane(r.list.length);
     toast(`${won(r.rc.bet)}을 걸고 참가했어요! 출발을 기다려요`); return true;

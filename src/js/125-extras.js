@@ -48,7 +48,9 @@ function paperLabel(text) {
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false, fog: false }));
   s.scale.set(w / h * .6, .6, 1); return s;
 }
+const recentPapers = [];
 function spawnPaper(pb) {
+  if (pb.t && !recentPapers.includes(pb.t)) { recentPapers.push(pb.t); if (recentPapers.length > 30) recentPapers.shift(); }
   const g = new THREE.Group();
   const hull = new THREE.Mesh(new THREE.CylinderGeometry(.34, .18, .15, 4, 1), paperM); hull.rotation.y = Math.PI / 4; hull.scale.set(1, 1, .42); hull.position.y = .07; g.add(hull);
   const sail = new THREE.Mesh(new THREE.ConeGeometry(.17, .3, 4), paperM); sail.rotation.y = Math.PI / 4; sail.scale.set(1, 1, .22); sail.position.y = .29; g.add(sail);

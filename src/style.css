@@ -212,3 +212,7 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
 .card.fish p.fish-duel{color:#f2b46b;font-weight:700}
 .fish-sheet{transition:transform .35s ease}
 .fish-sheet.peek{transform:translate(-50%,calc(100% + 40px))}
+.ann-bar{position:fixed;left:50%;top:calc(118px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:16;max-width:calc(100% - 32px);padding:11px 18px;border-radius:999px;background:linear-gradient(90deg,#f2b46b,#ffd98a);color:#2a1d0f;font-weight:700;font-size:14px;box-shadow:0 6px 24px rgba(0,0,0,.3);text-align:center;word-break:keep-all;pointer-events:none}
+.ann-bar.go{animation:annIn .5s ease}
+@keyframes annIn{from{transform:translate(-50%,-20px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+.shot{z-index:30!important}

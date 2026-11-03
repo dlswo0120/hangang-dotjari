@@ -148,7 +148,6 @@ $("bagModal").addEventListener("click", e => {
   if (e.target === $("bagModal")) { $("bagModal").hidden = true; return; }
   const b = e.target.closest("button[data-act]"); if (!b) return; const i = +b.dataset.i;
   if (b.dataset.act === "drop" && me.basket) { me.basket.splice(i, 1); publish(true); actKey = ""; openBag(); return; }
-  if (me.rod && (b.dataset.act === "fire" || b.dataset.act === "eat")) { toast("낚싯대를 든 채로는 꺼낼 수 없어요. 반납한 뒤에 꺼내 주세요"); return; }
   if (b.dataset.act === "fire") { fireFromBag(i); return; }
   if (b.dataset.act === "eat") {
     if (me.hold) { toast("들고 있는 걸 먼저 다 먹어 주세요"); return; }

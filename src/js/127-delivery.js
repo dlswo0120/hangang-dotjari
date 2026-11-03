@@ -68,7 +68,7 @@ function updateDeliveries(dt) {
 }
 function receiveDelivery() {
   const k = me.dv.k; me.dv.got = true;
-  const canHold = !me.hold && !me.rod && !boarded && (me.st === "walk" || me.st === "sit" || me.st === "bench" || me.st === "stool") && me.level === "ground";
+  const canHold = !me.hold && !boarded && (me.st === "walk" || me.st === "sit" || me.st === "bench" || me.st === "stool") && me.level === "ground";
   if (canHold) { me.hold = k; me.eat = 0; toast(PRODUCTS[k].name + " 도착! '먹기'를 누르면 먹을 수 있어요"); }
   else { if (wallet.bag.length < BAG_MAX) wallet.bag.push(k); saveWallet(); toast(PRODUCTS[k].name + " 도착! 가방에 넣어 두었어요"); }
   if (audio.ready) audio.ding();

@@ -9,10 +9,17 @@ const FISH = [
   { k: "sogari", name: "쏘가리", rare: 1, w: 8, cm: [20, 42], col: 0xb89040, pay: 600 },
   { k: "gold", name: "황금 잉어", rare: 2, w: 2, cm: [55, 95], col: 0xffcf3a, pay: 3000 },
   { k: "boot", name: "장화", rare: 3, w: 7, cm: [0, 0], col: 0x3a4a3a, pay: 100 },
-  { k: "can", name: "깡통", rare: 3, w: 7, cm: [0, 0], col: 0xb0b6bc, pay: 100 }
+  { k: "can", name: "깡통", rare: 3, w: 7, cm: [0, 0], col: 0xb0b6bc, pay: 100 },
+  // treasures: very rare, announced to everyone, money ones pay once a day each
+  { k: "letter", name: "유리병 편지", rare: 4, w: 1, cm: [0, 0], col: 0x9fe0d0, pay: 0, pts: 50, speed: 1.1, icon: "🍾" },
+  { k: "wallet", name: "지갑", rare: 4, w: .6, cm: [0, 0], col: 0x6b4a33, pay: 1000, pts: 100, speed: 1.2, icon: "👛" },
+  { k: "ring", name: "금반지", rare: 4, w: .3, cm: [0, 0], col: 0xffcf3a, pay: 2000, pts: 200, speed: 1.5, icon: "💍" },
+  { k: "chest", name: "보물상자", rare: 4, w: .3, cm: [0, 0], col: 0x8a5a2b, pay: 0, pts: 300, speed: 1.7, icon: "🧰" },
+  { k: "whale", name: "아기 고래", rare: 4, w: .05, cm: [480, 560], col: 0x3d5a80, pay: 5000, pts: 1000, speed: 2.1, icon: "🐋" }
 ];
+const LETTERS = ["오늘도 고생 많았어요. 한강 바람이 당신 편이에요", "천천히 가도 괜찮아요. 다들 각자의 속도가 있거든요", "누군가 이 편지를 읽고 웃었으면 좋겠어요", "내일은 오늘보다 조금 더 맑을 거예요", "지금 그 자리에 있어 줘서 고마워요"];
 const FISH_BY = Object.fromEntries(FISH.map(f => [f.k, f]));
-const RARE_LABEL = ["흔해요", "가끔 잡혀요", "아주 드물어요", "강 청소"];
+const RARE_LABEL = ["흔해요", "가끔 잡혀요", "아주 드물어요", "강 청소", "보물·전설"];
 const onFishDeck = (x, z) => Math.abs(x - FISH_DECK.x) < FISH_DECK.half && z > FISH_DECK.z0 && z < BOUND.landZ0 + .1;
 
 /* the deck and the rod rental box */
@@ -60,7 +67,7 @@ function fishClick(a) {
     toast("낚싯대를 빌렸어요! 낚시 데크 끝으로 가서 '낚시하기'를 눌러 보세요"); return true;
   }
   if (a === "rodret") { endRod("낚싯대를 반납했어요"); return true; }
-  if (a === "fish") { openFish(); return true; }
+  if (a === "fish") { if (me.hold) { toast("손에 든 걸 먼저 다 먹거나 내려놓아 주세요"); return true; } openFish(); return true; }
   return false;
 }
 function endRod(msg) { me.rod = null; me.fs = null; closeFish(); toast(msg); publish(true); actKey = ""; }
@@ -88,11 +95,13 @@ function drawFish() {
   else if (st === "bite") { const R = fishing.reel; msg.textContent = `걸렸다! 바늘이 초록 칸에 왔을 때 눌러요 (${R.hits}/2 · 헛손질 ${R.miss}/3)`; btn.textContent = "지금 눌러 감기!"; }
   else if (st === "caught" && fishing.catch) {
     const F = FISH_BY[fishing.catch.k], earned = fishEarnedToday(), pay = Math.min(F.pay, Math.max(0, FISH_DAY_CAP - earned));
-    msg.textContent = F.rare === 3 ? "물고기가 아니라…" : F.rare === 2 ? "✨ 대박! 황금 잉어예요!" : "잡았어요!";
-    $("fishName").textContent = F.name + (F.rare === 3 ? "" : ` ${fishing.catch.cm}cm`);
+    msg.textContent = F.rare === 4 ? `${F.icon} 이게 뭐지…?!` : F.rare === 3 ? "물고기가 아니라…" : F.rare === 2 ? "✨ 대박! 황금 잉어예요!" : "잡았어요!";
+    $("fishName").textContent = F.rare === 4 ? `${F.icon} ${F.name}` + (F.k === "whale" ? ` ${fishing.catch.cm}cm` : "") : F.name + (F.rare === 3 ? "" : ` ${fishing.catch.cm}cm`);
     $("fishRare").textContent = RARE_LABEL[F.rare] + (fishing.catch.isNew ? " · 도감에 새로 기록!" : "");
+    if (F.k === "letter") $("fishRare").textContent = `“${fishing.catch.note || LETTERS[0]}”`;
     $("fishIcon").style.background = "#" + F.col.toString(16).padStart(6, "0");
-    $("fishRelease").textContent = (F.rare === 3 ? "쓰레기 버리기" : "방생하기") + (fishing.catch.duel ? ` (대결 점수 +${fishing.catch.pts}점)` : pay > 0 ? ` (+${won(pay)})` : " (오늘 보상은 다 받았어요)");
+    if (F.rare === 4) $("fishRelease").textContent = fishing.catch.duel ? `대결 점수 +${fishing.catch.pts}점` : ({ letter: "쪽지 간직하기", wallet: "주인에게 돌려주기", ring: "주머니에 넣기", chest: "상자 열기", whale: "고래에게 손 흔들기" })[F.k];
+    else $("fishRelease").textContent = (F.rare === 3 ? "쓰레기 버리기" : "방생하기") + (fishing.catch.duel ? ` (대결 점수 +${fishing.catch.pts}점)` : pay > 0 ? ` (+${won(pay)})` : " (오늘 보상은 다 받았어요)");
   }
 }
 function fishLoop() {
@@ -103,7 +112,7 @@ function fishLoop() {
     const now = Date.now(), pn = performance.now(), dt = Math.min(.25, (pn - last) / 1000); last = pn;
     { const dl = $("fishDuel"), d = myDuel(); if (d && d.fd.st === "go") { const other = d.h.key === "me" ? d.opp : d.h, left = d.fd.go + FD_TIME - now; dl.hidden = false; dl.textContent = left > FD_TIME ? "대결 준비…" : left > 0 ? `🎣 대결 ${fmt(left / 1000)} · 나 ${scoreOf("me").s}점 · ${other ? other.n : "상대"} ${other ? scoreOf(other.key).s : 0}점` : "대결 끝!"; } else dl.hidden = true; }
     if (fishing.st === "charge") { fishing.power += fishing.pDir * dt * 1.1; if (fishing.power >= 1) { fishing.power = 1; fishing.pDir = -1; } if (fishing.power <= 0) { fishing.power = 0; fishing.pDir = 1; } $("fishPowerBar").style.width = Math.round(fishing.power * 100) + "%"; }
-    if (fishing.st === "wait" && now >= fishing.biteAt) { const F = rollFish(); fishing.st = "bite"; fishing.reel = { F, hits: 0, miss: 0, pos: 0, dir: 1, speed: [1, 1.35, 1.8, .75][F.rare], zone: .2 + Math.random() * .55, end: now + 7000 }; placeReel(); setFs("bite", { bx: me.fs.bx, bz: me.fs.bz }); if (audio.ready) { audio.tone(audio.sfx, "sine", 520, 260, .18, .3); if (navigator.vibrate) try { navigator.vibrate(120); } catch (e) {} } drawFish(); }
+    if (fishing.st === "wait" && now >= fishing.biteAt) { const F = rollFish(); fishing.st = "bite"; fishing.reel = { F, hits: 0, miss: 0, pos: 0, dir: 1, speed: F.speed || [1, 1.35, 1.8, .75][F.rare], zone: .2 + Math.random() * .55, end: now + 7000 }; placeReel(); setFs("bite", { bx: me.fs.bx, bz: me.fs.bz }); if (audio.ready) { audio.tone(audio.sfx, "sine", 520, 260, .18, .3); if (navigator.vibrate) try { navigator.vibrate(120); } catch (e) {} } drawFish(); }
     if (fishing.st === "bite") {
       const R = fishing.reel; R.pos += R.dir * R.speed * dt; if (R.pos >= 1) { R.pos = 1; R.dir = -1; } if (R.pos <= 0) { R.pos = 0; R.dir = 1; }
       $("reelNeedle").style.left = (R.pos * 100) + "%";
@@ -157,14 +166,34 @@ function strike(pre) {
   dex[F.k] = { n: (prev ? prev.n : 0) + 1, best: Math.max(prev ? prev.best : 0, cm) }; saveDex();
   const duel = inFishDuel(), pts = duelCatch(F, cm);
   fishing.catch = { k: F.k, cm, isNew, duel, pts }; fishing.st = "caught";
-  setFs("catch", { k: F.k, cm });
-  showBubble(() => myAvatar, F.rare === 3 ? `${F.name}…?` : `${F.name} ${cm}cm!`, 3, "me");
-  const sheet = $("fishModal"); sheet.classList.add("peek"); setTimeout(() => sheet.classList.remove("peek"), 2300);
+  if (F.k === "letter") { const pool = recentPapers.length ? recentPapers.concat(LETTERS) : LETTERS; fishing.catch.note = pool[Math.floor(Math.random() * pool.length)]; }
+  if (F.rare === 4) announceRare(me.name, F, cm);
+  setFs("catch", { k: F.k, cm, bx: me.fs && me.fs.bx != null ? me.fs.bx : +me.x.toFixed(2), bz: me.fs && me.fs.bz != null ? me.fs.bz : +(me.z - 7).toFixed(2) });
+  showBubble(() => myAvatar, F.rare === 4 ? `${F.icon} ${F.name}!` : F.rare === 3 ? `${F.name}…?` : `${F.name} ${cm}cm!`, 3, "me");
+  const sheet = $("fishModal"); sheet.classList.add("peek"); setTimeout(() => sheet.classList.remove("peek"), F.k === "whale" ? 6500 : 2300);
   if (audio.ready) (F.rare === 2 ? audio.ding() : audio.pop());
   drawFish();
 }
+function rareReward(k) {
+  // each paying treasure pays once a day
+  wallet.rare = wallet.rare || {}; if (wallet.rare[k] === todayKey()) return 0;
+  wallet.rare[k] = todayKey(); const F = FISH_BY[k];
+  return k === "chest" ? 1000 + Math.floor(Math.random() * 9) * 500 : F.pay;
+}
 $("fishRelease").addEventListener("click", () => {
   if (!fishing.catch) return; const F = FISH_BY[fishing.catch.k];
+  if (F.rare === 4) {
+    const k = F.k, duel = fishing.catch.duel; let msg = "", pay = 0;
+    if (k === "letter") msg = "쪽지를 소중히 간직했어요";
+    else { pay = duel ? 0 : rareReward(k); }
+    if (k === "chest" && !duel) { const extra = []; if (Math.random() < .3 && wallet.bag.length < BAG_MAX) { wallet.bag.push("sparkler"); extra.push("스파클러"); } if (Math.random() < .15 && wallet.bag.length < BAG_MAX) { wallet.bag.push("fountain"); extra.push("분수 폭죽"); } msg = pay ? `상자 안에 ${won(pay)}${extra.length ? "과 " + extra.join("·") : ""}이 들어 있었어요!` : "오늘은 이미 보물을 받았어요. 상자는 텅 비어 있네요"; if (pay) sparkBurst(myAvatar); }
+    else if (k === "wallet") msg = pay ? `지갑을 주인에게 돌려줬어요. 사례금 ${won(pay)}을 받았어요` : "지갑을 주인에게 돌려줬어요. (사례금은 하루 한 번)";
+    else if (k === "ring") msg = pay ? `금반지를 팔아 ${won(pay)}을 받았어요` : "반짝이는 금반지예요. (보상은 하루 한 번)";
+    else if (k === "whale") msg = pay ? `아기 고래와 인사했어요! ${won(pay)}` : "아기 고래와 또 만났어요! (보상은 하루 한 번)";
+    if (duel) msg = `대결 점수 +${fishing.catch.pts}점!`;
+    if (pay) { wallet.money += pay; } saveWallet(); toast(msg); if (audio.ready) audio.ding();
+    fishing.catch = null; fishing.st = "ready"; fishing.power = 0; setFs("idle"); drawFish(); return;
+  }
   const pay = fishing.catch.duel ? 0 : Math.min(F.pay, Math.max(0, FISH_DAY_CAP - fishEarnedToday()));
   if (pay > 0) { if (wallet.fishDay !== todayKey()) { wallet.fishDay = todayKey(); wallet.fishEarn = 0; } wallet.fishEarn += pay; wallet.money += pay; saveWallet(); }
   toast(F.rare === 3 ? `강이 조금 더 깨끗해졌어요${pay ? " · +" + won(pay) : ""}` : `${F.name}를 강으로 돌려보냈어요${pay ? " · +" + won(pay) : ""}`);
@@ -185,6 +214,14 @@ $("fishClose").addEventListener("click", closeFish);
 /* everyone's rods, lines, bobbers and catches */
 function makeFishMesh(k) {
   const F = FISH_BY[k] || FISH[0], g = new THREE.Group(), m = F.rare === 2 ? new THREE.MeshLambertMaterial({ color: F.col, emissive: 0x8a5a00, emissiveIntensity: .6 }) : mat(F.col);
+  if (F.rare === 4) {
+    const gold = new THREE.MeshLambertMaterial({ color: 0xffcf3a, emissive: 0x8a5a00, emissiveIntensity: .5 });
+    if (k === "letter") { const gl = new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, .26, 12), new THREE.MeshPhongMaterial({ color: 0x9fe0d0, transparent: true, opacity: .55 })); gl.position.y = .13; g.add(gl); const neck = new THREE.Mesh(new THREE.CylinderGeometry(.025, .05, .08, 10), gl.material); neck.position.y = .3; g.add(neck); const paper = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, .18, 8), mat(0xf6efd8)); paper.position.y = .13; g.add(paper); }
+    else if (k === "wallet") { const w = new THREE.Mesh(new THREE.BoxGeometry(.22, .14, .04), m); w.position.y = .07; g.add(w); const strap = new THREE.Mesh(new THREE.BoxGeometry(.06, .14, .045), mat(0x4a3222)); strap.position.set(.06, .07, 0); g.add(strap); }
+    else if (k === "ring") { const r = new THREE.Mesh(new THREE.TorusGeometry(.09, .022, 8, 20), gold); r.position.y = .1; g.add(r); const gem = new THREE.Mesh(new THREE.OctahedronGeometry(.045), new THREE.MeshBasicMaterial({ color: 0xbfe9ff })); gem.position.y = .21; g.add(gem); }
+    else if (k === "chest") { const b = new THREE.Mesh(new THREE.BoxGeometry(.36, .22, .24), m); b.position.y = .11; g.add(b); const lid = new THREE.Mesh(new THREE.CylinderGeometry(.12, .12, .36, 12, 1, false, 0, Math.PI), m); lid.rotation.z = Math.PI / 2; lid.position.y = .22; g.add(lid); const band = new THREE.Mesh(new THREE.BoxGeometry(.06, .36, .25), gold); band.position.y = .17; g.add(band); }
+    return g;
+  }
   if (F.rare === 3) {
     if (k === "boot") { const a = new THREE.Mesh(new THREE.BoxGeometry(.14, .3, .14), m); a.position.y = .15; g.add(a); const b = new THREE.Mesh(new THREE.BoxGeometry(.14, .1, .26), m); b.position.set(0, .05, -.06); g.add(b); }
     else { const c = new THREE.Mesh(new THREE.CylinderGeometry(.07, .07, .2, 12), m); c.position.y = .1; g.add(c); }
@@ -220,6 +257,9 @@ function showRod(av, has, fs) {
   const u = av.userData;
   if (!has) { if (u.rodG) { u.rodG.visible = false; u.line.visible = false; u.bobber.visible = false; u.ripple.visible = false; if (u.fishW) u.fishW.visible = false; } return; }
   rodFor(av); u.rodG.visible = true;
+  // not fishing right now: the rod rides on the back so hands are free for everything else
+  if (!fs) { u.rodG.position.set(-.12, .05, .26); u.rodG.rotation.set(.32, 0, .25); u.line.visible = u.bobber.visible = u.ripple.visible = false; if (u.fishW) u.fishW.visible = false; return; }
+  u.rodG.position.set(.2, .15, -.32);
   const s = fs && fs.s, t = fs ? (Date.now() - fs.at) / 1000 : 0, inWater = s === "cast" || s === "bite";
   const catching = s === "catch" && t < 6;
   // rod swing: back, whip forward, settle; held high while showing a catch
@@ -243,6 +283,7 @@ function showRod(av, has, fs) {
     else u.ripple.visible = false;
   } else u.ripple.visible = false;
   // the catch comes up out of the water and hangs from the line
+  if (catching && fs.k === "whale") { whaleShow(av, fs, t); u.line.visible = t < .8; if (u.fishW) u.fishW.visible = false; return; }
   if (catching && (!u.fishW || u.fishK !== fs.k)) { if (u.fishW) scene.remove(u.fishW); u.fishW = makeFishMesh(fs.k); u.fishW.rotation.order = "YXZ"; u.fishK = fs.k; scene.add(u.fishW); }
   if (u.fishW) {
     u.fishW.visible = catching;
@@ -259,12 +300,13 @@ function showRod(av, has, fs) {
 }
 const seenCatch = new Map();
 function updateFishing() {
+  if (me.fs && me.fs.s === "catch" && $("fishModal").hidden && Date.now() - me.fs.at > 7000) me.fs = null; // panel closed after a catch: put the rod away
   if (myAvatar) showRod(myAvatar, !!me.rod, me.fs);
   for (const [peer, o] of others) {
     showRod(o.obj, !!o.p.fr, o.p.fs);
     const fs = o.p.fs; if (fs && fs.s === "catch" && seenCatch.get(peer) !== fs.at) {
       seenCatch.set(peer, fs.at); const F = FISH_BY[fs.k];
-      if (F && Date.now() - fs.at < 4000) { const id = peer; showBubble(() => (others.get(id) || {}).obj, F.rare === 3 ? `${F.name}…?` : `${F.name} ${fs.cm}cm!`, 3, id); }
+      if (F && Date.now() - fs.at < 4000) { const id = peer; showBubble(() => (others.get(id) || {}).obj, F.rare === 4 ? `${F.icon} ${F.name}!` : F.rare === 3 ? `${F.name}…?` : `${F.name} ${fs.cm}cm!`, 3, id); if (F.rare === 4) announceRare(o.p.n, F, fs.cm); }
     }
   }
 }
@@ -274,4 +316,43 @@ function rodPose(v, fs) {
   if (!fs) return; const t = (Date.now() - fs.at) / 1000;
   if (fs.s === "cast" && t < .75) { const k = t < .2 ? t / .2 : t < .35 ? 1 - (t - .2) / .15 * 1.6 : -.6 + .6 * Math.min(1, (t - .35) / .4); v.arR += .9 * k; v.arL += .7 * k; v.lean -= .15 * k; }
   if (fs.s === "catch" && t < 6) { v.arL = v.arR = 1.6; v.azL = v.azR = -.15; v.lean -= .12; }
+}
+
+/* treasures: an announcement for everyone, sparkles, and the baby whale */
+function announceRare(name, F, cm) {
+  const bar = $("annBar"); bar.textContent = `${F.icon} ${name}님이 한강에서 ${F.name}${F.k === "whale" ? "를 만났어요" : "를 낚았어요"}!`;
+  bar.hidden = false; bar.classList.remove("go"); void bar.offsetWidth; bar.classList.add("go");
+  clearTimeout(bar._t); bar._t = setTimeout(() => { bar.hidden = true; }, 6000);
+  if (audio.ready) audio.ding();
+}
+function sparkBurst(av) { if (!av) return; av.userData.head.getWorldPosition(tipW); for (let i = 0; i < 60; i++) sparksS.emit(tipW.x, tipW.y + .3, tipW.z, rnd(-3, 3), rnd(1, 5), rnd(-3, 3), Math.random() < .5 ? GOLD : WHITE, rnd(.6, 1.2), 4); }
+function makeWhale() {
+  const g = new THREE.Group(), skin = mat(0x3d5a80), belly = mat(0xd8e4ef);
+  const body = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14), skin); body.scale.set(1.05, .95, 2.4); g.add(body);
+  const under = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 12), belly); under.scale.set(.85, .6, 2.1); under.position.y = -.38; g.add(under);
+  const tail = new THREE.Mesh(new THREE.ConeGeometry(.45, 1.6, 10), skin); tail.rotation.x = -Math.PI / 2; tail.position.z = 2.9; g.add(tail);
+  [-1, 1].forEach(s => { const f = new THREE.Mesh(new THREE.BoxGeometry(1.3, .1, .55), skin); f.position.set(s * .6, 0, 3.6); f.rotation.y = s * .35; g.add(f);
+    const fin = new THREE.Mesh(new THREE.BoxGeometry(.9, .08, .4), skin); fin.position.set(s * 1.0, -.35, -.6); fin.rotation.z = s * -.5; g.add(fin);
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(.09, 8, 6), new THREE.MeshBasicMaterial({ color: 0x111111 })); eye.position.set(s * .78, .05, -1.6); g.add(eye); });
+  g.traverse(m => { if (m.isMesh) m.castShadow = true; }); scene.add(g); return g;
+}
+let whale = null, whaleSnapAt = 0;
+function whaleShow(av, fs, t) {
+  if (!whale) whale = makeWhale();
+  const u = av.userData; if (!u.whaleAt || u.whaleAt !== fs.at) u.whaleAt = fs.at;
+  const k = clamp(t / 5.5, 0, 1), arc = Math.sin(k * Math.PI);
+  whale.visible = t < 6; whale.position.set(fs.bx + (k - .5) * 6, -2.4 + arc * 3.2, fs.bz - 2); whale.rotation.set(-Math.cos(k * Math.PI) * .6, Math.PI / 2, 0);
+  if (t > 1.2 && t < 3.2 && Math.random() < .8) for (let i = 0; i < 4; i++) sparksS.emit(whale.position.x, whale.position.y + 1, whale.position.z, rnd(-.5, .5), rnd(5, 8), rnd(-.5, .5), WHITE, 1, 6);
+  if (t > 5.8) whale.visible = false;
+  // the catcher gets a keepsake photo as the whale tops its leap
+  if (av === myAvatar && t > 2.6 && whaleSnapAt !== fs.at) { whaleSnapAt = fs.at; snapWhale(); }
+}
+function snapWhale() {
+  photoCam.aspect = canvas.width / canvas.height; photoCam.updateProjectionMatrix();
+  photoCam.position.set(me.x + 4, me.y + 2.4, me.z + 4); photoCam.lookAt(whale.position.x, whale.position.y, whale.position.z);
+  renderer.render(scene, photoCam);
+  const w = canvas.width, h = canvas.height, c = document.createElement("canvas"); c.width = w; c.height = h; const x = c.getContext("2d"); x.drawImage(canvas, 0, 0);
+  const sc = Math.max(1, w / 900), k = kst(); x.font = `${Math.round(16 * sc)}px 'Gowun Batang', serif`; x.fillStyle = "rgba(255,255,255,.92)"; x.textAlign = "right"; x.textBaseline = "bottom"; x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = 8 * sc;
+  x.fillText(`🐋 한강에서 아기 고래를 만난 날 · ${me.name} · ${k.getMonth() + 1}월 ${k.getDate()}일`, w - 18 * sc, h - 16 * sc);
+  setTimeout(() => deliverShot(c), 3200);
 }

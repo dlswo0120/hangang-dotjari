@@ -58,7 +58,7 @@ BET_FN.fish = bet => {
 // called from strike(): only fish caught during the 3 minutes count
 function duelCatch(F, cm) {
   if (!inFishDuel()) return 0;
-  const pts = Math.round(cm * FD_MULT[F.rare]), d = myDuel();
+  const pts = F.pts != null ? F.pts : Math.round(cm * FD_MULT[F.rare]), d = myDuel();
   me.fsc = { id: d.fd.id, s: (me.fsc && me.fsc.id === d.fd.id ? me.fsc.s : 0) + pts, n: (me.fsc && me.fsc.id === d.fd.id ? me.fsc.n : 0) + 1 };
   publish(true); return pts;
 }

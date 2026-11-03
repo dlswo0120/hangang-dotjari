@@ -206,7 +206,7 @@ function updateAvatar(av, dt, t, o = {}) {
     if (u.bowl.userData.tip) u.bowl.userData.tip.visible = !!o.lit;
   }
   v.roll = 0;
-  if (o.rod) rodPose(v, o.fs);
+  if (o.rod && o.fs) rodPose(v, o.fs);
   if (o.emote) emotePose(v, o.emote.i, o.emote.t, u.pose === "stand", u, o.emote.s); else if (u.vR) u.vR.visible = false;
   u.torso.scale.y = 1 + Math.sin(ph * 2.1) * .012;
   if (o.mat === false) v.matP = 0;
