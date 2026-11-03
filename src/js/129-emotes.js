@@ -15,7 +15,10 @@ const EMOTES = [
   { id: "pv2", name: "같이 브이", icon: "✌️", dur: 9, seat: true, photo: "duo" },
   { id: "pjump", name: "점프샷", icon: "🦘", dur: 9, seat: false, photo: "group" },
   { id: "paerial2", name: "단체 항공샷", icon: "🛸", dur: 9, seat: true, photo: "group", aerial: true },
-  { id: "pfight", name: "다 같이 파이팅", icon: "✊", dur: 9, seat: true, photo: "group", say: "화이팅!" }
+  { id: "pfight", name: "다 같이 파이팅", icon: "✊", dur: 9, seat: true, photo: "group", say: "화이팅!" },
+  // poses used by other features (not in the menu)
+  { id: "rail", name: "난간에 기대기", dur: 900, hidden: true },
+  { id: "dive", name: "다이빙", dur: 2.4, hidden: true }
 ];
 const PHOTO_SHOT_AT = { solo: 3.2, duo: 6.2, group: 6.2 }; // seconds from the start until the shutter
 const CHEST_BPM = 2.25; // beats per second
@@ -55,6 +58,11 @@ function emotePose(v, i, t, standing, u, side) {
   else if (E.id === "pheart") { const s = side || 1; v.roll = (v.roll || 0) - .2 * s * env; if (s > 0) { to("arR", .35); to("azR", 2.05); } else { to("arL", .35); to("azL", 2.05); } }
   else if (E.id === "pstick") { const s = side || 1; v.roll = (v.roll || 0) - .3 * s * env; to("arL", .1); to("arR", .1); to("azL", .2); to("azR", .2); v.nod -= .05 * env; }
   else if (E.id === "pjump") { to("arL", .25); to("arR", .25); to("azL", 2.45); to("azR", 2.45); const jt = t - (PHOTO_SHOT_AT.group - .45); if (standing && jt > 0 && jt < .9) v.lift += Math.sin(Math.PI * jt / .9) * .45; }
+  else if (E.id === "rail") { v.lean += .5 * env; to("arL", 1.55); to("arR", 1.55); to("azL", -.05); to("azR", -.05); v.nod -= .12 * env; v.knL -= .1 * env; v.knR -= .1 * env; }
+  else if (E.id === "dive") {
+    if (t < .35) { const c = t / .35; v.knL -= .9 * c; v.knR -= .9 * c; v.thL += .5 * c; v.thR += .5 * c; v.hipY -= .12 * c; v.arL = -.6 * c; v.arR = -.6 * c; v.lean += .3 * c; }
+    else { const s = t - .35; v.pitch = -Math.min(s, 1.5) * 4.2; v.arL = 2.9; v.arR = 2.9; v.azL = v.azR = .05; v.thL = v.thR = 0; v.knL = v.knR = 0; }
+  }
   else if (E.id === "pfight") { to("arR", 2.0); to("azR", .15); to("arL", .2); to("azL", .2); v.lean -= .05 * env; }
 }
 function activeEmote(em) {
@@ -87,7 +95,7 @@ function emoteSfx(key, a, dist) {
 /* menu inside the 말하기 panel */
 {
   const mk = (E, i) => { const b = document.createElement("button"); b.dataset.e = i; const s = document.createElement("span"); s.textContent = E.icon; s.className = "emo"; b.append(s, E.name); return b; };
-  EMOTES.forEach((E, i) => { if (!E.photo) (E.dance ? $("danceGrid") : $("emoteGrid")).appendChild(mk(E, i)); });
+  EMOTES.forEach((E, i) => { if (!E.photo && !E.hidden) (E.dance ? $("danceGrid") : $("emoteGrid")).appendChild(mk(E, i)); });
   [$("emoteGrid"), $("danceGrid")].forEach(g => g.addEventListener("click", e => {
     const b = e.target.closest("button"); if (!b) return; playEmote(+b.dataset.e);
     $("chatPanel").hidden = true; $("chatBtn").setAttribute("aria-expanded", "false");
@@ -105,7 +113,8 @@ function playEmote(i) {
   publish(true);
 }
 function updateEmotes() {
-  if (me.em && (me.moving || anim || boarded || !activeEmote(me.em))) { if (me.moving || anim || boarded) { me.em = null; publish(true); } }
+  const diving = me.em && EMOTES[me.em.i] && EMOTES[me.em.i].id === "dive";
+  if (me.em && !diving && (me.moving || anim || boarded || !activeEmote(me.em))) { if (me.moving || anim || boarded) { me.em = null; publish(true); } }
   emoteSfx("me", activeEmote(me.em), 0);
   for (const [peer, o] of others) {
     const em = o.p.em, a = activeEmote(em);

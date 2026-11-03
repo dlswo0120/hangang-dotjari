@@ -80,12 +80,12 @@ function drawFish() {
   const st = fishing.st, btn = $("fishBtn"), msg = $("fishMsg"), card = $("fishCard");
   card.hidden = st !== "caught"; $("fishPower").hidden = st !== "charge" && st !== "ready";
   $("fishPowerBar").style.width = Math.round(fishing.power * 100) + "%";
-  btn.className = "fish-btn" + (st === "bite" ? " bite" : "");
+  btn.className = "fish-btn" + (st === "bite" ? " bite" : ""); $("reel").hidden = st !== "bite";
   btn.hidden = st === "caught"; $("fishRelease").hidden = st !== "caught";
   if (st === "ready") { msg.textContent = "버튼을 꾹 눌렀다가 떼면 찌를 던져요"; btn.textContent = "꾹 눌러 던지기"; }
   else if (st === "charge") { msg.textContent = "적당할 때 손을 떼세요!"; btn.textContent = "던질 힘 모으는 중…"; }
   else if (st === "wait") { msg.textContent = "찌를 보고 있어요… 입질이 오면 바로 눌러요"; btn.textContent = "기다리는 중 (누르면 걷어 올려요)"; }
-  else if (st === "bite") { msg.textContent = "찌가 쏙 들어갔어요!"; btn.textContent = "지금! 챔질!"; }
+  else if (st === "bite") { const R = fishing.reel; msg.textContent = `걸렸다! 바늘이 초록 칸에 왔을 때 눌러요 (${R.hits}/2 · 헛손질 ${R.miss}/3)`; btn.textContent = "지금 눌러 감기!"; }
   else if (st === "caught" && fishing.catch) {
     const F = FISH_BY[fishing.catch.k], earned = fishEarnedToday(), pay = Math.min(F.pay, Math.max(0, FISH_DAY_CAP - earned));
     msg.textContent = F.rare === 3 ? "물고기가 아니라…" : F.rare === 2 ? "✨ 대박! 황금 잉어예요!" : "잡았어요!";
@@ -102,8 +102,12 @@ function fishLoop() {
     if ($("fishModal").hidden) return;
     const now = Date.now(), pn = performance.now(), dt = Math.min(.25, (pn - last) / 1000); last = pn;
     if (fishing.st === "charge") { fishing.power += fishing.pDir * dt * 1.1; if (fishing.power >= 1) { fishing.power = 1; fishing.pDir = -1; } if (fishing.power <= 0) { fishing.power = 0; fishing.pDir = 1; } $("fishPowerBar").style.width = Math.round(fishing.power * 100) + "%"; }
-    if (fishing.st === "wait" && now >= fishing.biteAt) { fishing.st = "bite"; fishing.biteEnd = now + 1500; setFs("bite", { bx: me.fs.bx, bz: me.fs.bz }); if (audio.ready) { audio.tone(audio.sfx, "sine", 520, 260, .18, .3); if (navigator.vibrate) try { navigator.vibrate(120); } catch (e) {} } drawFish(); }
-    if (fishing.st === "bite" && now > fishing.biteEnd) { fishing.st = "ready"; toast("놓쳤어요… 다시 던져 보세요"); setFs("idle"); drawFish(); }
+    if (fishing.st === "wait" && now >= fishing.biteAt) { const F = rollFish(); fishing.st = "bite"; fishing.reel = { F, hits: 0, miss: 0, pos: 0, dir: 1, speed: [1, 1.35, 1.8, .75][F.rare], zone: .2 + Math.random() * .55, end: now + 7000 }; placeReel(); setFs("bite", { bx: me.fs.bx, bz: me.fs.bz }); if (audio.ready) { audio.tone(audio.sfx, "sine", 520, 260, .18, .3); if (navigator.vibrate) try { navigator.vibrate(120); } catch (e) {} } drawFish(); }
+    if (fishing.st === "bite") {
+      const R = fishing.reel; R.pos += R.dir * R.speed * dt; if (R.pos >= 1) { R.pos = 1; R.dir = -1; } if (R.pos <= 0) { R.pos = 0; R.dir = 1; }
+      $("reelNeedle").style.left = (R.pos * 100) + "%";
+      if (now > R.end) { fishing.st = "ready"; toast("힘이 빠져서 놓쳤어요… 다시 던져 보세요"); setFs("idle"); drawFish(); }
+    }
     if ((fishing.st === "wait" || fishing.st === "bite") && (me.moving || me.st !== "walk" || !onFishDeck(me.x, me.z))) { fishing.st = "ready"; setFs("idle"); closeFish(); toast("움직여서 낚싯줄을 걷었어요"); return; }
     fishing.raf = requestAnimationFrame(tick);
   };
@@ -113,8 +117,23 @@ $("fishBtn").addEventListener("pointerdown", e => {
   e.preventDefault();
   if (fishing.st === "ready") { fishing.st = "charge"; fishing.power = 0; fishing.pDir = 1; drawFish(); }
   else if (fishing.st === "wait") { fishing.st = "ready"; setFs("idle"); toast("낚싯줄을 걷어 올렸어요"); drawFish(); }
-  else if (fishing.st === "bite") strike();
+  else if (fishing.st === "bite") reelTap();
 });
+const REEL_W = .2;
+function placeReel() { const z = $("reelZone"); z.style.left = (fishing.reel.zone * 100) + "%"; z.style.width = (REEL_W * 100) + "%"; }
+function reelTap() {
+  const R = fishing.reel, inZone = R.pos >= R.zone && R.pos <= R.zone + REEL_W, box = $("reel");
+  box.classList.remove("hit", "miss"); void box.offsetWidth;
+  if (inZone) {
+    R.hits++; box.classList.add("hit"); if (audio.ready) audio.tone(audio.sfx, "sine", 700 + R.hits * 200, 900 + R.hits * 200, .12, .12);
+    if (R.hits >= 2) { strike(R.F); return; }
+    R.zone = .05 + Math.random() * .7; R.speed *= 1.15; placeReel();
+  } else {
+    R.miss++; box.classList.add("miss"); if (audio.ready) audio.tone(audio.sfx, "square", 220, 160, .1, .05);
+    if (R.miss >= 3) { fishing.st = "ready"; toast(`${R.F.rare === 3 ? "뭔가" : "물고기"}가 줄을 끊고 도망갔어요…`); setFs("idle"); drawFish(); return; }
+  }
+  drawFish();
+}
 const castRelease = () => {
   if (fishing.st !== "charge") return;
   const d = 3 + fishing.power * 9; me.r = 0;
@@ -129,8 +148,8 @@ function rollFish() {
   const total = FISH.reduce((s, f) => s + f.w, 0); let r = Math.random() * total;
   for (const f of FISH) { r -= f.w; if (r <= 0) return f; } return FISH[0];
 }
-function strike() {
-  const F = rollFish(), cm = F.cm[1] ? Math.round(F.cm[0] + Math.pow(Math.random(), 1.6) * (F.cm[1] - F.cm[0])) : 0;
+function strike(pre) {
+  const F = pre || rollFish(), cm = F.cm[1] ? Math.round(F.cm[0] + Math.pow(Math.random(), 1.6) * (F.cm[1] - F.cm[0])) : 0;
   const prev = dex[F.k], isNew = !prev;
   dex[F.k] = { n: (prev ? prev.n : 0) + 1, best: Math.max(prev ? prev.best : 0, cm) }; saveDex();
   fishing.catch = { k: F.k, cm, isNew }; fishing.st = "caught";

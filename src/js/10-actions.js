@@ -126,6 +126,7 @@ function refreshActions() {
   status = photoActions(acts, status);
   status = beerActions(acts, status);
   status = fishActions(acts, status);
+  status = diveActions(acts, status);
   status = raceActions(acts, status);
   if ($("status").textContent !== status) { $("status").textContent = status; $("status").hidden = !status; }
   // rebuild the buttons only when they change, so a running timer in the status line never eats a tap
@@ -135,7 +136,7 @@ function refreshActions() {
 }
 $("actRow").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return; const a = b.dataset.act;
-  if (storeClick(a) || rentalClick(a) || deliveryClick(a) || boardClick(a) || fireClick(a) || photoClick(a) || beerClick(a) || fishClick(a) || raceClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
+  if (storeClick(a) || rentalClick(a) || deliveryClick(a) || boardClick(a) || fireClick(a) || photoClick(a) || beerClick(a) || fishClick(a) || raceClick(a) || diveClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
   if (a === "sit" || a === "lie") {
     if (me.st === "walk") {
       if (!canSpread()) { toast("잔디나 대교 위에서만 돗자리를 펼 수 있습니다"); return; }

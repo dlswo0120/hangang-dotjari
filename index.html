@@ -215,6 +215,12 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
 .race-btns{position:fixed;left:0;right:0;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:12;display:flex;justify-content:space-between;padding:0 18px;pointer-events:none}
 .race-btns button{pointer-events:auto;width:38vw;max-width:170px;height:96px;border-radius:24px;border:0;font-size:20px;font-weight:800;background:rgba(193,84,63,.92);color:#fff;touch-action:manipulation;user-select:none;-webkit-user-select:none}
 .race-btns button:active{transform:scale(.95)}
+.reel{position:relative;height:26px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden}
+.reel .zone{position:absolute;top:0;bottom:0;background:#4caf50;opacity:.85;border-radius:6px}
+.reel .needle{position:absolute;top:-2px;bottom:-2px;width:5px;margin-left:-2px;background:#fff;box-shadow:0 0 6px rgba(0,0,0,.5)}
+.reel.hit{animation:reelHit .35s}.reel.miss{animation:reelMiss .35s}
+@keyframes reelHit{0%{box-shadow:0 0 0 3px #7dffa8}100%{box-shadow:none}}
+@keyframes reelMiss{0%{box-shadow:0 0 0 3px #ef5350;transform:translateX(-4px)}50%{transform:translateX(4px)}100%{box-shadow:none;transform:none}}
 </style>
 
 </head>
@@ -341,6 +347,7 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
     <p id="fishMsg"></p>
     <div class="fish-power" id="fishPower"><div id="fishPowerBar"></div></div>
     <div class="fish-card" id="fishCard" hidden><i id="fishIcon"></i><div><b id="fishName"></b><span id="fishRare"></span></div></div>
+    <div class="reel" id="reel" hidden><div class="zone" id="reelZone"></div><div class="needle" id="reelNeedle"></div></div>
     <button class="fish-btn" id="fishBtn">꾹 눌러 던지기</button>
     <button class="news-ok" id="fishRelease" hidden>방생하기</button>
     <button class="photo-now" id="fishDexBtn">내 낚시 도감</button>
@@ -2428,6 +2435,7 @@ function refreshActions() {
   status = photoActions(acts, status);
   status = beerActions(acts, status);
   status = fishActions(acts, status);
+  status = diveActions(acts, status);
   status = raceActions(acts, status);
   if ($("status").textContent !== status) { $("status").textContent = status; $("status").hidden = !status; }
   // rebuild the buttons only when they change, so a running timer in the status line never eats a tap
@@ -2437,7 +2445,7 @@ function refreshActions() {
 }
 $("actRow").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return; const a = b.dataset.act;
-  if (storeClick(a) || rentalClick(a) || deliveryClick(a) || boardClick(a) || fireClick(a) || photoClick(a) || beerClick(a) || fishClick(a) || raceClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
+  if (storeClick(a) || rentalClick(a) || deliveryClick(a) || boardClick(a) || fireClick(a) || photoClick(a) || beerClick(a) || fishClick(a) || raceClick(a) || diveClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
   if (a === "sit" || a === "lie") {
     if (me.st === "walk") {
       if (!canSpread()) { toast("잔디나 대교 위에서만 돗자리를 펼 수 있습니다"); return; }
@@ -3562,7 +3570,10 @@ const EMOTES = [
   { id: "pv2", name: "같이 브이", icon: "✌️", dur: 9, seat: true, photo: "duo" },
   { id: "pjump", name: "점프샷", icon: "🦘", dur: 9, seat: false, photo: "group" },
   { id: "paerial2", name: "단체 항공샷", icon: "🛸", dur: 9, seat: true, photo: "group", aerial: true },
-  { id: "pfight", name: "다 같이 파이팅", icon: "✊", dur: 9, seat: true, photo: "group", say: "화이팅!" }
+  { id: "pfight", name: "다 같이 파이팅", icon: "✊", dur: 9, seat: true, photo: "group", say: "화이팅!" },
+  // poses used by other features (not in the menu)
+  { id: "rail", name: "난간에 기대기", dur: 900, hidden: true },
+  { id: "dive", name: "다이빙", dur: 2.4, hidden: true }
 ];
 const PHOTO_SHOT_AT = { solo: 3.2, duo: 6.2, group: 6.2 }; // seconds from the start until the shutter
 const CHEST_BPM = 2.25; // beats per second
@@ -3602,6 +3613,11 @@ function emotePose(v, i, t, standing, u, side) {
   else if (E.id === "pheart") { const s = side || 1; v.roll = (v.roll || 0) - .2 * s * env; if (s > 0) { to("arR", .35); to("azR", 2.05); } else { to("arL", .35); to("azL", 2.05); } }
   else if (E.id === "pstick") { const s = side || 1; v.roll = (v.roll || 0) - .3 * s * env; to("arL", .1); to("arR", .1); to("azL", .2); to("azR", .2); v.nod -= .05 * env; }
   else if (E.id === "pjump") { to("arL", .25); to("arR", .25); to("azL", 2.45); to("azR", 2.45); const jt = t - (PHOTO_SHOT_AT.group - .45); if (standing && jt > 0 && jt < .9) v.lift += Math.sin(Math.PI * jt / .9) * .45; }
+  else if (E.id === "rail") { v.lean += .5 * env; to("arL", 1.55); to("arR", 1.55); to("azL", -.05); to("azR", -.05); v.nod -= .12 * env; v.knL -= .1 * env; v.knR -= .1 * env; }
+  else if (E.id === "dive") {
+    if (t < .35) { const c = t / .35; v.knL -= .9 * c; v.knR -= .9 * c; v.thL += .5 * c; v.thR += .5 * c; v.hipY -= .12 * c; v.arL = -.6 * c; v.arR = -.6 * c; v.lean += .3 * c; }
+    else { const s = t - .35; v.pitch = -Math.min(s, 1.5) * 4.2; v.arL = 2.9; v.arR = 2.9; v.azL = v.azR = .05; v.thL = v.thR = 0; v.knL = v.knR = 0; }
+  }
   else if (E.id === "pfight") { to("arR", 2.0); to("azR", .15); to("arL", .2); to("azL", .2); v.lean -= .05 * env; }
 }
 function activeEmote(em) {
@@ -3634,7 +3650,7 @@ function emoteSfx(key, a, dist) {
 /* menu inside the 말하기 panel */
 {
   const mk = (E, i) => { const b = document.createElement("button"); b.dataset.e = i; const s = document.createElement("span"); s.textContent = E.icon; s.className = "emo"; b.append(s, E.name); return b; };
-  EMOTES.forEach((E, i) => { if (!E.photo) (E.dance ? $("danceGrid") : $("emoteGrid")).appendChild(mk(E, i)); });
+  EMOTES.forEach((E, i) => { if (!E.photo && !E.hidden) (E.dance ? $("danceGrid") : $("emoteGrid")).appendChild(mk(E, i)); });
   [$("emoteGrid"), $("danceGrid")].forEach(g => g.addEventListener("click", e => {
     const b = e.target.closest("button"); if (!b) return; playEmote(+b.dataset.e);
     $("chatPanel").hidden = true; $("chatBtn").setAttribute("aria-expanded", "false");
@@ -3652,7 +3668,8 @@ function playEmote(i) {
   publish(true);
 }
 function updateEmotes() {
-  if (me.em && (me.moving || anim || boarded || !activeEmote(me.em))) { if (me.moving || anim || boarded) { me.em = null; publish(true); } }
+  const diving = me.em && EMOTES[me.em.i] && EMOTES[me.em.i].id === "dive";
+  if (me.em && !diving && (me.moving || anim || boarded || !activeEmote(me.em))) { if (me.moving || anim || boarded) { me.em = null; publish(true); } }
   emoteSfx("me", activeEmote(me.em), 0);
   for (const [peer, o] of others) {
     const em = o.p.em, a = activeEmote(em);
@@ -4444,12 +4461,12 @@ function drawFish() {
   const st = fishing.st, btn = $("fishBtn"), msg = $("fishMsg"), card = $("fishCard");
   card.hidden = st !== "caught"; $("fishPower").hidden = st !== "charge" && st !== "ready";
   $("fishPowerBar").style.width = Math.round(fishing.power * 100) + "%";
-  btn.className = "fish-btn" + (st === "bite" ? " bite" : "");
+  btn.className = "fish-btn" + (st === "bite" ? " bite" : ""); $("reel").hidden = st !== "bite";
   btn.hidden = st === "caught"; $("fishRelease").hidden = st !== "caught";
   if (st === "ready") { msg.textContent = "버튼을 꾹 눌렀다가 떼면 찌를 던져요"; btn.textContent = "꾹 눌러 던지기"; }
   else if (st === "charge") { msg.textContent = "적당할 때 손을 떼세요!"; btn.textContent = "던질 힘 모으는 중…"; }
   else if (st === "wait") { msg.textContent = "찌를 보고 있어요… 입질이 오면 바로 눌러요"; btn.textContent = "기다리는 중 (누르면 걷어 올려요)"; }
-  else if (st === "bite") { msg.textContent = "찌가 쏙 들어갔어요!"; btn.textContent = "지금! 챔질!"; }
+  else if (st === "bite") { const R = fishing.reel; msg.textContent = `걸렸다! 바늘이 초록 칸에 왔을 때 눌러요 (${R.hits}/2 · 헛손질 ${R.miss}/3)`; btn.textContent = "지금 눌러 감기!"; }
   else if (st === "caught" && fishing.catch) {
     const F = FISH_BY[fishing.catch.k], earned = fishEarnedToday(), pay = Math.min(F.pay, Math.max(0, FISH_DAY_CAP - earned));
     msg.textContent = F.rare === 3 ? "물고기가 아니라…" : F.rare === 2 ? "✨ 대박! 황금 잉어예요!" : "잡았어요!";
@@ -4466,8 +4483,12 @@ function fishLoop() {
     if ($("fishModal").hidden) return;
     const now = Date.now(), pn = performance.now(), dt = Math.min(.25, (pn - last) / 1000); last = pn;
     if (fishing.st === "charge") { fishing.power += fishing.pDir * dt * 1.1; if (fishing.power >= 1) { fishing.power = 1; fishing.pDir = -1; } if (fishing.power <= 0) { fishing.power = 0; fishing.pDir = 1; } $("fishPowerBar").style.width = Math.round(fishing.power * 100) + "%"; }
-    if (fishing.st === "wait" && now >= fishing.biteAt) { fishing.st = "bite"; fishing.biteEnd = now + 1500; setFs("bite", { bx: me.fs.bx, bz: me.fs.bz }); if (audio.ready) { audio.tone(audio.sfx, "sine", 520, 260, .18, .3); if (navigator.vibrate) try { navigator.vibrate(120); } catch (e) {} } drawFish(); }
-    if (fishing.st === "bite" && now > fishing.biteEnd) { fishing.st = "ready"; toast("놓쳤어요… 다시 던져 보세요"); setFs("idle"); drawFish(); }
+    if (fishing.st === "wait" && now >= fishing.biteAt) { const F = rollFish(); fishing.st = "bite"; fishing.reel = { F, hits: 0, miss: 0, pos: 0, dir: 1, speed: [1, 1.35, 1.8, .75][F.rare], zone: .2 + Math.random() * .55, end: now + 7000 }; placeReel(); setFs("bite", { bx: me.fs.bx, bz: me.fs.bz }); if (audio.ready) { audio.tone(audio.sfx, "sine", 520, 260, .18, .3); if (navigator.vibrate) try { navigator.vibrate(120); } catch (e) {} } drawFish(); }
+    if (fishing.st === "bite") {
+      const R = fishing.reel; R.pos += R.dir * R.speed * dt; if (R.pos >= 1) { R.pos = 1; R.dir = -1; } if (R.pos <= 0) { R.pos = 0; R.dir = 1; }
+      $("reelNeedle").style.left = (R.pos * 100) + "%";
+      if (now > R.end) { fishing.st = "ready"; toast("힘이 빠져서 놓쳤어요… 다시 던져 보세요"); setFs("idle"); drawFish(); }
+    }
     if ((fishing.st === "wait" || fishing.st === "bite") && (me.moving || me.st !== "walk" || !onFishDeck(me.x, me.z))) { fishing.st = "ready"; setFs("idle"); closeFish(); toast("움직여서 낚싯줄을 걷었어요"); return; }
     fishing.raf = requestAnimationFrame(tick);
   };
@@ -4477,8 +4498,23 @@ $("fishBtn").addEventListener("pointerdown", e => {
   e.preventDefault();
   if (fishing.st === "ready") { fishing.st = "charge"; fishing.power = 0; fishing.pDir = 1; drawFish(); }
   else if (fishing.st === "wait") { fishing.st = "ready"; setFs("idle"); toast("낚싯줄을 걷어 올렸어요"); drawFish(); }
-  else if (fishing.st === "bite") strike();
+  else if (fishing.st === "bite") reelTap();
 });
+const REEL_W = .2;
+function placeReel() { const z = $("reelZone"); z.style.left = (fishing.reel.zone * 100) + "%"; z.style.width = (REEL_W * 100) + "%"; }
+function reelTap() {
+  const R = fishing.reel, inZone = R.pos >= R.zone && R.pos <= R.zone + REEL_W, box = $("reel");
+  box.classList.remove("hit", "miss"); void box.offsetWidth;
+  if (inZone) {
+    R.hits++; box.classList.add("hit"); if (audio.ready) audio.tone(audio.sfx, "sine", 700 + R.hits * 200, 900 + R.hits * 200, .12, .12);
+    if (R.hits >= 2) { strike(R.F); return; }
+    R.zone = .05 + Math.random() * .7; R.speed *= 1.15; placeReel();
+  } else {
+    R.miss++; box.classList.add("miss"); if (audio.ready) audio.tone(audio.sfx, "square", 220, 160, .1, .05);
+    if (R.miss >= 3) { fishing.st = "ready"; toast(`${R.F.rare === 3 ? "뭔가" : "물고기"}가 줄을 끊고 도망갔어요…`); setFs("idle"); drawFish(); return; }
+  }
+  drawFish();
+}
 const castRelease = () => {
   if (fishing.st !== "charge") return;
   const d = 3 + fishing.power * 9; me.r = 0;
@@ -4493,8 +4529,8 @@ function rollFish() {
   const total = FISH.reduce((s, f) => s + f.w, 0); let r = Math.random() * total;
   for (const f of FISH) { r -= f.w; if (r <= 0) return f; } return FISH[0];
 }
-function strike() {
-  const F = rollFish(), cm = F.cm[1] ? Math.round(F.cm[0] + Math.pow(Math.random(), 1.6) * (F.cm[1] - F.cm[0])) : 0;
+function strike(pre) {
+  const F = pre || rollFish(), cm = F.cm[1] ? Math.round(F.cm[0] + Math.pow(Math.random(), 1.6) * (F.cm[1] - F.cm[0])) : 0;
   const prev = dex[F.k], isNew = !prev;
   dex[F.k] = { n: (prev ? prev.n : 0) + 1, best: Math.max(prev ? prev.best : 0, cm) }; saveDex();
   fishing.catch = { k: F.k, cm, isNew }; fishing.st = "caught";
@@ -4746,6 +4782,51 @@ function showRaceResult(order, pays, mine, pot) {
   $("raceResModal").hidden = false; if (audio.ready && mine === 0) audio.ding();
 }
 $("raceResOk").addEventListener("click", () => { $("raceResModal").hidden = true; });
+/* ================= 대교 난간: 기대기 · 다이빙 ================= */
+const EM_RAIL = EMOTES.findIndex(E => E.id === "rail"), EM_DIVE = EMOTES.findIndex(E => E.id === "dive");
+function railSide() {
+  if (me.level !== "bridge" || me.st !== "walk" || anim) return 0;
+  if (me.x - (BR.x - BR.half) < .9) return -1;
+  if ((BR.x + BR.half) - me.x < .9) return 1;
+  return 0;
+}
+const overWater = () => me.z < -3 && me.z > BOUND.waterZ0 + 3;
+const leaning = () => me.em && me.em.i === EM_RAIL && activeEmote(me.em);
+function diveActions(acts, status) {
+  if (!started || boarded) return status;
+  if (leaning()) {
+    acts.length = 0;
+    if (overWater()) acts.push(["dive", "다이빙하기", "primary"]);
+    acts.push(["unlean", "그만 기대기", acts.length ? "" : "primary"]);
+    return overWater() ? "강바람이 시원해요… 뛰어들어 볼까요?" : "여기는 강가가 너무 멀어서 뛰어들 수 없어요";
+  }
+  const s = railSide(); if (s) acts.unshift(["lean", "난간에 기대기", ""]);
+  return status;
+}
+function diveClick(a) {
+  if (a === "lean") {
+    const s = railSide(); if (!s) return true;
+    me.x = s < 0 ? BR.x - BR.half + .45 : BR.x + BR.half - .45; me.r = s < 0 ? Math.PI / 2 : -Math.PI / 2; me.railSide = s;
+    me.em = { i: EM_RAIL, at: Date.now() }; cam.tYaw = me.r + Math.PI * 0; return true;
+  }
+  if (a === "unlean") { me.em = null; return true; }
+  if (a === "dive") {
+    if (!overWater()) return true;
+    const s = me.railSide || (me.x < BR.x ? -1 : 1);
+    if (me.hold) dropRamen(me.hold === "ramen" ? "앗, 라면이 강으로 같이 떨어졌어요…" : "앗, 들고 있던 걸 놓쳤어요…");
+    me.em = { i: EM_DIVE, at: Date.now() }; me.level = "ground";
+    // swing the camera out over the water so the bridge deck does not hide the jump
+    cam.tYaw = s * Math.PI / 2; cam.yaw = cam.tYaw; cam.tPitch = .35; cam.tDist = 8;
+    showBubble(() => myAvatar, "야호~!", 1.6, "me");
+    const tx = me.x + s * 3.4, tz = me.z - .4;
+    anim = { t: 0, dur: 2.0, from: [me.x, me.z, BR.y], to: [tx, tz, -0.85], hop: 2.4, then: () => {
+      me.st = "swim"; me.y = 0; me.em = null; rebuildMe(); doSplash(me.x, me.z); setTimeout(() => doSplash(me.x + .6, me.z - .4), 120);
+      toast("풍덩! 다이빙 성공! 강가로 헤엄쳐 나오세요"); publish(true); actKey = ""; refreshActions();
+    } };
+    publish(true); return true;
+  }
+  return false;
+}
 })();
 </script>
 
