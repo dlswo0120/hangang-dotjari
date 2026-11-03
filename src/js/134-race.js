@@ -115,10 +115,12 @@ function raceTap(foot) {
   run.v = Math.min(7.5, run.v + .62); if (audio.ready) audio.step("path", foot === "R");
 }
 addEventListener("keydown", e => {
-  if (e.repeat || !inRaceNow()) return; const k = e.key.toLowerCase();
+  if (e.repeat) return; const k = e.key.toLowerCase();
+  if (boatRaceLive()) { if (k === "a") boatPedal("L"); else if (k === "d") boatPedal("R"); return; }
+  if (!inRaceNow()) return;
   if (k === "a" || k === "arrowleft") raceTap("L"); else if (k === "d" || k === "arrowright") raceTap("R");
 });
-[["raceL", "L"], ["raceR", "R"]].forEach(([id, f]) => $(id).addEventListener("pointerdown", e => { e.preventDefault(); raceTap(f); }));
+[["raceL", "L"], ["raceR", "R"]].forEach(([id, f]) => $(id).addEventListener("pointerdown", e => { e.preventDefault(); if (boatRaceLive()) boatPedal(f); else raceTap(f); }));
 function raceStep(dt) {
   // called from stepPlayer while in a race: the race moves you, not the joystick
   const r = myRace(); if (!r) return false;

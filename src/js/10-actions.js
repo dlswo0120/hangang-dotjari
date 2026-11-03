@@ -42,7 +42,7 @@ function boatOptions() {
     if (b.doomed) return;
     const c = claimsFor(b.id).length, d = Math.hypot(b.x - me.x, b.z - me.z); if (d > range) return;
     if (c <= 1) { const s = d - (c === 1 ? 50 : 0); if (s < jd) { jd = s; out.join = b.id; } }
-    else if (c === 2 && d < sd) { sd = d; out.squeeze = b.id; }
+    else if (c === 2 && d < sd && !boatInRace(b.id)) { sd = d; out.squeeze = b.id; }
   });
   return out;
 }
@@ -129,6 +129,7 @@ function refreshActions() {
   status = duelActions(acts, status);
   status = diveActions(acts, status);
   status = raceActions(acts, status);
+  status = boatRaceActions(acts, status);
   if ($("status").textContent !== status) { $("status").textContent = status; $("status").hidden = !status; }
   // rebuild the buttons only when they change, so a running timer in the status line never eats a tap
   const key = JSON.stringify(acts); if (key === actKey) return; actKey = key;
@@ -137,7 +138,7 @@ function refreshActions() {
 }
 $("actRow").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return; const a = b.dataset.act;
-  if (storeClick(a) || rentalClick(a) || deliveryClick(a) || boardClick(a) || fireClick(a) || photoClick(a) || beerClick(a) || fishClick(a) || raceClick(a) || diveClick(a) || duelClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
+  if (storeClick(a) || rentalClick(a) || deliveryClick(a) || boardClick(a) || fireClick(a) || photoClick(a) || beerClick(a) || fishClick(a) || raceClick(a) || diveClick(a) || duelClick(a) || boatRaceClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
   if (a === "sit" || a === "lie") {
     if (me.st === "walk") {
       if (!canSpread()) { toast("잔디나 대교 위에서만 돗자리를 펼 수 있습니다"); return; }

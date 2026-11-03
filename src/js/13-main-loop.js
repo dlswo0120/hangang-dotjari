@@ -33,7 +33,7 @@ function frame() {
   // boats
   boats.forEach((b, i) => {
     const all = claimsFor(b.id), crew = all.length >= 2 ? all.slice(0, 3) : null; b.crew = crew;
-    if (crew && crew.length >= 3 && !b.doomed) {
+    if (crew && crew.length >= 3 && !b.doomed && !boatInRace(i)) {
       b.doomed = true; b.sinkT = 0;
       if (boarded && boarded.id === i) { toast("세 명은 너무 무거워요! 오리배에 물이 차오릅니다"); if (audio.ready) audio.quack(); actKey = ""; }
     }
@@ -188,6 +188,7 @@ function frame() {
   updateFishing();
   updateRace();
   updateDuel();
+  updateBoatRace(dt);
   // bubbles follow their owners
   for (let i = bubbles.length - 1; i >= 0; i--) {
     const b = bubbles[i], o = b.getObj();

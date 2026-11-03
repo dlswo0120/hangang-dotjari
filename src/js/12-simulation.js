@@ -28,6 +28,7 @@ function stepPlayer(dt) {
   me.moving = mag > 0.05;
   if (boarded) {
     if (boarded.driver) {
+      if (boatRaceDrive(dt)) return;
       boatLocal.r -= inp.r * dt * 1.4;
       const sp = inp.f * 3.2 * dt * (1 - boats[boarded.id].sink * 0.85); boatLocal.x += -Math.sin(boatLocal.r) * sp; boatLocal.z += -Math.cos(boatLocal.r) * sp;
       [boatLocal.x, boatLocal.z] = pushOut(boatLocal.x, boatLocal.z, 1.4);
