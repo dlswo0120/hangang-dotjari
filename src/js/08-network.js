@@ -28,7 +28,7 @@ function cleanPresence(p) {
   if (p.rc && typeof p.rc === "object" && typeof p.rc.id === "number" && RACE_BETS.includes(p.rc.bet)) o.rc = { id: p.rc.id, bet: p.rc.bet, st: p.rc.st === "go" ? "go" : "open", go: num(p.rc.go, 0, 1e15, 0) };
   if (p.rj && typeof p.rj === "object" && typeof p.rj.h === "string" && typeof p.rj.id === "number") o.rj = { h: p.rj.h.slice(0, 80), id: p.rj.id, at: num(p.rj.at, 0, 1e15, 0) };
   if (p.rp && typeof p.rp === "object" && typeof p.rp.id === "number") o.rp = { id: p.rp.id, d: num(p.rp.d, 0, 100, 0), f: num(p.rp.f, 0, 600000, 0) };
-  if (p.fs && typeof p.fs === "object" && ["idle", "cast", "bite", "catch"].includes(p.fs.s) && typeof p.fs.at === "number") o.fs = { s: p.fs.s, at: p.fs.at, bx: num(p.fs.bx, WORLD.x0, WORLD.x1, 0), bz: num(p.fs.bz, -40, 1, -4), k: FISH_BY[p.fs.k] ? p.fs.k : null, cm: num(p.fs.cm, 0, 200, 0) };
+  if (p.fs && typeof p.fs === "object" && ["idle", "cast", "bite", "catch"].includes(p.fs.s) && typeof p.fs.at === "number") o.fs = { s: p.fs.s, at: p.fs.at, bx: num(p.fs.bx, WORLD.x0, WORLD.x1, 0), bz: num(p.fs.bz, -40, 1, -4), k: FISH_BY[p.fs.k] ? p.fs.k : null, cm: num(p.fs.cm, 0, 200, 0), ah: num(p.fs.ah, .5, 4, 1.5), ft: num(p.fs.ft, .3, 2, .6) };
   o.rd = Number.isInteger(p.rd) ? clamp(p.rd, 0, 3) : 0;
   if (p.bq && typeof p.bq === "object" && typeof p.bq.at === "number") o.bq = { at: p.bq.at, q: p.bq.q === 2 ? 2 : p.bq.q === 0 ? 0 : 1 };
   o.lt = num(p.lt, 0, 1e15, 0); o.tw = num(p.tw, 0, 1e15, 0);

@@ -137,11 +137,13 @@ function reelTap() {
 }
 const castRelease = () => {
   if (fishing.st !== "charge") return;
-  const d = 3 + fishing.power * 9; me.r = 0;
-  const bx = clamp(me.x - Math.sin(me.r) * d, BOUND.x0, BOUND.x1), bz = Math.min(FISH_DECK.z0 - 1, me.z - Math.cos(me.r) * d);
+  // every cast lands a little differently: wobble in distance and direction, a high or a flat arc
+  const d = (3 + fishing.power * 9) * (.75 + Math.random() * .5), ang = (Math.random() - .5) * .9; me.r = 0;
+  const bx = clamp(me.x - Math.sin(ang) * d, BOUND.x0, BOUND.x1), bz = Math.min(FISH_DECK.z0 - 1, me.z - Math.cos(ang) * d);
+  const ah = +(1 + Math.random() * 2.4).toFixed(2), ft = +(.45 + d / 16).toFixed(2);
   fishing.st = "wait"; fishing.castAt = Date.now(); fishing.biteAt = fishing.castAt + 5000 + Math.random() * 17000;
-  setFs("cast", { bx: +bx.toFixed(2), bz: +bz.toFixed(2) }); if (audio.ready) audio.tone(audio.sfx, "sine", 900, 300, .25, .08);
-  setTimeout(() => { if (audio.ready) audio.paddle(); }, 600);
+  setFs("cast", { bx: +bx.toFixed(2), bz: +bz.toFixed(2), ah, ft }); if (audio.ready) audio.tone(audio.sfx, "sine", 900, 300, .25, .08);
+  setTimeout(() => { if (audio.ready) audio.paddle(); }, (ft + .25) * 1000);
   drawFish();
 };
 ["pointerup", "pointerleave", "pointercancel"].forEach(ev => $("fishBtn").addEventListener(ev, castRelease));
@@ -157,6 +159,7 @@ function strike(pre) {
   fishing.catch = { k: F.k, cm, isNew, duel, pts }; fishing.st = "caught";
   setFs("catch", { k: F.k, cm });
   showBubble(() => myAvatar, F.rare === 3 ? `${F.name}…?` : `${F.name} ${cm}cm!`, 3, "me");
+  const sheet = $("fishModal"); sheet.classList.add("peek"); setTimeout(() => sheet.classList.remove("peek"), 2300);
   if (audio.ready) (F.rare === 2 ? audio.ding() : audio.pop());
   drawFish();
 }
@@ -192,37 +195,67 @@ function makeFishMesh(k) {
   const eye = new THREE.Mesh(new THREE.SphereGeometry(.018, 6, 4), new THREE.MeshBasicMaterial({ color: 0x111111 })); eye.position.set(.07, .03, -.2); g.add(eye);
   g.rotation.x = -Math.PI / 2.3; return g;
 }
+const LINE_N = 16;
 function rodFor(av) {
   const u = av.userData;
   if (!u.rodG) {
     const g = new THREE.Group(), rod = new THREE.Mesh(new THREE.CylinderGeometry(.015, .03, 1.9, 6), mat(0x2a2e3a)); rod.position.y = .95; g.add(rod);
     const tip = new THREE.Object3D(); tip.position.y = 1.9; g.add(tip);
     g.position.set(.2, .15, -.32); g.rotation.x = -.85; u.torso.add(g); u.rodG = g; u.rodTip = tip;
-    const lineGeo = new THREE.BufferGeometry(); lineGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(6), 3));
-    u.line = new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ color: 0xeeeeee, transparent: true, opacity: .7 })); u.line.frustumCulled = false; scene.add(u.line);
+    const lineGeo = new THREE.BufferGeometry(); lineGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(LINE_N * 3), 3));
+    u.line = new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ color: 0xeeeeee, transparent: true, opacity: .75 })); u.line.frustumCulled = false; scene.add(u.line);
     u.bobber = new THREE.Mesh(new THREE.SphereGeometry(.11, 12, 8), new THREE.MeshLambertMaterial({ color: 0xff3b30, emissive: 0xff3b30, emissiveIntensity: .5 })); scene.add(u.bobber);
+    u.ripple = new THREE.Mesh(new THREE.RingGeometry(.8, 1, 28), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide })); u.ripple.rotation.x = -Math.PI / 2; scene.add(u.ripple);
   }
   return u;
 }
 const tipW = new THREE.Vector3();
+// a line that sags between the rod tip and its end
+function drawLine(u, x, y, z, sag) {
+  const a = u.line.geometry.attributes.position.array;
+  for (let i = 0; i < LINE_N; i++) { const k = i / (LINE_N - 1); a[i * 3] = tipW.x + (x - tipW.x) * k; a[i * 3 + 1] = tipW.y + (y - tipW.y) * k - Math.sin(k * Math.PI) * sag; a[i * 3 + 2] = tipW.z + (z - tipW.z) * k; }
+  u.line.geometry.attributes.position.needsUpdate = true;
+}
 function showRod(av, has, fs) {
   const u = av.userData;
-  if (!has) { if (u.rodG) { u.rodG.visible = false; u.line.visible = false; u.bobber.visible = false; if (u.fishM) u.fishM.visible = false; } return; }
+  if (!has) { if (u.rodG) { u.rodG.visible = false; u.line.visible = false; u.bobber.visible = false; u.ripple.visible = false; if (u.fishW) u.fishW.visible = false; } return; }
   rodFor(av); u.rodG.visible = true;
-  const s = fs && fs.s, inWater = s === "cast" || s === "bite";
-  u.line.visible = u.bobber.visible = inWater;
+  const s = fs && fs.s, t = fs ? (Date.now() - fs.at) / 1000 : 0, inWater = s === "cast" || s === "bite";
+  const catching = s === "catch" && t < 6;
+  // rod swing: back, whip forward, settle; held high while showing a catch
+  let rx = -.85;
+  if (s === "cast" && t < .75) rx = t < .2 ? -.85 + 1.1 * (t / .2) : t < .35 ? .25 - 1.6 * ((t - .2) / .15) : -1.35 + .5 * Math.min(1, (t - .35) / .4);
+  if (catching) rx = -.85 + .55 * Math.min(1, t / .5);
+  u.rodG.rotation.x = rx; u.rodG.rotation.z = catching ? -.75 * Math.min(1, t / .5) : 0; // swing the catch out to the side where it can be seen
+  u.line.visible = inWater || catching; u.bobber.visible = inWater;
+  u.rodTip.getWorldPosition(tipW);
   if (inWater) {
-    const fly = clamp((Date.now() - fs.at) / 600, 0, 1), dip = s === "bite" ? .12 + Math.sin(T * 30) * .03 : 0;
-    u.rodTip.getWorldPosition(tipW);
-    const by = -.58 + Math.sin(T * 2.2 + av.id) * .02 - dip;
-    const bx = s === "cast" ? tipW.x + (fs.bx - tipW.x) * fly : fs.bx, bz = s === "cast" ? tipW.z + (fs.bz - tipW.z) * fly : fs.bz, byy = s === "cast" ? tipW.y + (by - tipW.y) * fly + Math.sin(fly * Math.PI) * 1.5 : by;
+    const ft = fs.ft || .6, fly = clamp((t - .25) / ft, 0, 1), dip = s === "bite" ? .12 + Math.sin(T * 30) * .03 : 0;
+    const by = -.58 + Math.sin(T * 2.2 + av.id) * .02 - dip, landed = s !== "cast" || fly >= 1;
+    let bx = fs.bx, bz = fs.bz, byy = by;
+    if (!landed) { bx = tipW.x + (fs.bx - tipW.x) * fly; bz = tipW.z + (fs.bz - tipW.z) * fly; byy = tipW.y + (by - tipW.y) * fly + Math.sin(fly * Math.PI) * (fs.ah || 1.5); }
     u.bobber.position.set(bx, byy, bz);
-    const a = u.line.geometry.attributes.position.array; a[0] = tipW.x; a[1] = tipW.y; a[2] = tipW.z; a[3] = bx; a[4] = byy + .06; a[5] = bz; u.line.geometry.attributes.position.needsUpdate = true;
+    drawLine(u, bx, byy + .06, bz, landed ? .35 : .05);
+    // rings where the float hits the water
+    const rt = s === "cast" ? t - .25 - ft : 9;
+    if (rt >= 0 && rt < 1.4) { u.ripple.visible = true; u.ripple.position.set(fs.bx, -.57, fs.bz); u.ripple.scale.setScalar(.2 + rt * .9); u.ripple.material.opacity = .6 * (1 - rt / 1.4); }
+    else if (s === "bite") { u.ripple.visible = true; u.ripple.position.set(fs.bx, -.57, fs.bz); const k = (T * 1.6) % 1; u.ripple.scale.setScalar(.2 + k * .6); u.ripple.material.opacity = .5 * (1 - k); }
+    else u.ripple.visible = false;
+  } else u.ripple.visible = false;
+  // the catch comes up out of the water and hangs from the line
+  if (catching && (!u.fishW || u.fishK !== fs.k)) { if (u.fishW) scene.remove(u.fishW); u.fishW = makeFishMesh(fs.k); u.fishW.rotation.order = "YXZ"; u.fishK = fs.k; scene.add(u.fishW); }
+  if (u.fishW) {
+    u.fishW.visible = catching;
+    if (catching) {
+      const F = FISH_BY[fs.k], sc = F && F.rare === 3 ? 1 : clamp((fs.cm || 30) / 45, .6, 1.8), up = ease(Math.min(1, t / .9));
+      const hx = tipW.x, hy = tipW.y - .55 - .3 * sc, hz = tipW.z, sx = fs.bx || hx, sz = fs.bz || hz;
+      const fx = sx + (hx - sx) * up, fy = -.6 + (hy + .6) * up + Math.sin(up * Math.PI) * 1.2, fz = sz + (hz - sz) * up;
+      u.fishW.position.set(fx, fy, fz); u.fishW.scale.setScalar(sc);
+      if (F && F.rare !== 3) u.fishW.rotation.set(Math.PI / 2, T * .8, Math.sin(T * 11) * .35); else u.fishW.rotation.set(0, T * .8, Math.sin(T * 5) * .2);
+      drawLine(u, fx, fy + .2 * sc, fz, 0);
+      if (t < .9 && Math.random() < .5) sparksS.emit(fx, fy, fz, rnd(-1, 1), rnd(0, 2), rnd(-1, 1), WHITE, .4, 6);
+    }
   }
-  // the catch, held up for a few seconds
-  const showing = s === "catch" && Date.now() - fs.at < 6000;
-  if (showing && (!u.fishM || u.fishK !== fs.k)) { if (u.fishM) u.torso.remove(u.fishM); u.fishM = makeFishMesh(fs.k); u.fishK = fs.k; u.fishM.position.set(0, .55, -.38); u.torso.add(u.fishM); }
-  if (u.fishM) { u.fishM.visible = showing; if (showing) { const sc = clamp((fs.cm || 30) / 45, .6, 1.8); u.fishM.scale.setScalar(FISH_BY[fs.k] && FISH_BY[fs.k].rare === 3 ? 1 : sc); u.fishM.rotation.z = Math.sin(T * 9) * .2; } }
 }
 const seenCatch = new Map();
 function updateFishing() {
@@ -236,4 +269,9 @@ function updateFishing() {
   }
 }
 // rod pose: both hands forward on the grip
-function rodPose(v, fs) { v.arR = 1.15; v.azR = -.25; v.arL = 1.0; v.azL = -.35; if (fs && fs.s === "catch" && Date.now() - fs.at < 6000) { v.arL = v.arR = 2.2; v.azL = v.azR = .1; } }
+function rodPose(v, fs) {
+  v.arR = 1.15; v.azR = -.25; v.arL = 1.0; v.azL = -.35;
+  if (!fs) return; const t = (Date.now() - fs.at) / 1000;
+  if (fs.s === "cast" && t < .75) { const k = t < .2 ? t / .2 : t < .35 ? 1 - (t - .2) / .15 * 1.6 : -.6 + .6 * Math.min(1, (t - .35) / .4); v.arR += .9 * k; v.arL += .7 * k; v.lean -= .15 * k; }
+  if (fs.s === "catch" && t < 6) { v.arL = v.arR = 1.6; v.azL = v.azR = -.15; v.lean -= .12; }
+}

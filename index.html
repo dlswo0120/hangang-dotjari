@@ -222,6 +222,8 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
 @keyframes reelHit{0%{box-shadow:0 0 0 3px #7dffa8}100%{box-shadow:none}}
 @keyframes reelMiss{0%{box-shadow:0 0 0 3px #ef5350;transform:translateX(-4px)}50%{transform:translateX(4px)}100%{box-shadow:none;transform:none}}
 .card.fish p.fish-duel{color:#f2b46b;font-weight:700}
+.fish-sheet{transition:transform .35s ease}
+.fish-sheet.peek{transform:translate(-50%,calc(100% + 40px))}
 </style>
 
 </head>
@@ -657,7 +659,7 @@ window.HANGANG_CONFIG = {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
-const APP_VERSION = "2026.11.03c", UPDATES = [{"v": "2026.11.03c", "date": "11월 3일", "items": ["낚시 손맛이 바뀌었어요: 입질이 오면 바늘이 초록 칸에 왔을 때 눌러서 2번 맞추면 낚여요", "대교 난간에 기대어 강바람을 쐬고, 다이빙도 할 수 있어요", "낚시 데크에서 1:1 낚시 대결(3분 점수전, 이긴 사람 80%)을 열 수 있어요", "오리배 경주가 생겼어요: 2~3팀이 빨간 깃발 부표를 돌아와요. 둘이 A·D로 같이 페달을 밟을수록 빨라요"]}, {"v": "2026.11.03b", "date": "11월 3일", "items": ["공원 서쪽 끝에 '한강 달리기 대회' 트랙이 생겼어요. 2~4명이 판돈(500~2,000원)을 걸고 달려요", "A(왼발)·D(오른발)를 번갈아 눌러 달려요. 같은 발을 두 번 누르면 휘청! 휴대폰은 화면 버튼으로 달려요", "1등이 가장 많이 가져가고, 꼴찌도 조금은 돌려받아요"]}, {"v": "2026.11.03", "date": "11월 3일", "items": ["편의점 냉장고에서 한강소주·캔맥주·생맥주 잔을 팔아요 (19세 이상)", "냉장고 옆 셀프 생맥주 기계에서 맥주와 거품을 7:3으로 맞춰 따라 보세요", "한두 잔 마시면 볼이 살짝 빨개져요", "낚시 데크와 낚싯대 대여함(30분 1,000원)이 생겼어요. 9가지를 낚고 방생하면 용돈을 받아요 (하루 4,000원까지)", "잡은 물고기는 '내 낚시 도감'에 기록돼요"]}, {"v": "2026.11.02i", "date": "11월 2일", "items": ["스파클러 불꽃이 더 크고 화려해졌어요", "분수 폭죽과 연발 폭죽이 하늘 높이 올라가요", "화면을 아래로 끌면 하늘을 올려다볼 수 있어요"]}, {"v": "2026.11.02h", "date": "11월 2일", "items": ["강가에 '한강 불꽃 가게'가 생겼어요. 밤 8시~10시에만 열어요", "스파클러(500원)는 손에 들고, 분수 폭죽(1,500원)과 연발 폭죽(3,000원)은 잔디에 놓고 즐겨요", "불붙은 스파클러를 든 사람 곁에서 불을 옮겨 받을 수 있어요", "카메라 버튼에서 혼자·둘이·단체 포즈를 골라 앞에서 사진을 찍어요. 같이 찍은 사람도 사진을 받아요"]}, {"v": "2026.11.02g", "date": "11월 2일", "items": ["가슴 튕기기 춤을 출 때 오른팔을 몸 앞에 가로로 받쳐요", "설정 화면 맨 아래에서 지금 버전을 확인할 수 있어요"]}, {"v": "2026.11.02f", "date": "11월 2일", "items": ["말하기 메뉴에 '감정 표현'(손 흔들기 · 박수 · 만세 · 하트 · 꾸벅 인사)이 생겼어요", "'가슴 튕기기 춤'을 출 수 있어요. 여럿이 같이 누르면 단체 춤!"]}, {"v": "2026.11.02e", "date": "11월 2일", "items": ["친구 돗자리 바로 옆에 내 돗자리를 붙여 펼 수 있어요. 옆에 서면 나란히 맞춰 펴져요"]}, {"v": "2026.11.02d", "date": "11월 2일", "items": ["오리배 선착장에 이용 안내 표지판이 생겼어요", "자전거 대여소 옆에 '한강 소식판'이 생겼어요. 업데이트 내역을 언제든 볼 수 있어요"]}, {"v": "2026.11.02c", "date": "11월 2일", "items": ["앉아 있을 때 '한강통닭'에 치킨 배달을 시킬 수 있어요. 2분쯤 뒤 오토바이 기사님이 자리까지 가져다 드려요", "배달 전용 '한강통닭 반마리'(배달비 포함 6,000원)가 생겼어요"]}, {"v": "2026.11.02b", "date": "11월 2일", "items": ["강 건너편 잔디에 '한강 자전거 대여소'가 생겼어요. 10분에 1,000원, 같은 곳에 반납해요", "자전거를 타는 동안 '따르릉' 벨을 울릴 수 있어요", "길가에 '돗자리 대여소'가 생겼어요. 오늘 첫 대여는 무료, 그다음은 500원이에요", "돗자리 없이도 잔디에 그냥 앉거나 누울 수 있어요"]}, {"v": "2026.11.02", "date": "11월 2일", "items": ["앉아서 가만히 있으면 화면이 비워지는 '물멍 모드'가 생겼어요", "강가에서 한마디 적은 종이배를 띄울 수 있어요", "매일 밤 9시, 4분 동안 한강 불꽃놀이가 열려요. 맑은 밤엔 별똥별도 지나가요", "음료를 든 채 가까이 앉으면 '짠' 할 수 있어요", "라면은 편의점에서 봉지라면을 사 와서 기계로 끓여요", "찍은 사진을 휴대폰 사진 앱에 바로 저장할 수 있어요", "새 버전이 나오면 화면 위에 알려 드려요"]}];
+const APP_VERSION = "2026.11.03d", UPDATES = [{"v": "2026.11.03d", "date": "11월 3일", "items": ["낚싯대를 휘둘러 던질 때마다 찌가 날아가는 거리·방향·높이가 조금씩 달라요", "찌가 떨어진 자리에 물결이 퍼지고, 낚은 물고기는 낚싯줄 끝에 매달려 올라와요"]}, {"v": "2026.11.03c", "date": "11월 3일", "items": ["낚시 손맛이 바뀌었어요: 입질이 오면 바늘이 초록 칸에 왔을 때 눌러서 2번 맞추면 낚여요", "대교 난간에 기대어 강바람을 쐬고, 다이빙도 할 수 있어요", "낚시 데크에서 1:1 낚시 대결(3분 점수전, 이긴 사람 80%)을 열 수 있어요", "오리배 경주가 생겼어요: 2~3팀이 빨간 깃발 부표를 돌아와요. 둘이 A·D로 같이 페달을 밟을수록 빨라요"]}, {"v": "2026.11.03b", "date": "11월 3일", "items": ["공원 서쪽 끝에 '한강 달리기 대회' 트랙이 생겼어요. 2~4명이 판돈(500~2,000원)을 걸고 달려요", "A(왼발)·D(오른발)를 번갈아 눌러 달려요. 같은 발을 두 번 누르면 휘청! 휴대폰은 화면 버튼으로 달려요", "1등이 가장 많이 가져가고, 꼴찌도 조금은 돌려받아요"]}, {"v": "2026.11.03", "date": "11월 3일", "items": ["편의점 냉장고에서 한강소주·캔맥주·생맥주 잔을 팔아요 (19세 이상)", "냉장고 옆 셀프 생맥주 기계에서 맥주와 거품을 7:3으로 맞춰 따라 보세요", "한두 잔 마시면 볼이 살짝 빨개져요", "낚시 데크와 낚싯대 대여함(30분 1,000원)이 생겼어요. 9가지를 낚고 방생하면 용돈을 받아요 (하루 4,000원까지)", "잡은 물고기는 '내 낚시 도감'에 기록돼요"]}, {"v": "2026.11.02i", "date": "11월 2일", "items": ["스파클러 불꽃이 더 크고 화려해졌어요", "분수 폭죽과 연발 폭죽이 하늘 높이 올라가요", "화면을 아래로 끌면 하늘을 올려다볼 수 있어요"]}, {"v": "2026.11.02h", "date": "11월 2일", "items": ["강가에 '한강 불꽃 가게'가 생겼어요. 밤 8시~10시에만 열어요", "스파클러(500원)는 손에 들고, 분수 폭죽(1,500원)과 연발 폭죽(3,000원)은 잔디에 놓고 즐겨요", "불붙은 스파클러를 든 사람 곁에서 불을 옮겨 받을 수 있어요", "카메라 버튼에서 혼자·둘이·단체 포즈를 골라 앞에서 사진을 찍어요. 같이 찍은 사람도 사진을 받아요"]}, {"v": "2026.11.02g", "date": "11월 2일", "items": ["가슴 튕기기 춤을 출 때 오른팔을 몸 앞에 가로로 받쳐요", "설정 화면 맨 아래에서 지금 버전을 확인할 수 있어요"]}, {"v": "2026.11.02f", "date": "11월 2일", "items": ["말하기 메뉴에 '감정 표현'(손 흔들기 · 박수 · 만세 · 하트 · 꾸벅 인사)이 생겼어요", "'가슴 튕기기 춤'을 출 수 있어요. 여럿이 같이 누르면 단체 춤!"]}, {"v": "2026.11.02e", "date": "11월 2일", "items": ["친구 돗자리 바로 옆에 내 돗자리를 붙여 펼 수 있어요. 옆에 서면 나란히 맞춰 펴져요"]}, {"v": "2026.11.02d", "date": "11월 2일", "items": ["오리배 선착장에 이용 안내 표지판이 생겼어요", "자전거 대여소 옆에 '한강 소식판'이 생겼어요. 업데이트 내역을 언제든 볼 수 있어요"]}, {"v": "2026.11.02c", "date": "11월 2일", "items": ["앉아 있을 때 '한강통닭'에 치킨 배달을 시킬 수 있어요. 2분쯤 뒤 오토바이 기사님이 자리까지 가져다 드려요", "배달 전용 '한강통닭 반마리'(배달비 포함 6,000원)가 생겼어요"]}, {"v": "2026.11.02b", "date": "11월 2일", "items": ["강 건너편 잔디에 '한강 자전거 대여소'가 생겼어요. 10분에 1,000원, 같은 곳에 반납해요", "자전거를 타는 동안 '따르릉' 벨을 울릴 수 있어요", "길가에 '돗자리 대여소'가 생겼어요. 오늘 첫 대여는 무료, 그다음은 500원이에요", "돗자리 없이도 잔디에 그냥 앉거나 누울 수 있어요"]}];
 "use strict";
 const $ = id => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -2199,7 +2201,7 @@ function cleanPresence(p) {
   if (p.rc && typeof p.rc === "object" && typeof p.rc.id === "number" && RACE_BETS.includes(p.rc.bet)) o.rc = { id: p.rc.id, bet: p.rc.bet, st: p.rc.st === "go" ? "go" : "open", go: num(p.rc.go, 0, 1e15, 0) };
   if (p.rj && typeof p.rj === "object" && typeof p.rj.h === "string" && typeof p.rj.id === "number") o.rj = { h: p.rj.h.slice(0, 80), id: p.rj.id, at: num(p.rj.at, 0, 1e15, 0) };
   if (p.rp && typeof p.rp === "object" && typeof p.rp.id === "number") o.rp = { id: p.rp.id, d: num(p.rp.d, 0, 100, 0), f: num(p.rp.f, 0, 600000, 0) };
-  if (p.fs && typeof p.fs === "object" && ["idle", "cast", "bite", "catch"].includes(p.fs.s) && typeof p.fs.at === "number") o.fs = { s: p.fs.s, at: p.fs.at, bx: num(p.fs.bx, WORLD.x0, WORLD.x1, 0), bz: num(p.fs.bz, -40, 1, -4), k: FISH_BY[p.fs.k] ? p.fs.k : null, cm: num(p.fs.cm, 0, 200, 0) };
+  if (p.fs && typeof p.fs === "object" && ["idle", "cast", "bite", "catch"].includes(p.fs.s) && typeof p.fs.at === "number") o.fs = { s: p.fs.s, at: p.fs.at, bx: num(p.fs.bx, WORLD.x0, WORLD.x1, 0), bz: num(p.fs.bz, -40, 1, -4), k: FISH_BY[p.fs.k] ? p.fs.k : null, cm: num(p.fs.cm, 0, 200, 0), ah: num(p.fs.ah, .5, 4, 1.5), ft: num(p.fs.ft, .3, 2, .6) };
   o.rd = Number.isInteger(p.rd) ? clamp(p.rd, 0, 3) : 0;
   if (p.bq && typeof p.bq === "object" && typeof p.bq.at === "number") o.bq = { at: p.bq.at, q: p.bq.q === 2 ? 2 : p.bq.q === 0 ? 0 : 1 };
   o.lt = num(p.lt, 0, 1e15, 0); o.tw = num(p.tw, 0, 1e15, 0);
@@ -4533,11 +4535,13 @@ function reelTap() {
 }
 const castRelease = () => {
   if (fishing.st !== "charge") return;
-  const d = 3 + fishing.power * 9; me.r = 0;
-  const bx = clamp(me.x - Math.sin(me.r) * d, BOUND.x0, BOUND.x1), bz = Math.min(FISH_DECK.z0 - 1, me.z - Math.cos(me.r) * d);
+  // every cast lands a little differently: wobble in distance and direction, a high or a flat arc
+  const d = (3 + fishing.power * 9) * (.75 + Math.random() * .5), ang = (Math.random() - .5) * .9; me.r = 0;
+  const bx = clamp(me.x - Math.sin(ang) * d, BOUND.x0, BOUND.x1), bz = Math.min(FISH_DECK.z0 - 1, me.z - Math.cos(ang) * d);
+  const ah = +(1 + Math.random() * 2.4).toFixed(2), ft = +(.45 + d / 16).toFixed(2);
   fishing.st = "wait"; fishing.castAt = Date.now(); fishing.biteAt = fishing.castAt + 5000 + Math.random() * 17000;
-  setFs("cast", { bx: +bx.toFixed(2), bz: +bz.toFixed(2) }); if (audio.ready) audio.tone(audio.sfx, "sine", 900, 300, .25, .08);
-  setTimeout(() => { if (audio.ready) audio.paddle(); }, 600);
+  setFs("cast", { bx: +bx.toFixed(2), bz: +bz.toFixed(2), ah, ft }); if (audio.ready) audio.tone(audio.sfx, "sine", 900, 300, .25, .08);
+  setTimeout(() => { if (audio.ready) audio.paddle(); }, (ft + .25) * 1000);
   drawFish();
 };
 ["pointerup", "pointerleave", "pointercancel"].forEach(ev => $("fishBtn").addEventListener(ev, castRelease));
@@ -4553,6 +4557,7 @@ function strike(pre) {
   fishing.catch = { k: F.k, cm, isNew, duel, pts }; fishing.st = "caught";
   setFs("catch", { k: F.k, cm });
   showBubble(() => myAvatar, F.rare === 3 ? `${F.name}…?` : `${F.name} ${cm}cm!`, 3, "me");
+  const sheet = $("fishModal"); sheet.classList.add("peek"); setTimeout(() => sheet.classList.remove("peek"), 2300);
   if (audio.ready) (F.rare === 2 ? audio.ding() : audio.pop());
   drawFish();
 }
@@ -4588,37 +4593,67 @@ function makeFishMesh(k) {
   const eye = new THREE.Mesh(new THREE.SphereGeometry(.018, 6, 4), new THREE.MeshBasicMaterial({ color: 0x111111 })); eye.position.set(.07, .03, -.2); g.add(eye);
   g.rotation.x = -Math.PI / 2.3; return g;
 }
+const LINE_N = 16;
 function rodFor(av) {
   const u = av.userData;
   if (!u.rodG) {
     const g = new THREE.Group(), rod = new THREE.Mesh(new THREE.CylinderGeometry(.015, .03, 1.9, 6), mat(0x2a2e3a)); rod.position.y = .95; g.add(rod);
     const tip = new THREE.Object3D(); tip.position.y = 1.9; g.add(tip);
     g.position.set(.2, .15, -.32); g.rotation.x = -.85; u.torso.add(g); u.rodG = g; u.rodTip = tip;
-    const lineGeo = new THREE.BufferGeometry(); lineGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(6), 3));
-    u.line = new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ color: 0xeeeeee, transparent: true, opacity: .7 })); u.line.frustumCulled = false; scene.add(u.line);
+    const lineGeo = new THREE.BufferGeometry(); lineGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(LINE_N * 3), 3));
+    u.line = new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ color: 0xeeeeee, transparent: true, opacity: .75 })); u.line.frustumCulled = false; scene.add(u.line);
     u.bobber = new THREE.Mesh(new THREE.SphereGeometry(.11, 12, 8), new THREE.MeshLambertMaterial({ color: 0xff3b30, emissive: 0xff3b30, emissiveIntensity: .5 })); scene.add(u.bobber);
+    u.ripple = new THREE.Mesh(new THREE.RingGeometry(.8, 1, 28), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide })); u.ripple.rotation.x = -Math.PI / 2; scene.add(u.ripple);
   }
   return u;
 }
 const tipW = new THREE.Vector3();
+// a line that sags between the rod tip and its end
+function drawLine(u, x, y, z, sag) {
+  const a = u.line.geometry.attributes.position.array;
+  for (let i = 0; i < LINE_N; i++) { const k = i / (LINE_N - 1); a[i * 3] = tipW.x + (x - tipW.x) * k; a[i * 3 + 1] = tipW.y + (y - tipW.y) * k - Math.sin(k * Math.PI) * sag; a[i * 3 + 2] = tipW.z + (z - tipW.z) * k; }
+  u.line.geometry.attributes.position.needsUpdate = true;
+}
 function showRod(av, has, fs) {
   const u = av.userData;
-  if (!has) { if (u.rodG) { u.rodG.visible = false; u.line.visible = false; u.bobber.visible = false; if (u.fishM) u.fishM.visible = false; } return; }
+  if (!has) { if (u.rodG) { u.rodG.visible = false; u.line.visible = false; u.bobber.visible = false; u.ripple.visible = false; if (u.fishW) u.fishW.visible = false; } return; }
   rodFor(av); u.rodG.visible = true;
-  const s = fs && fs.s, inWater = s === "cast" || s === "bite";
-  u.line.visible = u.bobber.visible = inWater;
+  const s = fs && fs.s, t = fs ? (Date.now() - fs.at) / 1000 : 0, inWater = s === "cast" || s === "bite";
+  const catching = s === "catch" && t < 6;
+  // rod swing: back, whip forward, settle; held high while showing a catch
+  let rx = -.85;
+  if (s === "cast" && t < .75) rx = t < .2 ? -.85 + 1.1 * (t / .2) : t < .35 ? .25 - 1.6 * ((t - .2) / .15) : -1.35 + .5 * Math.min(1, (t - .35) / .4);
+  if (catching) rx = -.85 + .55 * Math.min(1, t / .5);
+  u.rodG.rotation.x = rx; u.rodG.rotation.z = catching ? -.75 * Math.min(1, t / .5) : 0; // swing the catch out to the side where it can be seen
+  u.line.visible = inWater || catching; u.bobber.visible = inWater;
+  u.rodTip.getWorldPosition(tipW);
   if (inWater) {
-    const fly = clamp((Date.now() - fs.at) / 600, 0, 1), dip = s === "bite" ? .12 + Math.sin(T * 30) * .03 : 0;
-    u.rodTip.getWorldPosition(tipW);
-    const by = -.58 + Math.sin(T * 2.2 + av.id) * .02 - dip;
-    const bx = s === "cast" ? tipW.x + (fs.bx - tipW.x) * fly : fs.bx, bz = s === "cast" ? tipW.z + (fs.bz - tipW.z) * fly : fs.bz, byy = s === "cast" ? tipW.y + (by - tipW.y) * fly + Math.sin(fly * Math.PI) * 1.5 : by;
+    const ft = fs.ft || .6, fly = clamp((t - .25) / ft, 0, 1), dip = s === "bite" ? .12 + Math.sin(T * 30) * .03 : 0;
+    const by = -.58 + Math.sin(T * 2.2 + av.id) * .02 - dip, landed = s !== "cast" || fly >= 1;
+    let bx = fs.bx, bz = fs.bz, byy = by;
+    if (!landed) { bx = tipW.x + (fs.bx - tipW.x) * fly; bz = tipW.z + (fs.bz - tipW.z) * fly; byy = tipW.y + (by - tipW.y) * fly + Math.sin(fly * Math.PI) * (fs.ah || 1.5); }
     u.bobber.position.set(bx, byy, bz);
-    const a = u.line.geometry.attributes.position.array; a[0] = tipW.x; a[1] = tipW.y; a[2] = tipW.z; a[3] = bx; a[4] = byy + .06; a[5] = bz; u.line.geometry.attributes.position.needsUpdate = true;
+    drawLine(u, bx, byy + .06, bz, landed ? .35 : .05);
+    // rings where the float hits the water
+    const rt = s === "cast" ? t - .25 - ft : 9;
+    if (rt >= 0 && rt < 1.4) { u.ripple.visible = true; u.ripple.position.set(fs.bx, -.57, fs.bz); u.ripple.scale.setScalar(.2 + rt * .9); u.ripple.material.opacity = .6 * (1 - rt / 1.4); }
+    else if (s === "bite") { u.ripple.visible = true; u.ripple.position.set(fs.bx, -.57, fs.bz); const k = (T * 1.6) % 1; u.ripple.scale.setScalar(.2 + k * .6); u.ripple.material.opacity = .5 * (1 - k); }
+    else u.ripple.visible = false;
+  } else u.ripple.visible = false;
+  // the catch comes up out of the water and hangs from the line
+  if (catching && (!u.fishW || u.fishK !== fs.k)) { if (u.fishW) scene.remove(u.fishW); u.fishW = makeFishMesh(fs.k); u.fishW.rotation.order = "YXZ"; u.fishK = fs.k; scene.add(u.fishW); }
+  if (u.fishW) {
+    u.fishW.visible = catching;
+    if (catching) {
+      const F = FISH_BY[fs.k], sc = F && F.rare === 3 ? 1 : clamp((fs.cm || 30) / 45, .6, 1.8), up = ease(Math.min(1, t / .9));
+      const hx = tipW.x, hy = tipW.y - .55 - .3 * sc, hz = tipW.z, sx = fs.bx || hx, sz = fs.bz || hz;
+      const fx = sx + (hx - sx) * up, fy = -.6 + (hy + .6) * up + Math.sin(up * Math.PI) * 1.2, fz = sz + (hz - sz) * up;
+      u.fishW.position.set(fx, fy, fz); u.fishW.scale.setScalar(sc);
+      if (F && F.rare !== 3) u.fishW.rotation.set(Math.PI / 2, T * .8, Math.sin(T * 11) * .35); else u.fishW.rotation.set(0, T * .8, Math.sin(T * 5) * .2);
+      drawLine(u, fx, fy + .2 * sc, fz, 0);
+      if (t < .9 && Math.random() < .5) sparksS.emit(fx, fy, fz, rnd(-1, 1), rnd(0, 2), rnd(-1, 1), WHITE, .4, 6);
+    }
   }
-  // the catch, held up for a few seconds
-  const showing = s === "catch" && Date.now() - fs.at < 6000;
-  if (showing && (!u.fishM || u.fishK !== fs.k)) { if (u.fishM) u.torso.remove(u.fishM); u.fishM = makeFishMesh(fs.k); u.fishK = fs.k; u.fishM.position.set(0, .55, -.38); u.torso.add(u.fishM); }
-  if (u.fishM) { u.fishM.visible = showing; if (showing) { const sc = clamp((fs.cm || 30) / 45, .6, 1.8); u.fishM.scale.setScalar(FISH_BY[fs.k] && FISH_BY[fs.k].rare === 3 ? 1 : sc); u.fishM.rotation.z = Math.sin(T * 9) * .2; } }
 }
 const seenCatch = new Map();
 function updateFishing() {
@@ -4632,7 +4667,12 @@ function updateFishing() {
   }
 }
 // rod pose: both hands forward on the grip
-function rodPose(v, fs) { v.arR = 1.15; v.azR = -.25; v.arL = 1.0; v.azL = -.35; if (fs && fs.s === "catch" && Date.now() - fs.at < 6000) { v.arL = v.arR = 2.2; v.azL = v.azR = .1; } }
+function rodPose(v, fs) {
+  v.arR = 1.15; v.azR = -.25; v.arL = 1.0; v.azL = -.35;
+  if (!fs) return; const t = (Date.now() - fs.at) / 1000;
+  if (fs.s === "cast" && t < .75) { const k = t < .2 ? t / .2 : t < .35 ? 1 - (t - .2) / .15 * 1.6 : -.6 + .6 * Math.min(1, (t - .35) / .4); v.arR += .9 * k; v.arL += .7 * k; v.lean -= .15 * k; }
+  if (fs.s === "catch" && t < 6) { v.arL = v.arR = 1.6; v.azL = v.azR = -.15; v.lean -= .12; }
+}
 /* ================= 한강 달리기 경주: 2~4명, 판돈, A·D 번갈아 ================= */
 const RACE = { x0: -138, len: 40, lanes: [6.5, 8.6, 10.7, 12.8], gate: [-141.5, 9.6] };
 const RACE_BETS = [500, 1000, 2000], RACE_SHARE = { 2: [.7, .3], 3: [.55, .3, .15], 4: [.5, .25, .15, .1] };
