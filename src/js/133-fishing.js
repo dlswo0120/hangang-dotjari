@@ -110,7 +110,7 @@ function fishLoop() {
   const tick = () => {
     if ($("fishModal").hidden) return;
     const now = Date.now(), pn = performance.now(), dt = Math.min(.25, (pn - last) / 1000); last = pn;
-    { const dl = $("fishDuel"), d = myDuel(); if (d && d.fd.st === "go") { const other = d.h.key === "me" ? d.opp : d.h, left = d.fd.go + FD_TIME - now; dl.hidden = false; dl.textContent = left > FD_TIME ? "대결 준비…" : left > 0 ? `🎣 대결 ${fmt(left / 1000)} · 나 ${scoreOf("me").s}점 · ${other ? other.n : "상대"} ${other ? scoreOf(other.key).s : 0}점` : "대결 끝!"; } else dl.hidden = true; }
+    { const dl = $("fishDuel"), d = myDuel(); if (d && d.fd.st === "go") { const left = d.fd.go + FD_TIME - now; dl.hidden = false; dl.textContent = left > FD_TIME ? "대결 준비…" : left > 0 ? `🎣 대결 ${fmt(left / 1000)} · ${fdBoardText(d)}` : "대결 끝!"; } else dl.hidden = true; }
     if (fishing.st === "charge") { fishing.power += fishing.pDir * dt * 1.1; if (fishing.power >= 1) { fishing.power = 1; fishing.pDir = -1; } if (fishing.power <= 0) { fishing.power = 0; fishing.pDir = 1; } $("fishPowerBar").style.width = Math.round(fishing.power * 100) + "%"; }
     if (fishing.st === "wait" && now >= fishing.biteAt) { const F = rollFish(); fishing.st = "bite"; fishing.reel = { F, hits: 0, miss: 0, pos: 0, dir: 1, speed: F.speed || [1, 1.35, 1.8, .75][F.rare], zone: .2 + Math.random() * .55, end: now + 7000 }; placeReel(); setFs("bite", { bx: me.fs.bx, bz: me.fs.bz }); if (audio.ready) { audio.tone(audio.sfx, "sine", 520, 260, .18, .3); if (navigator.vibrate) try { navigator.vibrate(120); } catch (e) {} } drawFish(); }
     if (fishing.st === "bite") {
