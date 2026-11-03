@@ -70,7 +70,7 @@ function raceActions(acts, status) {
   return status;
 }
 function raceClick(a) {
-  if (a === "raceopen") { if (me.hold || me.basket || me.rod) { toast("손을 비우고 와 주세요"); return true; } $("raceBetModal").hidden = false; return true; }
+  if (a === "raceopen") { if (me.hold || me.basket || me.rod) { toast("손을 비우고 와 주세요"); return true; } openBet("race"); return true; }
   if (a.startsWith("racejoin:")) {
     const r = raceOf(a.slice(9)); if (!r || r.rc.st !== "open" || r.list.length >= 4) { toast("이미 출발했거나 자리가 없어요"); return true; }
     if (me.hold || me.basket || me.rod) { toast("손을 비우고 와 주세요"); return true; }
@@ -84,9 +84,19 @@ function raceClick(a) {
   return false;
 }
 function refundRace(msg) { const r = myRace(); if (r && r.rc.st !== "go") { wallet.money += r.rc.bet; saveWallet(); toast(msg); } }
+// the same stake picker serves every contest: openBet(kind) sets who gets the chosen amount
+let betFor = "race";
+const BET_INFO = {
+  race: ["판돈을 골라 주세요", "참가하는 사람 모두 같은 금액을 걸어요. 1등이 가장 많이 가져가고, 꼴찌도 조금은 돌려받아요.", "2명 70·30% · 3명 55·30·15% · 4명 50·25·15·10%"],
+  fish: ["낚시 대결 판돈", "3분 동안 잡은 물고기 점수(크기 × 희귀도)로 겨뤄요. 둘이 같은 금액을 걸어요.", "이긴 사람 80% · 진 사람 20% · 비기면 반반"],
+  boat: ["오리배 경주 판돈", "한 팀(두 명) 모두 같은 금액을 걸어요. 부표를 돌아 먼저 선착장에 오는 팀이 이겨요.", "2팀 70·30% · 3팀 55·30·15% · 팀 안에서 반씩"]
+};
+const BET_FN = {};
+function openBet(kind) { betFor = kind; const [t, p, tb] = BET_INFO[kind]; $("raceBetTitle").textContent = t; $("raceBetDesc").textContent = p; $("raceBetTable").textContent = tb; $("raceBetModal").hidden = false; }
 $("raceBetGrid").addEventListener("click", e => {
   const b = e.target.closest("button[data-bet]"); if (!b) return; const bet = +b.dataset.bet;
   if (wallet.money < bet) { toast("판돈이 모자라요"); return; }
+  if (betFor !== "race") { $("raceBetModal").hidden = true; BET_FN[betFor](bet); return; }
   wallet.money -= bet; saveWallet(); me.rc = { id: Date.now(), bet, st: "open" }; me.rj = null; me.rp = null; $("raceBetModal").hidden = true; standAtLane(0);
   toast(`${won(bet)}을 걸고 경주를 열었어요. 근처 사람들이 참가할 수 있어요`); publish(true); actKey = ""; refreshActions();
 });

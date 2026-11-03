@@ -187,6 +187,7 @@ function frame() {
   updateBeer();
   updateFishing();
   updateRace();
+  updateDuel();
   // bubbles follow their owners
   for (let i = bubbles.length - 1; i >= 0; i--) {
     const b = bubbles[i], o = b.getObj();

@@ -221,6 +221,7 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
 .reel.hit{animation:reelHit .35s}.reel.miss{animation:reelMiss .35s}
 @keyframes reelHit{0%{box-shadow:0 0 0 3px #7dffa8}100%{box-shadow:none}}
 @keyframes reelMiss{0%{box-shadow:0 0 0 3px #ef5350;transform:translateX(-4px)}50%{transform:translateX(4px)}100%{box-shadow:none;transform:none}}
+.card.fish p.fish-duel{color:#f2b46b;font-weight:700}
 </style>
 
 </head>
@@ -344,6 +345,7 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
 <div class="fish-sheet" id="fishModal" hidden role="dialog" aria-labelledby="fishTitle">
   <div class="card fish">
     <div class="shop-head"><h2 id="fishTitle">한강 낚시</h2><button class="x" id="fishClose" aria-label="닫기">닫기</button></div>
+    <p class="fish-duel" id="fishDuel" hidden></p>
     <p id="fishMsg"></p>
     <div class="fish-power" id="fishPower"><div id="fishPowerBar"></div></div>
     <div class="fish-card" id="fishCard" hidden><i id="fishIcon"></i><div><b id="fishName"></b><span id="fishRare"></span></div></div>
@@ -358,9 +360,9 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
 <div class="modal" id="raceBetModal" hidden role="dialog" aria-modal="true" aria-labelledby="raceBetTitle">
   <div class="card">
     <h2 id="raceBetTitle">판돈을 골라 주세요</h2>
-    <p>참가하는 사람 모두 같은 금액을 걸어요. 1등이 가장 많이 가져가고, 꼴찌도 조금은 돌려받아요.</p>
+    <p id="raceBetDesc">참가하는 사람 모두 같은 금액을 걸어요. 1등이 가장 많이 가져가고, 꼴찌도 조금은 돌려받아요.</p>
     <div class="race-bets" id="raceBetGrid"><button data-bet="500">500원</button><button data-bet="1000">1,000원</button><button data-bet="2000">2,000원</button></div>
-    <p class="race-table">2명 70·30% · 3명 55·30·15% · 4명 50·25·15·10%</p>
+    <p class="race-table" id="raceBetTable">2명 70·30% · 3명 55·30·15% · 4명 50·25·15·10%</p>
     <div class="modal-btns one"><button type="button" id="raceBetClose">그만두기</button></div>
   </div>
 </div>
@@ -2186,6 +2188,9 @@ function cleanPresence(p) {
     ch: num(p.ch, 0, 1e15, 0), pb: null, mt: p.mt === 1, bl: num(p.bl, 0, 1e15, 0)
   };
   o.fr = p.fr === 1;
+  if (p.fd && typeof p.fd === "object" && typeof p.fd.id === "number" && RACE_BETS.includes(p.fd.bet)) o.fd = { id: p.fd.id, bet: p.fd.bet, st: p.fd.st === "go" ? "go" : "open", go: num(p.fd.go, 0, 1e15, 0) };
+  if (p.fj && typeof p.fj === "object" && typeof p.fj.h === "string" && typeof p.fj.id === "number") o.fj = { h: p.fj.h.slice(0, 80), id: p.fj.id, at: num(p.fj.at, 0, 1e15, 0) };
+  if (p.fsc && typeof p.fsc === "object" && typeof p.fsc.id === "number") o.fsc = { id: p.fsc.id, s: num(p.fsc.s, 0, 1e6, 0), n: num(p.fsc.n, 0, 999, 0) };
   if (p.rc && typeof p.rc === "object" && typeof p.rc.id === "number" && RACE_BETS.includes(p.rc.bet)) o.rc = { id: p.rc.id, bet: p.rc.bet, st: p.rc.st === "go" ? "go" : "open", go: num(p.rc.go, 0, 1e15, 0) };
   if (p.rj && typeof p.rj === "object" && typeof p.rj.h === "string" && typeof p.rj.id === "number") o.rj = { h: p.rj.h.slice(0, 80), id: p.rj.id, at: num(p.rj.at, 0, 1e15, 0) };
   if (p.rp && typeof p.rp === "object" && typeof p.rp.id === "number") o.rp = { id: p.rp.id, d: num(p.rp.d, 0, 100, 0), f: num(p.rp.f, 0, 600000, 0) };
@@ -2244,7 +2249,7 @@ function syncPeers(peers) {
 })();
 let lastPub = 0, lastPubKey = "", mySay = null;
 function presenceObj() {
-  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id, at: me.bt.at } : null, say: mySay, rm: me.rm, hr: me.hold ? 1 : 0, hi: me.hold || null, ea: me.eat || 0, q: me.q || 0, bk: me.basket ? me.basket.length : -1, ch: me.ch || 0, pb: me.pb || null, mt: me.mat ? 1 : 0, bl: me.bl || 0, dv: me.dv ? { k: me.dv.k, at: me.dv.at } : null, em: me.em || null, lt: me.lit || 0, tw: me.tw || 0, gf: me.gf || null, ph: me.ph || null, pj: me.pj || null, rd: redness(), bq: me.bq || null, fr: me.rod ? 1 : 0, fs: me.fs || null, rc: me.rc || null, rj: me.rj ? { h: me.rj.h, id: me.rj.id, at: me.rj.at } : null, rp: me.rp || null };
+  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id, at: me.bt.at } : null, say: mySay, rm: me.rm, hr: me.hold ? 1 : 0, hi: me.hold || null, ea: me.eat || 0, q: me.q || 0, bk: me.basket ? me.basket.length : -1, ch: me.ch || 0, pb: me.pb || null, mt: me.mat ? 1 : 0, bl: me.bl || 0, dv: me.dv ? { k: me.dv.k, at: me.dv.at } : null, em: me.em || null, lt: me.lit || 0, tw: me.tw || 0, gf: me.gf || null, ph: me.ph || null, pj: me.pj || null, rd: redness(), bq: me.bq || null, fr: me.rod ? 1 : 0, fs: me.fs || null, rc: me.rc || null, rj: me.rj ? { h: me.rj.h, id: me.rj.id, at: me.rj.at } : null, rp: me.rp || null, fd: me.fd || null, fj: me.fj ? { h: me.fj.h, id: me.fj.id, at: me.fj.at } : null, fsc: me.fsc || null };
   if (boarded && boarded.driver) { o.bx = +boatLocal.x.toFixed(2); o.bz = +boatLocal.z.toFixed(2); o.br = +boatLocal.r.toFixed(2); }
   else { o.bx = null; o.bz = null; o.br = null; }
   return o;
@@ -2435,6 +2440,7 @@ function refreshActions() {
   status = photoActions(acts, status);
   status = beerActions(acts, status);
   status = fishActions(acts, status);
+  status = duelActions(acts, status);
   status = diveActions(acts, status);
   status = raceActions(acts, status);
   if ($("status").textContent !== status) { $("status").textContent = status; $("status").hidden = !status; }
@@ -2445,7 +2451,7 @@ function refreshActions() {
 }
 $("actRow").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return; const a = b.dataset.act;
-  if (storeClick(a) || rentalClick(a) || deliveryClick(a) || boardClick(a) || fireClick(a) || photoClick(a) || beerClick(a) || fishClick(a) || raceClick(a) || diveClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
+  if (storeClick(a) || rentalClick(a) || deliveryClick(a) || boardClick(a) || fireClick(a) || photoClick(a) || beerClick(a) || fishClick(a) || raceClick(a) || diveClick(a) || duelClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
   if (a === "sit" || a === "lie") {
     if (me.st === "walk") {
       if (!canSpread()) { toast("잔디나 대교 위에서만 돗자리를 펼 수 있습니다"); return; }
@@ -2748,7 +2754,7 @@ $("leaveModal").addEventListener("click", e => { if (e.target === $("leaveModal"
 addEventListener("keydown", e => { if (e.key === "Escape" && !$("leaveModal").hidden) $("leaveModal").hidden = true; });
 $("leaveBtn").addEventListener("click", async () => {
   $("leaveModal").hidden = true;
-  started = false; me.bt = null; boarded = null; me.rm = null; me.hold = false; me.eat = 0; me.basket = null; me.q = 0; payState = null; me.ch = 0; me.pb = null; me.mat = false; me.bike = null; me.em = null; me.lit = 0; me.tw = 0; me.gf = null; me.ph = null; me.pj = null; if (shoot) shoot.done = true; me.rod = null; me.fs = null; if ((me.rc && me.rc.st !== "go") || (me.rj && !inRaceNow())) { const rr = myRace(); if (rr) { wallet.money += rr.rc.bet; saveWallet(); } } me.rc = null; me.rj = null; me.rp = null; $("fishModal").hidden = true; if (me.dv && !me.dv.got && Date.now() - me.dv.at < DV_RIDE_IN * 1000) { wallet.money += PRODUCTS[me.dv.k].price + DV_FEE; saveWallet(); } me.dv = null; if (me.st === "bike") me.st = "walk"; exitMung();
+  started = false; me.bt = null; boarded = null; me.rm = null; me.hold = false; me.eat = 0; me.basket = null; me.q = 0; payState = null; me.ch = 0; me.pb = null; me.mat = false; me.bike = null; me.em = null; me.lit = 0; me.tw = 0; me.gf = null; me.ph = null; me.pj = null; if (shoot) shoot.done = true; me.rod = null; me.fs = null; if ((me.rc && me.rc.st !== "go") || (me.rj && !inRaceNow())) { const rr = myRace(); if (rr) { wallet.money += rr.rc.bet; saveWallet(); } } me.rc = null; me.rj = null; me.rp = null; { const dd = myDuel(); if (dd && dd.fd.st !== "go") { wallet.money += dd.fd.bet; saveWallet(); } } me.fd = null; me.fj = null; me.fsc = null; $("fishModal").hidden = true; if (me.dv && !me.dv.got && Date.now() - me.dv.at < DV_RIDE_IN * 1000) { wallet.money += PRODUCTS[me.dv.k].price + DV_FEE; saveWallet(); } me.dv = null; if (me.st === "bike") me.st = "walk"; exitMung();
   try { if (room) { await room.presence({ n: null, st: null, bt: null, rm: null }); if (typeof room.leave === "function") await room.leave(); } } catch (e) {}
   room = null;
   if (myAvatar) { scene.remove(myAvatar); myAvatar = null; }
@@ -3866,6 +3872,7 @@ function frame() {
   updateBeer();
   updateFishing();
   updateRace();
+  updateDuel();
   // bubbles follow their owners
   for (let i = bubbles.length - 1; i >= 0; i--) {
     const b = bubbles[i], o = b.getObj();
@@ -4473,7 +4480,7 @@ function drawFish() {
     $("fishName").textContent = F.name + (F.rare === 3 ? "" : ` ${fishing.catch.cm}cm`);
     $("fishRare").textContent = RARE_LABEL[F.rare] + (fishing.catch.isNew ? " · 도감에 새로 기록!" : "");
     $("fishIcon").style.background = "#" + F.col.toString(16).padStart(6, "0");
-    $("fishRelease").textContent = (F.rare === 3 ? "쓰레기 버리기" : "방생하기") + (pay > 0 ? ` (+${won(pay)})` : " (오늘 보상은 다 받았어요)");
+    $("fishRelease").textContent = (F.rare === 3 ? "쓰레기 버리기" : "방생하기") + (fishing.catch.duel ? ` (대결 점수 +${fishing.catch.pts}점)` : pay > 0 ? ` (+${won(pay)})` : " (오늘 보상은 다 받았어요)");
   }
 }
 function fishLoop() {
@@ -4482,6 +4489,7 @@ function fishLoop() {
   const tick = () => {
     if ($("fishModal").hidden) return;
     const now = Date.now(), pn = performance.now(), dt = Math.min(.25, (pn - last) / 1000); last = pn;
+    { const dl = $("fishDuel"), d = myDuel(); if (d && d.fd.st === "go") { const other = d.h.key === "me" ? d.opp : d.h, left = d.fd.go + FD_TIME - now; dl.hidden = false; dl.textContent = left > FD_TIME ? "대결 준비…" : left > 0 ? `🎣 대결 ${fmt(left / 1000)} · 나 ${scoreOf("me").s}점 · ${other ? other.n : "상대"} ${other ? scoreOf(other.key).s : 0}점` : "대결 끝!"; } else dl.hidden = true; }
     if (fishing.st === "charge") { fishing.power += fishing.pDir * dt * 1.1; if (fishing.power >= 1) { fishing.power = 1; fishing.pDir = -1; } if (fishing.power <= 0) { fishing.power = 0; fishing.pDir = 1; } $("fishPowerBar").style.width = Math.round(fishing.power * 100) + "%"; }
     if (fishing.st === "wait" && now >= fishing.biteAt) { const F = rollFish(); fishing.st = "bite"; fishing.reel = { F, hits: 0, miss: 0, pos: 0, dir: 1, speed: [1, 1.35, 1.8, .75][F.rare], zone: .2 + Math.random() * .55, end: now + 7000 }; placeReel(); setFs("bite", { bx: me.fs.bx, bz: me.fs.bz }); if (audio.ready) { audio.tone(audio.sfx, "sine", 520, 260, .18, .3); if (navigator.vibrate) try { navigator.vibrate(120); } catch (e) {} } drawFish(); }
     if (fishing.st === "bite") {
@@ -4533,7 +4541,8 @@ function strike(pre) {
   const F = pre || rollFish(), cm = F.cm[1] ? Math.round(F.cm[0] + Math.pow(Math.random(), 1.6) * (F.cm[1] - F.cm[0])) : 0;
   const prev = dex[F.k], isNew = !prev;
   dex[F.k] = { n: (prev ? prev.n : 0) + 1, best: Math.max(prev ? prev.best : 0, cm) }; saveDex();
-  fishing.catch = { k: F.k, cm, isNew }; fishing.st = "caught";
+  const duel = inFishDuel(), pts = duelCatch(F, cm);
+  fishing.catch = { k: F.k, cm, isNew, duel, pts }; fishing.st = "caught";
   setFs("catch", { k: F.k, cm });
   showBubble(() => myAvatar, F.rare === 3 ? `${F.name}…?` : `${F.name} ${cm}cm!`, 3, "me");
   if (audio.ready) (F.rare === 2 ? audio.ding() : audio.pop());
@@ -4541,7 +4550,7 @@ function strike(pre) {
 }
 $("fishRelease").addEventListener("click", () => {
   if (!fishing.catch) return; const F = FISH_BY[fishing.catch.k];
-  const pay = Math.min(F.pay, Math.max(0, FISH_DAY_CAP - fishEarnedToday()));
+  const pay = fishing.catch.duel ? 0 : Math.min(F.pay, Math.max(0, FISH_DAY_CAP - fishEarnedToday()));
   if (pay > 0) { if (wallet.fishDay !== todayKey()) { wallet.fishDay = todayKey(); wallet.fishEarn = 0; } wallet.fishEarn += pay; wallet.money += pay; saveWallet(); }
   toast(F.rare === 3 ? `강이 조금 더 깨끗해졌어요${pay ? " · +" + won(pay) : ""}` : `${F.name}를 강으로 돌려보냈어요${pay ? " · +" + won(pay) : ""}`);
   if (audio.ready) audio.paddle();
@@ -4688,7 +4697,7 @@ function raceActions(acts, status) {
   return status;
 }
 function raceClick(a) {
-  if (a === "raceopen") { if (me.hold || me.basket || me.rod) { toast("손을 비우고 와 주세요"); return true; } $("raceBetModal").hidden = false; return true; }
+  if (a === "raceopen") { if (me.hold || me.basket || me.rod) { toast("손을 비우고 와 주세요"); return true; } openBet("race"); return true; }
   if (a.startsWith("racejoin:")) {
     const r = raceOf(a.slice(9)); if (!r || r.rc.st !== "open" || r.list.length >= 4) { toast("이미 출발했거나 자리가 없어요"); return true; }
     if (me.hold || me.basket || me.rod) { toast("손을 비우고 와 주세요"); return true; }
@@ -4702,9 +4711,19 @@ function raceClick(a) {
   return false;
 }
 function refundRace(msg) { const r = myRace(); if (r && r.rc.st !== "go") { wallet.money += r.rc.bet; saveWallet(); toast(msg); } }
+// the same stake picker serves every contest: openBet(kind) sets who gets the chosen amount
+let betFor = "race";
+const BET_INFO = {
+  race: ["판돈을 골라 주세요", "참가하는 사람 모두 같은 금액을 걸어요. 1등이 가장 많이 가져가고, 꼴찌도 조금은 돌려받아요.", "2명 70·30% · 3명 55·30·15% · 4명 50·25·15·10%"],
+  fish: ["낚시 대결 판돈", "3분 동안 잡은 물고기 점수(크기 × 희귀도)로 겨뤄요. 둘이 같은 금액을 걸어요.", "이긴 사람 80% · 진 사람 20% · 비기면 반반"],
+  boat: ["오리배 경주 판돈", "한 팀(두 명) 모두 같은 금액을 걸어요. 부표를 돌아 먼저 선착장에 오는 팀이 이겨요.", "2팀 70·30% · 3팀 55·30·15% · 팀 안에서 반씩"]
+};
+const BET_FN = {};
+function openBet(kind) { betFor = kind; const [t, p, tb] = BET_INFO[kind]; $("raceBetTitle").textContent = t; $("raceBetDesc").textContent = p; $("raceBetTable").textContent = tb; $("raceBetModal").hidden = false; }
 $("raceBetGrid").addEventListener("click", e => {
   const b = e.target.closest("button[data-bet]"); if (!b) return; const bet = +b.dataset.bet;
   if (wallet.money < bet) { toast("판돈이 모자라요"); return; }
+  if (betFor !== "race") { $("raceBetModal").hidden = true; BET_FN[betFor](bet); return; }
   wallet.money -= bet; saveWallet(); me.rc = { id: Date.now(), bet, st: "open" }; me.rj = null; me.rp = null; $("raceBetModal").hidden = true; standAtLane(0);
   toast(`${won(bet)}을 걸고 경주를 열었어요. 근처 사람들이 참가할 수 있어요`); publish(true); actKey = ""; refreshActions();
 });
@@ -4826,6 +4845,94 @@ function diveClick(a) {
     publish(true); return true;
   }
   return false;
+}
+/* ================= 낚시 1:1 대결: 3분 점수전, 이긴 사람 80% ================= */
+const FD_TIME = 180000, FD_COUNT = 3000, FD_MULT = [1, 2, 5, 0];
+// host: me.fd = { id, bet, st: "open" | "go", go }   joiner: me.fj = { h, id, at, bet }   score: me.fsc = { id, s, n }
+function fdOf(hostKey) {
+  const h = hostKey === "me" ? { key: "me", peer: myPeer, fd: me.fd, n: me.name } : (() => { const o = others.get(hostKey); return o && o.p.fd ? { key: hostKey, peer: hostKey, fd: o.p.fd, n: o.p.n } : null; })();
+  if (!h || !h.fd) return null;
+  let opp = null;
+  if (h.key !== "me" && me.fj && me.fj.h === h.peer && me.fj.id === h.fd.id) opp = { key: "me", n: me.name };
+  else for (const [peer, o] of others) if (peer !== h.key && o.p.fj && o.p.fj.h === h.peer && o.p.fj.id === h.fd.id) { opp = { key: peer, n: o.p.n }; break; }
+  return { h, opp, fd: h.fd };
+}
+function myDuel() { if (me.fd) return fdOf("me"); if (me.fj) return fdOf(me.fj.h === myPeer ? "me" : me.fj.h); return null; }
+function inFishDuel() { const d = myDuel(); return !!(d && d.fd.st === "go" && Date.now() >= d.fd.go && Date.now() < d.fd.go + FD_TIME); }
+const scoreOf = key => { const s = key === "me" ? me.fsc : (others.get(key) || { p: {} }).p.fsc; return s || { s: 0, n: 0 }; };
+
+function duelActions(acts, status) {
+  if (!started || anim || boarded || !me.rod) return status;
+  const d = myDuel(), now = Date.now();
+  if (d) {
+    const mine = scoreOf("me").s, theirs = d.opp ? scoreOf(d.h.key === "me" ? d.opp.key : d.h.key).s : 0, other = d.h.key === "me" ? d.opp : d.h;
+    if (d.fd.st !== "go") {
+      if (me.fd) { if (d.opp) acts.unshift(["fdgo", "대결 시작!", "primary"]); acts.push(["fdcancel", "대결 취소", ""]); }
+      else acts.push(["fdleave", "대결 나가기", ""]);
+      return `🎣 낚시 대결 · 판돈 ${won(d.fd.bet)} · ` + (d.opp ? `${d.h.n} vs ${d.opp.n}` : "상대를 기다리는 중…");
+    }
+    const left = d.fd.go + FD_TIME - now;
+    if (left > 0 && now >= d.fd.go) return `🎣 대결 ${fmt(left / 1000)} · 나 ${mine}점 · ${other ? other.n : "상대"} ${theirs}점`;
+    return status;
+  }
+  if (me.st !== "walk" || !onFishDeck(me.x, me.z)) return status;
+  for (const [peer, o] of others) {
+    const fd = o.p.fd; if (!fd || fd.st !== "open" || now - fd.id > 180000) continue;
+    const r = fdOf(peer); if (r && !r.opp && Math.hypot(o.x - me.x, o.z - me.z) < 15) acts.push(["fdjoin:" + peer, `🎣 ${o.p.n}님과 대결 · ${won(fd.bet)}`, ""]);
+  }
+  acts.push(["fdopen", "낚시 대결 열기", ""]);
+  return status;
+}
+function duelClick(a) {
+  if (a === "fdopen") { openBet("fish"); return true; }
+  if (a.startsWith("fdjoin:")) {
+    const r = fdOf(a.slice(7)); if (!r || r.opp || r.fd.st !== "open") { toast("이미 상대가 있어요"); return true; }
+    if (wallet.money < r.fd.bet) { toast("판돈이 모자라요"); return true; }
+    wallet.money -= r.fd.bet; saveWallet(); me.fj = { h: r.h.peer, id: r.fd.id, at: Date.now(), bet: r.fd.bet }; me.fsc = { id: r.fd.id, s: 0, n: 0 };
+    toast(`${won(r.fd.bet)}을 걸고 ${r.h.n}님과의 대결에 참가했어요!`); return true;
+  }
+  if (a === "fdgo") { const r = myDuel(); if (!r || !r.opp) return true; me.fd.st = "go"; me.fd.go = Date.now() + FD_COUNT; return true; }
+  if (a === "fdcancel" || a === "fdleave") {
+    const r = myDuel(); if (r && r.fd.st !== "go") { wallet.money += r.fd.bet; saveWallet(); toast("대결을 취소했어요. 판돈을 돌려받았어요"); }
+    me.fd = null; me.fj = null; me.fsc = null; return true;
+  }
+  return false;
+}
+BET_FN.fish = bet => {
+  if (!me.rod) { toast("낚싯대를 빌린 뒤에 대결을 열 수 있어요"); return; }
+  wallet.money -= bet; saveWallet(); me.fd = { id: Date.now(), bet, st: "open" }; me.fj = null; me.fsc = { id: me.fd.id, s: 0, n: 0 };
+  toast(`${won(bet)}을 걸고 낚시 대결을 열었어요. 데크 위 사람이 참가할 수 있어요`); publish(true); actKey = ""; refreshActions();
+};
+// called from strike(): only fish caught during the 3 minutes count
+function duelCatch(F, cm) {
+  if (!inFishDuel()) return 0;
+  const pts = Math.round(cm * FD_MULT[F.rare]), d = myDuel();
+  me.fsc = { id: d.fd.id, s: (me.fsc && me.fsc.id === d.fd.id ? me.fsc.s : 0) + pts, n: (me.fsc && me.fsc.id === d.fd.id ? me.fsc.n : 0) + 1 };
+  publish(true); return pts;
+}
+let fdShown = "", fdPaid = 0;
+function updateDuel() {
+  const d = myDuel(), cd = $("countdown");
+  if (!d) { if (me.fj && fdPaid !== me.fj.id) { toast("대결이 취소됐어요. 판돈을 돌려받았어요"); wallet.money += me.fj.bet || 0; saveWallet(); me.fj = null; me.fsc = null; } return; }
+  if (d.fd.st !== "go") return;
+  const now = Date.now(), left = d.fd.go - now;
+  if (left > 0) { const n = String(Math.ceil(left / 1000)); if (fdShown !== d.fd.id + n) { fdShown = d.fd.id + n; cd.textContent = n; cd.hidden = false; cd.classList.remove("pop"); void cd.offsetWidth; cd.classList.add("pop"); if (audio.ready) audio.pop(); } return; }
+  if (left > -900) { if (fdShown !== d.fd.id + "go") { fdShown = d.fd.id + "go"; cd.textContent = "시작!"; cd.hidden = false; cd.classList.remove("pop"); void cd.offsetWidth; cd.classList.add("pop"); if (audio.ready) audio.ding(); } return; }
+  if (fdShown === d.fd.id + "go") { cd.hidden = true; fdShown = d.fd.id + "on"; }
+  if (now < d.fd.go + FD_TIME || fdPaid === d.fd.id) return;
+  fdPaid = d.fd.id;
+  const meKey = "me", otherKey = d.h.key === "me" ? (d.opp && d.opp.key) : d.h.key, otherName = d.h.key === "me" ? (d.opp && d.opp.n) : d.h.n;
+  const a = scoreOf(meKey), b = otherKey ? scoreOf(otherKey) : { s: -1, n: 0 }, pot = d.fd.bet * 2;
+  const pay = !otherKey ? pot : a.s > b.s ? pot * .8 : a.s < b.s ? pot * .2 : pot / 2;
+  wallet.money += Math.round(pay); saveWallet();
+  const rows = [{ n: me.name, s: a.s, c: a.n, pay: Math.round(pay), me: true }];
+  if (otherKey) rows.push({ n: otherName, s: b.s, c: b.n, pay: pot - Math.round(pay) });
+  rows.sort((x, y) => y.s - x.s);
+  const box = $("raceResList"); box.textContent = "";
+  rows.forEach((r, i) => { const row = document.createElement("div"); row.className = "row" + (r.me ? " me" : ""); const s1 = document.createElement("span"); s1.textContent = `${i + 1}등 · ${r.n} · ${r.s}점 (${r.c}마리)`; const s2 = document.createElement("b"); s2.textContent = "+" + won(r.pay); row.append(s1, s2); box.appendChild(row); });
+  $("raceResTitle").textContent = a.s > b.s ? "🏆 대결 승리!" : a.s === b.s ? "무승부예요" : "아쉽게 졌어요";
+  $("raceResPot").textContent = `낚시 대결 · 총 상금 ${won(pot)}`; $("raceResModal").hidden = false; if (audio.ready) audio.ding();
+  setTimeout(() => { me.fd = null; me.fj = null; me.fsc = null; publish(true); actKey = ""; refreshActions(); }, 4000);
 }
 })();
 </script>

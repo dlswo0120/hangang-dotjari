@@ -209,3 +209,4 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
 .reel.hit{animation:reelHit .35s}.reel.miss{animation:reelMiss .35s}
 @keyframes reelHit{0%{box-shadow:0 0 0 3px #7dffa8}100%{box-shadow:none}}
 @keyframes reelMiss{0%{box-shadow:0 0 0 3px #ef5350;transform:translateX(-4px)}50%{transform:translateX(4px)}100%{box-shadow:none;transform:none}}
+.card.fish p.fish-duel{color:#f2b46b;font-weight:700}

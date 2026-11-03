@@ -92,7 +92,7 @@ function drawFish() {
     $("fishName").textContent = F.name + (F.rare === 3 ? "" : ` ${fishing.catch.cm}cm`);
     $("fishRare").textContent = RARE_LABEL[F.rare] + (fishing.catch.isNew ? " · 도감에 새로 기록!" : "");
     $("fishIcon").style.background = "#" + F.col.toString(16).padStart(6, "0");
-    $("fishRelease").textContent = (F.rare === 3 ? "쓰레기 버리기" : "방생하기") + (pay > 0 ? ` (+${won(pay)})` : " (오늘 보상은 다 받았어요)");
+    $("fishRelease").textContent = (F.rare === 3 ? "쓰레기 버리기" : "방생하기") + (fishing.catch.duel ? ` (대결 점수 +${fishing.catch.pts}점)` : pay > 0 ? ` (+${won(pay)})` : " (오늘 보상은 다 받았어요)");
   }
 }
 function fishLoop() {
@@ -101,6 +101,7 @@ function fishLoop() {
   const tick = () => {
     if ($("fishModal").hidden) return;
     const now = Date.now(), pn = performance.now(), dt = Math.min(.25, (pn - last) / 1000); last = pn;
+    { const dl = $("fishDuel"), d = myDuel(); if (d && d.fd.st === "go") { const other = d.h.key === "me" ? d.opp : d.h, left = d.fd.go + FD_TIME - now; dl.hidden = false; dl.textContent = left > FD_TIME ? "대결 준비…" : left > 0 ? `🎣 대결 ${fmt(left / 1000)} · 나 ${scoreOf("me").s}점 · ${other ? other.n : "상대"} ${other ? scoreOf(other.key).s : 0}점` : "대결 끝!"; } else dl.hidden = true; }
     if (fishing.st === "charge") { fishing.power += fishing.pDir * dt * 1.1; if (fishing.power >= 1) { fishing.power = 1; fishing.pDir = -1; } if (fishing.power <= 0) { fishing.power = 0; fishing.pDir = 1; } $("fishPowerBar").style.width = Math.round(fishing.power * 100) + "%"; }
     if (fishing.st === "wait" && now >= fishing.biteAt) { const F = rollFish(); fishing.st = "bite"; fishing.reel = { F, hits: 0, miss: 0, pos: 0, dir: 1, speed: [1, 1.35, 1.8, .75][F.rare], zone: .2 + Math.random() * .55, end: now + 7000 }; placeReel(); setFs("bite", { bx: me.fs.bx, bz: me.fs.bz }); if (audio.ready) { audio.tone(audio.sfx, "sine", 520, 260, .18, .3); if (navigator.vibrate) try { navigator.vibrate(120); } catch (e) {} } drawFish(); }
     if (fishing.st === "bite") {
@@ -152,7 +153,8 @@ function strike(pre) {
   const F = pre || rollFish(), cm = F.cm[1] ? Math.round(F.cm[0] + Math.pow(Math.random(), 1.6) * (F.cm[1] - F.cm[0])) : 0;
   const prev = dex[F.k], isNew = !prev;
   dex[F.k] = { n: (prev ? prev.n : 0) + 1, best: Math.max(prev ? prev.best : 0, cm) }; saveDex();
-  fishing.catch = { k: F.k, cm, isNew }; fishing.st = "caught";
+  const duel = inFishDuel(), pts = duelCatch(F, cm);
+  fishing.catch = { k: F.k, cm, isNew, duel, pts }; fishing.st = "caught";
   setFs("catch", { k: F.k, cm });
   showBubble(() => myAvatar, F.rare === 3 ? `${F.name}…?` : `${F.name} ${cm}cm!`, 3, "me");
   if (audio.ready) (F.rare === 2 ? audio.ding() : audio.pop());
@@ -160,7 +162,7 @@ function strike(pre) {
 }
 $("fishRelease").addEventListener("click", () => {
   if (!fishing.catch) return; const F = FISH_BY[fishing.catch.k];
-  const pay = Math.min(F.pay, Math.max(0, FISH_DAY_CAP - fishEarnedToday()));
+  const pay = fishing.catch.duel ? 0 : Math.min(F.pay, Math.max(0, FISH_DAY_CAP - fishEarnedToday()));
   if (pay > 0) { if (wallet.fishDay !== todayKey()) { wallet.fishDay = todayKey(); wallet.fishEarn = 0; } wallet.fishEarn += pay; wallet.money += pay; saveWallet(); }
   toast(F.rare === 3 ? `강이 조금 더 깨끗해졌어요${pay ? " · +" + won(pay) : ""}` : `${F.name}를 강으로 돌려보냈어요${pay ? " · +" + won(pay) : ""}`);
   if (audio.ready) audio.paddle();
