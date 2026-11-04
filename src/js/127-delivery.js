@@ -1,7 +1,7 @@
 /* ================= 한강통닭 치킨 배달 ================= */
 // The order (menu + time) rides along in presence, and every screen plays the same timeline,
 // so everyone sees the same rider without any server.
-const DV_FEE = 1000, DV_MENU = ["halfchk", "chicken", "gangjeong"];
+const DV_FEE = 1000, DV_MENU = ["halfchk", "chicken", "yangchk", "gangjeong"];
 const DV_RIDE_IN = 90, DV_RIDE = 15, DV_LANE = 30.6, DV_WALK_SPEED = 1.7;
 const dvLogo = signTex([["한강통닭", 44, .55]], "#c0392b", "#fff6e0", 256, 96);
 

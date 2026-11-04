@@ -18,7 +18,10 @@ const PRODUCTS = {
   icebar: { name: "아이스바", price: 2500, cat: "ice", color: "#8fd3ff", eat: 7 },
   cone: { name: "콘 아이스크림", price: 3000, cat: "ice", color: "#f7c6d9", eat: 8 },
   mochi: { name: "찹쌀떡 아이스", price: 3500, cat: "ice", color: "#f3efe4", eat: 7 },
-  gangjeong: { name: "닭강정 컵", price: 6500, cat: "chicken", color: "#c4632a", eat: 120 },
+  gangjeong: { name: "닭강정 컵", price: 6500, cat: "chicken", color: "#c4632a", eat: 120, sauce: true },
+  yangchk: { name: "양념치킨", price: 8500, cat: "chicken", color: "#b5391f", eat: 120, sauce: true },
+  chkshare: { name: "나눠 받은 치킨", price: 0, cat: "chicken", color: "#d9893a", eat: 60, share: true },
+  chkshareY: { name: "나눠 받은 양념치킨", price: 0, cat: "chicken", color: "#b5391f", eat: 60, share: true, sauce: true },
   chicken: { name: "순살치킨", price: 8000, cat: "chicken", color: "#d9893a", eat: 120 },
   halfchk: { name: "한강통닭 반마리", price: 5000, cat: "chicken", color: "#e0a046", eat: 120 },
   sparkler: { name: "스파클러", price: 500, cat: "fire", color: "#ffcf5a", eat: 0, fire: "hand" },
@@ -29,7 +32,7 @@ const CATS = {
   snack: { title: "과자 진열대", verb: "과자 고르기", items: ["chips", "shrimp", "choco", "jelly", "rpack"] },
   drink: { title: "음료 냉장고", verb: "음료 고르기", items: ["water", "banana", "cider", "coffee", "soju", "canbeer", "beercup"] },
   ice: { title: "아이스크림 냉동고", verb: "아이스크림 고르기", items: ["icebar", "cone", "mochi"] },
-  chicken: { title: "따끈한 치킨", verb: "치킨 고르기", items: ["gangjeong", "chicken"] }
+  chicken: { title: "따끈한 치킨", verb: "치킨 고르기", items: ["gangjeong", "chicken", "yangchk"] }
 };
 const won = n => n.toLocaleString("ko-KR") + "원";
 const PRODUCT_IMG = {}, PRODUCT_TEX = {}, PRODUCT_URL = {};
@@ -174,12 +177,24 @@ const ART = {
     label(x, "반마리", w / 2, 134, 13, "#7a3b10");
     for (let i = 0; i < 4; i++) { const cx = 30 + i * 23, cy = 30 + (i % 2) * 10; const g = x.createRadialGradient(cx - 4, cy - 4, 2, cx, cy, 14); g.addColorStop(0, "#f6c983"); g.addColorStop(1, "#b5602a"); x.fillStyle = g; x.beginPath(); x.ellipse(cx, cy, 14, 11, i, 0, 7); x.fill(); }
   },
+  yangchk(x, w, h) {
+    x.fillStyle = "#fff6e8"; rr(x, 12, 44, w - 24, h - 52, 6); x.fill(); x.fillStyle = "#b5391f"; for (let i = 12; i < w - 12; i += 16) x.fillRect(i, 44, 8, h - 52);
+    x.fillStyle = "#fff6e8"; x.fillRect(20, 96, w - 40, 26); label(x, "양념치킨", w / 2, 109, 15, "#b5391f");
+    for (let i = 0; i < 6; i++) { const cx = 26 + (i * 19) % 80, cy = 30 + (i % 2) * 12; const g = x.createRadialGradient(cx - 4, cy - 4, 2, cx, cy, 15); g.addColorStop(0, "#e2643a"); g.addColorStop(1, "#8a2414"); x.fillStyle = g; x.beginPath(); x.ellipse(cx, cy, 15, 12, i, 0, 7); x.fill(); x.fillStyle = "rgba(255,255,255,.7)"; x.fillRect(cx - 3, cy - 6, 2, 2); }
+  },
+  chkshare(x, w, h) { drumArt(x, w, h, "#c4702e", "#8a4a18"); },
+  chkshareY(x, w, h) { drumArt(x, w, h, "#d0482a", "#7a1e10"); },
   chicken(x, w, h) {
     x.fillStyle = "#ffffff"; rr(x, 12, 44, w - 24, h - 52, 6); x.fill(); x.fillStyle = "#d8322f"; for (let i = 12; i < w - 12; i += 16) x.fillRect(i, 44, 8, h - 52);
     x.fillStyle = "#ffffff"; x.fillRect(20, 96, w - 40, 26); label(x, "순살치킨", w / 2, 109, 15, "#d8322f");
     for (let i = 0; i < 6; i++) { const cx = 26 + (i * 19) % 80, cy = 30 + (i % 2) * 12; const g = x.createRadialGradient(cx - 4, cy - 4, 2, cx, cy, 15); g.addColorStop(0, "#f3c27a"); g.addColorStop(1, "#b9682a"); x.fillStyle = g; x.beginPath(); x.ellipse(cx, cy, 15, 12, i, 0, 7); x.fill(); }
   }
 };
+function drumArt(x, w, h, c0, c1) {
+  x.fillStyle = "#fff6e8"; rr(x, 14, 20, w - 28, h - 40, 14); x.fill();
+  x.fillStyle = "#f4ead8"; x.fillRect(w / 2 - 6, 96, 12, 34); x.beginPath(); x.arc(w / 2 - 6, 132, 8, 0, 7); x.arc(w / 2 + 6, 132, 8, 0, 7); x.fill();
+  const g = x.createRadialGradient(w / 2 - 8, 60, 4, w / 2, 70, 34); g.addColorStop(0, c0); g.addColorStop(1, c1); x.fillStyle = g; x.beginPath(); x.ellipse(w / 2, 70, 28, 36, 0, 0, 7); x.fill();
+}
 for (const k in PRODUCTS) {
   const c = document.createElement("canvas"); c.width = 128; c.height = 160; const x = c.getContext("2d");
   (ART[k] || (k === "beer" ? ART.beercup : ART.chips))(x, 128, 160);

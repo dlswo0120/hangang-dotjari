@@ -8,10 +8,13 @@ function eatTime(k) { return k === "ramen" || k === true ? EAT_TIME : (PRODUCTS[
 const EAT_WORDS = { ramen: ["후루릅~", "짭짭"], snack: ["바삭바삭", "와삭와삭"], drink: ["꿀꺽꿀꺽", "캬~"], ice: ["냠냠", "시원해~"], chicken: ["바삭!", "냠냠 쫄깃"] };
 function eatingFx(av, key, e, dist, kind) {
   if (e < 0) { u_lastBite[key] = -1; return; }
+  const share = PRODUCTS[kind] && PRODUCTS[kind].share;
+  if (share && e > 15.4 && e < 16.6 && Math.random() < .5) { av.userData.head.getWorldPosition(tmpV); sparksS.emit(tmpV.x + rnd(-.3, .3), tmpV.y + .5, tmpV.z + rnd(-.3, .3), rnd(-.4, .4), rnd(.8, 1.6), rnd(-.4, .4), HEART_C, rnd(.7, 1.1), .3, 1); }
   const chicken = PRODUCTS[kind] && PRODUCTS[kind].cat === "chicken", bite = Math.floor(e * (chicken ? .25 : .9));
   if (bite === u_lastBite[key]) return; u_lastBite[key] = bite;
   const cat = kind === "ramen" || kind === true || !PRODUCTS[kind] ? "ramen" : PRODUCTS[kind].cat, first = bite % 2 === 0;
-  showBubble(() => av, EAT_WORDS[cat][first ? 0 : 1], 1.1, "eat-" + key);
+  if (share && bite === 3) showBubble(() => av, "너무 맛있어~! 😋", 2.2, "eat-" + key);
+  else if (!(share && bite === 4)) showBubble(() => av, EAT_WORDS[cat][first ? 0 : 1], 1.1, "eat-" + key);
   if (audio.ready && dist < 14) {
     const v = clamp(1 - dist / 14, 0, 1);
     if (cat === "ramen") first ? audio.slurp(v) : audio.chomp(v);
@@ -70,7 +73,7 @@ function frame() {
     const myEat = me.eat ? (Date.now() - me.eat) / 1000 : -1;
     updateAvatar(myAvatar, dt, T, { moving: me.moving, speed: me.speed, crank: boarded ? boats[boarded.id].crank + (mySeat === 1 ? Math.PI / 2 : 0) : me.crank || 0, seat: mySeat, hold: me.hold, mat: !!me.mat, eatT: myEat, basket: me.basket ? me.basket.length : -1, cheer: cheerOf("me"), emote: activeEmote(me.em), rod: !!me.rod, fs: me.fs, lit: litOf(me.hold, me.lit), spin: me.hold === "sparkler" && me.lit ? spinOf(me.tw) : null });
     avatarRental(myAvatar, me.st === "bike", me.crank || 0, me.speed, !!me.mat && me.st !== "sit" && me.st !== "lie" && me.st !== "ride" && myAvatar.userData.cur.matP < .05, dt);
-    avatarSteed(myAvatar, me.st === "ride" ? ride.k : null, me.speed, dt);
+    avatarSteed(myAvatar, me.st === "ride" ? ride.k : null, me.speed, dt, ride.boost > 0);
     eatingFx(myAvatar, "me", myEat, 0, me.hold);
     if (me.eat && myEat >= eatTime(me.hold)) { noteDrink(me.hold); toast(me.hold === "ramen" ? "잘 먹었습니다! 국물까지 싹 비웠어요" : `${PRODUCTS[me.hold] ? PRODUCTS[me.hold].name : "간식"} 맛있게 먹었어요!`); me.hold = false; me.eat = 0; publish(true); actKey = ""; }
     const showGhost = me.st === "walk" && !anim && !me.moving && !me.bt && !!me.mat && canSpread();
@@ -107,7 +110,7 @@ function frame() {
     const oEat = p.hi && p.ea ? (Date.now() - p.ea) / 1000 : -1, oE = oEat >= 0 && oEat < eatTime(p.hi) ? oEat : -1;
     updateAvatar(o.obj, dt, T, { moving, speed: 3.6, seat, crank, hold: p.hi, eatT: oE, basket: p.bk, cheer: cheerOf(peer), mat: !!p.mt, emote: activeEmote(p.em), rod: !!p.fr, fs: p.fs, lit: litOf(p.hi, p.lt), spin: litOf(p.hi, p.lt) ? spinOf(p.tw) : null });
     avatarRental(o.obj, p.st === "bike", crank, stepD / Math.max(dt, 1e-3), !!p.mt && p.st !== "sit" && p.st !== "lie" && p.st !== "ride" && o.obj.userData.cur.matP < .05, dt);
-    avatarSteed(o.obj, steedK, stepD / Math.max(dt, 1e-3), dt);
+    avatarSteed(o.obj, steedK, stepD / Math.max(dt, 1e-3), dt, !!(p.ap && p.ap.b));
     eatingFx(o.obj, peer, oE, Math.hypot(o.x - cam.tx, o.z - cam.tz), p.hi);
   }
 
@@ -200,6 +203,7 @@ function frame() {
   updateDuel();
   updateBoatRace(dt);
   updateBeg();
+  updateShare();
   updateCircuit(dt);
   // bubbles follow their owners
   for (let i = bubbles.length - 1; i >= 0; i--) {

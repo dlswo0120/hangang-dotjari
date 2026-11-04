@@ -100,7 +100,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 /* photo */
 .shot{position:fixed;inset:0;z-index:12;background:rgba(8,10,14,.72);display:grid;place-items:center;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px}
 .shot-card{display:flex;flex-direction:column;gap:12px;width:min(560px,100%)}
-.shot-card img{width:100%;border-radius:16px;border:1px solid var(--line);display:block}
+.shot-card img{width:100%;max-height:min(62vh,62dvh);object-fit:contain;border-radius:16px;border:1px solid var(--line);display:block;background:#0c0f14}
+.shot-actions .btn{min-height:44px}
 .shot-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;align-items:center}
 .shot-actions p{margin:0 auto 0 0;font-size:12px;color:var(--ink-soft)}
 .btn{border:1px solid var(--line);background:var(--glass-strong);border-radius:999px;padding:10px 18px;font-size:14px}
@@ -666,7 +667,7 @@ window.HANGANG_CONFIG = {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
-const APP_VERSION = "2026.11.04b", UPDATES = [{"v": "2026.11.04b", "date": "11월 4일", "items": ["두 번째 대교 동쪽에 '한강 동물 레이스' 서킷이 생겼어요. 헤어핀·S자·시케인이 있는 코스를 3바퀴 돌아요 (2~4명, 판돈 500~2,000원)", "출발하면 동물 11종 중 하나가 랜덤으로 공짜 배정돼요. 얼룩말·적토마는 가끔, 유니콘은 아주 드물게 나와요. 빠르기는 모두 같아요", "Space·W(모바일은 🥕 버튼)를 박자 맞춰 누르면 달려요. 너무 급하게 누르면 지쳐요. 코너 안쪽이 더 빨라요", "돈이 1,000원 아래로 떨어지면 감정 표현에 '용돈 구걸'이 생겨요. 근처 사람이 500~2,000원을 깡통에 넣어 줄 수 있어요 (주기 하루 3,000원, 받기 하루 5,000원까지)"]}, {"v": "2026.11.04", "date": "11월 4일", "items": ["새 춤 3가지: 공중 미끄럼 걸음, 엄지 흔들기 응원, 손 탑 쌓기 (말하기 → 춤추기)", "엄지 흔들기 응원과 손 탑 쌓기는 앉아서도 출 수 있어요", "달리기 경주 출발 카운트를 3·2·1로 맞췄어요"]}, {"v": "2026.11.03g", "date": "11월 3일", "items": ["치킨이 훨씬 커졌어요. 앉아서 먹으면 앞에 치킨 상자를 놓고 닭다리를 들고 먹어요", "치킨은 2분 동안 천천히 먹어요. 먹는 중에도 짠이나 감정 표현을 할 수 있어요", "김은 라면과 치킨에서만 모락모락 나요"]}, {"v": "2026.11.03f", "date": "11월 3일", "items": ["낚시 대결을 최대 4명까지 함께할 수 있어요. 낚시 창에서 실시간 순위를 볼 수 있어요"]}, {"v": "2026.11.03e", "date": "11월 3일", "items": ["아주 드물게 유리병 편지·지갑·금반지·보물상자·아기 고래가 낚여요. 누가 낚으면 모두에게 알려 줘요", "지갑은 주인에게 돌려주면 사례금을 받아요. 돈을 주는 보물은 하루 한 번씩만 보상이 있어요", "낚싯대를 빌린 채로 달리기·자전거·먹기 같은 다른 활동도 할 수 있어요. 안 쓸 때는 등에 메고 다녀요"]}, {"v": "2026.11.03d", "date": "11월 3일", "items": ["낚싯대를 휘둘러 던질 때마다 찌가 날아가는 거리·방향·높이가 조금씩 달라요", "찌가 떨어진 자리에 물결이 퍼지고, 낚은 물고기는 낚싯줄 끝에 매달려 올라와요"]}, {"v": "2026.11.03c", "date": "11월 3일", "items": ["낚시 손맛이 바뀌었어요: 입질이 오면 바늘이 초록 칸에 왔을 때 눌러서 2번 맞추면 낚여요", "대교 난간에 기대어 강바람을 쐬고, 다이빙도 할 수 있어요", "낚시 데크에서 1:1 낚시 대결(3분 점수전, 이긴 사람 80%)을 열 수 있어요", "오리배 경주가 생겼어요: 2~3팀이 빨간 깃발 부표를 돌아와요. 둘이 A·D로 같이 페달을 밟을수록 빨라요"]}, {"v": "2026.11.03b", "date": "11월 3일", "items": ["공원 서쪽 끝에 '한강 달리기 대회' 트랙이 생겼어요. 2~4명이 판돈(500~2,000원)을 걸고 달려요", "A(왼발)·D(오른발)를 번갈아 눌러 달려요. 같은 발을 두 번 누르면 휘청! 휴대폰은 화면 버튼으로 달려요", "1등이 가장 많이 가져가고, 꼴찌도 조금은 돌려받아요"]}, {"v": "2026.11.03", "date": "11월 3일", "items": ["편의점 냉장고에서 한강소주·캔맥주·생맥주 잔을 팔아요 (19세 이상)", "냉장고 옆 셀프 생맥주 기계에서 맥주와 거품을 7:3으로 맞춰 따라 보세요", "한두 잔 마시면 볼이 살짝 빨개져요", "낚시 데크와 낚싯대 대여함(30분 1,000원)이 생겼어요. 9가지를 낚고 방생하면 용돈을 받아요 (하루 4,000원까지)", "잡은 물고기는 '내 낚시 도감'에 기록돼요"]}, {"v": "2026.11.02i", "date": "11월 2일", "items": ["스파클러 불꽃이 더 크고 화려해졌어요", "분수 폭죽과 연발 폭죽이 하늘 높이 올라가요", "화면을 아래로 끌면 하늘을 올려다볼 수 있어요"]}, {"v": "2026.11.02h", "date": "11월 2일", "items": ["강가에 '한강 불꽃 가게'가 생겼어요. 밤 8시~10시에만 열어요", "스파클러(500원)는 손에 들고, 분수 폭죽(1,500원)과 연발 폭죽(3,000원)은 잔디에 놓고 즐겨요", "불붙은 스파클러를 든 사람 곁에서 불을 옮겨 받을 수 있어요", "카메라 버튼에서 혼자·둘이·단체 포즈를 골라 앞에서 사진을 찍어요. 같이 찍은 사람도 사진을 받아요"]}, {"v": "2026.11.02g", "date": "11월 2일", "items": ["가슴 튕기기 춤을 출 때 오른팔을 몸 앞에 가로로 받쳐요", "설정 화면 맨 아래에서 지금 버전을 확인할 수 있어요"]}];
+const APP_VERSION = "2026.11.04c", UPDATES = [{"v": "2026.11.04c", "date": "11월 4일", "items": ["모바일에서 사진을 찍으면 화면이 가려지던 문제를 고쳤어요. 사진 바깥을 누르면 닫혀요", "치킨 나눠 먹기: 치킨을 먹는 중에 근처 사람에게 한 조각씩 나눠 줄 수 있어요 (최대 3명, 한 번 줄 때마다 내 치킨이 20초 줄어요)", "나눠 받은 치킨을 세 입 먹으면 \"너무 맛있어~!\" 하고 얼굴을 파묻어요. 양념치킨이면 볼에 양념이 묻어요", "편의점과 치킨 배달에 양념치킨이 생겼어요", "동물 레이스: 동물마다 빠르기·가속·코너링·지구력이 달라요. 적토마는 박자를 5번 맞추면 🔥불꽃 질주, 유니콘은 바퀴마다 🌈무지개 질주를 해요"]}, {"v": "2026.11.04b", "date": "11월 4일", "items": ["두 번째 대교 동쪽에 '한강 동물 레이스' 서킷이 생겼어요. 헤어핀·S자·시케인이 있는 코스를 3바퀴 돌아요 (2~4명, 판돈 500~2,000원)", "출발하면 동물 11종 중 하나가 랜덤으로 공짜 배정돼요. 얼룩말·적토마는 가끔, 유니콘은 아주 드물게 나와요. 빠르기는 모두 같아요", "Space·W(모바일은 🥕 버튼)를 박자 맞춰 누르면 달려요. 너무 급하게 누르면 지쳐요. 코너 안쪽이 더 빨라요", "돈이 1,000원 아래로 떨어지면 감정 표현에 '용돈 구걸'이 생겨요. 근처 사람이 500~2,000원을 깡통에 넣어 줄 수 있어요 (주기 하루 3,000원, 받기 하루 5,000원까지)"]}, {"v": "2026.11.04", "date": "11월 4일", "items": ["새 춤 3가지: 공중 미끄럼 걸음, 엄지 흔들기 응원, 손 탑 쌓기 (말하기 → 춤추기)", "엄지 흔들기 응원과 손 탑 쌓기는 앉아서도 출 수 있어요", "달리기 경주 출발 카운트를 3·2·1로 맞췄어요"]}, {"v": "2026.11.03g", "date": "11월 3일", "items": ["치킨이 훨씬 커졌어요. 앉아서 먹으면 앞에 치킨 상자를 놓고 닭다리를 들고 먹어요", "치킨은 2분 동안 천천히 먹어요. 먹는 중에도 짠이나 감정 표현을 할 수 있어요", "김은 라면과 치킨에서만 모락모락 나요"]}, {"v": "2026.11.03f", "date": "11월 3일", "items": ["낚시 대결을 최대 4명까지 함께할 수 있어요. 낚시 창에서 실시간 순위를 볼 수 있어요"]}, {"v": "2026.11.03e", "date": "11월 3일", "items": ["아주 드물게 유리병 편지·지갑·금반지·보물상자·아기 고래가 낚여요. 누가 낚으면 모두에게 알려 줘요", "지갑은 주인에게 돌려주면 사례금을 받아요. 돈을 주는 보물은 하루 한 번씩만 보상이 있어요", "낚싯대를 빌린 채로 달리기·자전거·먹기 같은 다른 활동도 할 수 있어요. 안 쓸 때는 등에 메고 다녀요"]}, {"v": "2026.11.03d", "date": "11월 3일", "items": ["낚싯대를 휘둘러 던질 때마다 찌가 날아가는 거리·방향·높이가 조금씩 달라요", "찌가 떨어진 자리에 물결이 퍼지고, 낚은 물고기는 낚싯줄 끝에 매달려 올라와요"]}, {"v": "2026.11.03c", "date": "11월 3일", "items": ["낚시 손맛이 바뀌었어요: 입질이 오면 바늘이 초록 칸에 왔을 때 눌러서 2번 맞추면 낚여요", "대교 난간에 기대어 강바람을 쐬고, 다이빙도 할 수 있어요", "낚시 데크에서 1:1 낚시 대결(3분 점수전, 이긴 사람 80%)을 열 수 있어요", "오리배 경주가 생겼어요: 2~3팀이 빨간 깃발 부표를 돌아와요. 둘이 A·D로 같이 페달을 밟을수록 빨라요"]}, {"v": "2026.11.03b", "date": "11월 3일", "items": ["공원 서쪽 끝에 '한강 달리기 대회' 트랙이 생겼어요. 2~4명이 판돈(500~2,000원)을 걸고 달려요", "A(왼발)·D(오른발)를 번갈아 눌러 달려요. 같은 발을 두 번 누르면 휘청! 휴대폰은 화면 버튼으로 달려요", "1등이 가장 많이 가져가고, 꼴찌도 조금은 돌려받아요"]}, {"v": "2026.11.03", "date": "11월 3일", "items": ["편의점 냉장고에서 한강소주·캔맥주·생맥주 잔을 팔아요 (19세 이상)", "냉장고 옆 셀프 생맥주 기계에서 맥주와 거품을 7:3으로 맞춰 따라 보세요", "한두 잔 마시면 볼이 살짝 빨개져요", "낚시 데크와 낚싯대 대여함(30분 1,000원)이 생겼어요. 9가지를 낚고 방생하면 용돈을 받아요 (하루 4,000원까지)", "잡은 물고기는 '내 낚시 도감'에 기록돼요"]}, {"v": "2026.11.02i", "date": "11월 2일", "items": ["스파클러 불꽃이 더 크고 화려해졌어요", "분수 폭죽과 연발 폭죽이 하늘 높이 올라가요", "화면을 아래로 끌면 하늘을 올려다볼 수 있어요"]}, {"v": "2026.11.02h", "date": "11월 2일", "items": ["강가에 '한강 불꽃 가게'가 생겼어요. 밤 8시~10시에만 열어요", "스파클러(500원)는 손에 들고, 분수 폭죽(1,500원)과 연발 폭죽(3,000원)은 잔디에 놓고 즐겨요", "불붙은 스파클러를 든 사람 곁에서 불을 옮겨 받을 수 있어요", "카메라 버튼에서 혼자·둘이·단체 포즈를 골라 앞에서 사진을 찍어요. 같이 찍은 사람도 사진을 받아요"]}];
 "use strict";
 const $ = id => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -1385,10 +1386,11 @@ function updateAvatar(av, dt, t, o = {}) {
   // carrying and eating: the ramen bowl or a snack from the store
   const realKind = o.hold === true ? "ramen" : (o.hold || null), isChicken = !!(PRODUCTS[realKind] && PRODUCTS[realKind].cat === "chicken");
   // eating chicken while seated: the box goes down in front and a drumstick comes up in hand
-  const boxEat = isChicken && o.eatT >= 0 && (u.pose === "sit" || u.pose === "stool" || u.pose === "bench") && !u.queue.length;
-  const holdKind = boxEat ? "drumstick" : realKind;
+  const PK = PRODUCTS[realKind] || {}, isShare = !!PK.share, sauce = !!PK.sauce;
+  const boxEat = isChicken && !isShare && o.eatT >= 0 && (u.pose === "sit" || u.pose === "stool" || u.pose === "bench") && !u.queue.length;
+  const holdKind = isShare || boxEat ? (sauce ? "drumstickY" : "drumstick") : realKind;
   const holding = !!holdKind && u.pose !== "lie" && u.pose !== "swim" && u.pose !== "tube";
-  if (boxEat && !u.chBox) { u.chBox = makeChickenBox(); av.add(u.chBox); }
+  if (boxEat && (!u.chBox || u.chBox.userData.sauce !== sauce)) { if (u.chBox) av.remove(u.chBox); u.chBox = makeChickenBox(sauce); u.chBox.userData.sauce = sauce; av.add(u.chBox); }
   if (u.chBox) {
     u.chBox.visible = boxEat;
     if (boxEat) { u.chBox.position.set(0, .02, -.75); const left = 1 - Math.min(1, o.eatT / eatTime(realKind)); u.chBox.userData.pieces.forEach((p, i) => { p.visible = i < Math.ceil(left * 10); }); }
@@ -1402,7 +1404,7 @@ function updateAvatar(av, dt, t, o = {}) {
       u.arms[1].add(ch); u.chop = ch;
     }
   }
-  if (u.bowl) { u.bowl.visible = holding; u.chop.visible = holding && o.eatT >= 0 && (holdKind === "ramen" || holdKind === "gangjeong" || holdKind === "chicken" || holdKind === "halfchk"); }
+  if (u.bowl) { u.bowl.visible = holding; u.chop.visible = holding && o.eatT >= 0 && (holdKind === "ramen" || holdKind === "gangjeong" || holdKind === "chicken" || holdKind === "halfchk" || holdKind === "yangchk"); }
   const bk = typeof o.basket === "number" ? o.basket : -1;
   if (bk >= 0) {
     if (!u.basketM) { u.basketM = makeBasket(); u.arms[0].add(u.basketM); u.basketM.position.set(0, -.4, 0); }
@@ -1417,17 +1419,28 @@ function updateAvatar(av, dt, t, o = {}) {
       const e = o.eatT, bite = (e * (isChicken ? .25 : .9)) % 1, lift = Math.max(0, Math.sin(Math.min(1, bite * (isChicken ? 3 : 1)) * Math.PI * 2));
       v.arL = 1.35; v.azL = -.2; v.arR = 1.55 + lift * 1.0 + Math.sin(e * 22) * .05 * lift; v.azR = -.42;
       v.nod += .22 - lift * .12; v.lean += .12; by = .36; bz = -.3;
+      if (isShare && e >= 12 && e < 16.4) {
+        // "너무 맛있어~!": a happy pause, then face buried in the chicken with a little nuzzle, then back up
+        const plant = e < 13 ? 0 : e < 13.5 ? ease((e - 13) / .5) : e < 15.4 ? 1 : 1 - ease((e - 15.4) / 1);
+        v.arR = 1.25 + (1 - plant) * .5; v.azR = -.42; v.arL = 1.3; v.azL = -.25;
+        v.nod += plant * .85 - (1 - plant) * .15; v.lean += plant * .5;
+        u.eatRoll = e < 13 ? Math.sin(e * 9) * .08 : plant * Math.sin(e * 15) * .16;
+        by = .3 - plant * .08; bz = -.36 - plant * .04;
+      }
       if (u.bowl.userData.soup) u.bowl.userData.soup.position.y = .12 - Math.min(1, e / EAT_TIME) * .07;
     } else if (u.bowl.userData.soup) u.bowl.userData.soup.position.y = .12;
     if (o.cheer > 0 && !(o.eatT >= 0)) { const c = o.cheer; v.arL += (2.25 - v.arL) * c; v.arR += (2.25 - v.arR) * c; v.azL = v.azR = -.18; by += .5 * c; bz -= .12 * c; v.nod -= .15 * c; }
-    const left = o.eatT >= 0 && holdKind !== "ramen" && holdKind !== "drumstick" ? 1 - Math.min(1, o.eatT / eatTime(holdKind)) * .6 : 1;
+    const left = o.eatT >= 0 && holdKind !== "ramen" && holdKind !== "drumstick" && holdKind !== "drumstickY" ? 1 - Math.min(1, o.eatT / eatTime(holdKind)) * .6 : 1;
     u.bowl.scale.setScalar(left * (u.bowl.userData.base || 1));
     let bx = 0;
     if (o.spin != null) { const a = o.spin; bx = Math.sin(a) * .28; by += .18 + Math.cos(a) * .28; v.arR = 1.6 + Math.cos(a) * .7; v.azR = -.2 + Math.sin(a) * .5; v.arL = .3; v.azL = .2; }
     u.bowl.position.set(bx, by, bz);
     if (u.bowl.userData.tip) u.bowl.userData.tip.visible = !!o.lit;
   }
-  v.roll = 0; v.glz = 0;
+  const smear = isShare && sauce && o.eatT >= 14 && o.eatT < 27;
+  if (smear && !u.smear) { u.smear = new THREE.Group(); [[.2, -.19, -.37, .07, .045], [-.1, -.25, -.39, .05, .03], [.05, -.27, -.39, .035, .025]].forEach(([x, y, z, sx, sy]) => { const m = new THREE.Mesh(G_SPH_S, SAUCE_M); m.position.set(x, y, z); m.scale.set(sx, sy, .02); u.smear.add(m); }); u.head.add(u.smear); }
+  if (u.smear) u.smear.visible = smear;
+  v.roll = u.eatRoll || 0; u.eatRoll = 0; v.glz = 0;
   if (o.rod && o.fs) rodPose(v, o.fs);
   if (o.emote) emotePose(v, o.emote.i, o.emote.t, u.pose === "stand", u, o.emote.s); else if (u.vR) u.vR.visible = false;
   u.torso.scale.y = 1 + Math.sin(ph * 2.1) * .012;
@@ -1529,7 +1542,10 @@ const PRODUCTS = {
   icebar: { name: "아이스바", price: 2500, cat: "ice", color: "#8fd3ff", eat: 7 },
   cone: { name: "콘 아이스크림", price: 3000, cat: "ice", color: "#f7c6d9", eat: 8 },
   mochi: { name: "찹쌀떡 아이스", price: 3500, cat: "ice", color: "#f3efe4", eat: 7 },
-  gangjeong: { name: "닭강정 컵", price: 6500, cat: "chicken", color: "#c4632a", eat: 120 },
+  gangjeong: { name: "닭강정 컵", price: 6500, cat: "chicken", color: "#c4632a", eat: 120, sauce: true },
+  yangchk: { name: "양념치킨", price: 8500, cat: "chicken", color: "#b5391f", eat: 120, sauce: true },
+  chkshare: { name: "나눠 받은 치킨", price: 0, cat: "chicken", color: "#d9893a", eat: 60, share: true },
+  chkshareY: { name: "나눠 받은 양념치킨", price: 0, cat: "chicken", color: "#b5391f", eat: 60, share: true, sauce: true },
   chicken: { name: "순살치킨", price: 8000, cat: "chicken", color: "#d9893a", eat: 120 },
   halfchk: { name: "한강통닭 반마리", price: 5000, cat: "chicken", color: "#e0a046", eat: 120 },
   sparkler: { name: "스파클러", price: 500, cat: "fire", color: "#ffcf5a", eat: 0, fire: "hand" },
@@ -1540,7 +1556,7 @@ const CATS = {
   snack: { title: "과자 진열대", verb: "과자 고르기", items: ["chips", "shrimp", "choco", "jelly", "rpack"] },
   drink: { title: "음료 냉장고", verb: "음료 고르기", items: ["water", "banana", "cider", "coffee", "soju", "canbeer", "beercup"] },
   ice: { title: "아이스크림 냉동고", verb: "아이스크림 고르기", items: ["icebar", "cone", "mochi"] },
-  chicken: { title: "따끈한 치킨", verb: "치킨 고르기", items: ["gangjeong", "chicken"] }
+  chicken: { title: "따끈한 치킨", verb: "치킨 고르기", items: ["gangjeong", "chicken", "yangchk"] }
 };
 const won = n => n.toLocaleString("ko-KR") + "원";
 const PRODUCT_IMG = {}, PRODUCT_TEX = {}, PRODUCT_URL = {};
@@ -1685,12 +1701,24 @@ const ART = {
     label(x, "반마리", w / 2, 134, 13, "#7a3b10");
     for (let i = 0; i < 4; i++) { const cx = 30 + i * 23, cy = 30 + (i % 2) * 10; const g = x.createRadialGradient(cx - 4, cy - 4, 2, cx, cy, 14); g.addColorStop(0, "#f6c983"); g.addColorStop(1, "#b5602a"); x.fillStyle = g; x.beginPath(); x.ellipse(cx, cy, 14, 11, i, 0, 7); x.fill(); }
   },
+  yangchk(x, w, h) {
+    x.fillStyle = "#fff6e8"; rr(x, 12, 44, w - 24, h - 52, 6); x.fill(); x.fillStyle = "#b5391f"; for (let i = 12; i < w - 12; i += 16) x.fillRect(i, 44, 8, h - 52);
+    x.fillStyle = "#fff6e8"; x.fillRect(20, 96, w - 40, 26); label(x, "양념치킨", w / 2, 109, 15, "#b5391f");
+    for (let i = 0; i < 6; i++) { const cx = 26 + (i * 19) % 80, cy = 30 + (i % 2) * 12; const g = x.createRadialGradient(cx - 4, cy - 4, 2, cx, cy, 15); g.addColorStop(0, "#e2643a"); g.addColorStop(1, "#8a2414"); x.fillStyle = g; x.beginPath(); x.ellipse(cx, cy, 15, 12, i, 0, 7); x.fill(); x.fillStyle = "rgba(255,255,255,.7)"; x.fillRect(cx - 3, cy - 6, 2, 2); }
+  },
+  chkshare(x, w, h) { drumArt(x, w, h, "#c4702e", "#8a4a18"); },
+  chkshareY(x, w, h) { drumArt(x, w, h, "#d0482a", "#7a1e10"); },
   chicken(x, w, h) {
     x.fillStyle = "#ffffff"; rr(x, 12, 44, w - 24, h - 52, 6); x.fill(); x.fillStyle = "#d8322f"; for (let i = 12; i < w - 12; i += 16) x.fillRect(i, 44, 8, h - 52);
     x.fillStyle = "#ffffff"; x.fillRect(20, 96, w - 40, 26); label(x, "순살치킨", w / 2, 109, 15, "#d8322f");
     for (let i = 0; i < 6; i++) { const cx = 26 + (i * 19) % 80, cy = 30 + (i % 2) * 12; const g = x.createRadialGradient(cx - 4, cy - 4, 2, cx, cy, 15); g.addColorStop(0, "#f3c27a"); g.addColorStop(1, "#b9682a"); x.fillStyle = g; x.beginPath(); x.ellipse(cx, cy, 15, 12, i, 0, 7); x.fill(); }
   }
 };
+function drumArt(x, w, h, c0, c1) {
+  x.fillStyle = "#fff6e8"; rr(x, 14, 20, w - 28, h - 40, 14); x.fill();
+  x.fillStyle = "#f4ead8"; x.fillRect(w / 2 - 6, 96, 12, 34); x.beginPath(); x.arc(w / 2 - 6, 132, 8, 0, 7); x.arc(w / 2 + 6, 132, 8, 0, 7); x.fill();
+  const g = x.createRadialGradient(w / 2 - 8, 60, 4, w / 2, 70, 34); g.addColorStop(0, c0); g.addColorStop(1, c1); x.fillStyle = g; x.beginPath(); x.ellipse(w / 2, 70, 28, 36, 0, 0, 7); x.fill();
+}
 for (const k in PRODUCTS) {
   const c = document.createElement("canvas"); c.width = 128; c.height = 160; const x = c.getContext("2d");
   (ART[k] || (k === "beer" ? ART.beercup : ART.chips))(x, 128, 160);
@@ -1774,8 +1802,8 @@ function setBasketCount(b, n) {
 // what someone holds while eating: the ramen bowl, or a snack from the store
 function makeHeld(kind) {
   if (kind === "ramen") return makeBowl();
-  if (kind === "drumstick") { // one piece in hand while the box sits in front
-    const g = new THREE.Group(), meat = new THREE.Mesh(new THREE.SphereGeometry(.07, 12, 8), new THREE.MeshLambertMaterial({ color: 0xc4702e, emissive: 0x5a2a08, emissiveIntensity: .35 })); meat.scale.set(1, 1.35, 1); meat.position.y = .12; g.add(meat);
+  if (kind === "drumstick" || kind === "drumstickY") { // one piece in hand while the box sits in front
+    const g = new THREE.Group(), meat = new THREE.Mesh(new THREE.SphereGeometry(.07, 12, 8), kind === "drumstickY" ? SAUCE_M : FRIED_M); meat.scale.set(1, 1.35, 1); meat.position.y = .12; g.add(meat);
     const bone = new THREE.Mesh(new THREE.CylinderGeometry(.015, .015, .1, 6), mat(0xf4ead8)); bone.position.y = .02; g.add(bone);
     const knob = new THREE.Mesh(new THREE.SphereGeometry(.025, 8, 6), mat(0xf4ead8)); knob.position.y = -.03; g.add(knob);
     g.userData.base = 1.4; return g;
@@ -1811,12 +1839,16 @@ function makeHeld(kind) {
   return g;
 }
 // an open chicken box set down in front of someone eating while seated; pieces disappear as they eat
-function makeChickenBox() {
+const FRIED_M = new THREE.MeshLambertMaterial({ color: 0xc4702e, emissive: 0x5a2a08, emissiveIntensity: .35 });
+const SAUCE_M = new THREE.MeshPhongMaterial({ color: 0xc23a1c, emissive: 0x4a0e04, emissiveIntensity: .35, shininess: 70 });
+// the open lid is seen from the front, where the plain logo would read back to front
+let lidTex = null; const lidLogo = () => { if (!lidTex) { lidTex = dvLogo.clone(); lidTex.wrapS = THREE.RepeatWrapping; lidTex.repeat.x = -1; lidTex.offset.x = 1; lidTex.needsUpdate = true; } return lidTex; };
+function makeChickenBox(sauce) {
   const g = new THREE.Group(), red = mat(0xc0392b), white = mat(0xfff6e8);
   const base = new THREE.Mesh(new THREE.BoxGeometry(.5, .14, .4), red); base.position.y = .07; g.add(base);
   const inner = new THREE.Mesh(new THREE.BoxGeometry(.46, .02, .36), white); inner.position.y = .14; g.add(inner);
-  const lid = new THREE.Mesh(new THREE.BoxGeometry(.5, .02, .4), new THREE.MeshLambertMaterial({ map: dvLogo })); lid.position.set(0, .3, .2); lid.rotation.x = -1.2; g.add(lid);
-  const pieces = [], pm = new THREE.MeshLambertMaterial({ color: 0xc4702e, emissive: 0x5a2a08, emissiveIntensity: .35 });
+  const lid = new THREE.Mesh(new THREE.BoxGeometry(.5, .02, .4), new THREE.MeshLambertMaterial({ map: lidLogo() })); lid.position.set(0, .3, .2); lid.rotation.x = -1.2; g.add(lid);
+  const pieces = [], pm = sauce ? SAUCE_M : FRIED_M;
   for (let i = 0; i < 10; i++) { const p = new THREE.Mesh(new THREE.SphereGeometry(.055, 10, 8), pm); p.scale.set(1, .8, 1.25); p.position.set(-.16 + (i % 4) * .11, .18 + Math.floor(i / 4) * .04, -.11 + ((i * 3) % 3) * .1); p.rotation.y = i; g.add(p); pieces.push(p); }
   g.scale.setScalar(1.5); g.traverse(m => { if (m.isMesh) m.castShadow = true; }); g.userData.pieces = pieces; return g;
 }
@@ -2231,9 +2263,11 @@ function cleanPresence(p) {
   o.bpw = num(p.bpw, 0, 1, 0);
   if (p.gv && typeof p.gv === "object" && typeof p.gv.to === "string" && typeof p.gv.id === "number" && RACE_BETS.includes(p.gv.a)) o.gv = { to: p.gv.to.slice(0, 80), id: p.gv.id, a: p.gv.a };
   o.gr = num(p.gr, 0, RECV_DAY_MAX, 0);
+  if (p.sh && typeof p.sh === "object" && typeof p.sh.to === "string" && typeof p.sh.id === "number" && (p.sh.k === "chkshare" || p.sh.k === "chkshareY")) o.sh = { to: p.sh.to.slice(0, 80), id: p.sh.id, k: p.sh.k };
+  o.sa = num(p.sa, 0, 1e15, 0);
   if (p.ac && typeof p.ac === "object" && typeof p.ac.id === "number" && RACE_BETS.includes(p.ac.bet)) o.ac = { id: p.ac.id, bet: p.ac.bet, st: p.ac.st === "go" ? "go" : "open", go: num(p.ac.go, 0, 1e15, 0) };
   if (p.aj && typeof p.aj === "object" && typeof p.aj.h === "string" && typeof p.aj.id === "number") o.aj = { h: p.aj.h.slice(0, 80), id: p.aj.id, at: num(p.aj.at, 0, 1e15, 0) };
-  if (p.ap && typeof p.ap === "object" && typeof p.ap.id === "number") o.ap = { id: p.ap.id, s: num(p.ap.s, -20, 2000, 0), f: num(p.ap.f, 0, 600000, 0), k: Number.isInteger(p.ap.k) ? clamp(p.ap.k, 0, STEEDS.length - 1) : 1 };
+  if (p.ap && typeof p.ap === "object" && typeof p.ap.id === "number") o.ap = { id: p.ap.id, s: num(p.ap.s, -20, 2000, 0), f: num(p.ap.f, 0, 600000, 0), k: Number.isInteger(p.ap.k) ? clamp(p.ap.k, 0, STEEDS.length - 1) : 1, b: p.ap.b === 1 ? 1 : 0 };
   if (p.fd && typeof p.fd === "object" && typeof p.fd.id === "number" && RACE_BETS.includes(p.fd.bet)) o.fd = { id: p.fd.id, bet: p.fd.bet, st: p.fd.st === "go" ? "go" : "open", go: num(p.fd.go, 0, 1e15, 0) };
   if (p.fj && typeof p.fj === "object" && typeof p.fj.h === "string" && typeof p.fj.id === "number") o.fj = { h: p.fj.h.slice(0, 80), id: p.fj.id, at: num(p.fj.at, 0, 1e15, 0) };
   if (p.fsc && typeof p.fsc === "object" && typeof p.fsc.id === "number") o.fsc = { id: p.fsc.id, s: num(p.fsc.s, 0, 1e6, 0), n: num(p.fsc.n, 0, 999, 0) };
@@ -2295,7 +2329,7 @@ function syncPeers(peers) {
 })();
 let lastPub = 0, lastPubKey = "", mySay = null;
 function presenceObj() {
-  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id, at: me.bt.at } : null, say: mySay, rm: me.rm, hr: me.hold ? 1 : 0, hi: me.hold || null, ea: me.eat || 0, q: me.q || 0, bk: me.basket ? me.basket.length : -1, ch: me.ch || 0, pb: me.pb || null, mt: me.mat ? 1 : 0, bl: me.bl || 0, dv: me.dv ? { k: me.dv.k, at: me.dv.at } : null, em: me.em || null, lt: me.lit || 0, tw: me.tw || 0, gf: me.gf || null, ph: me.ph || null, pj: me.pj || null, rd: redness(), bq: me.bq || null, fr: me.rod ? 1 : 0, fs: me.fs || null, rc: me.rc || null, rj: me.rj ? { h: me.rj.h, id: me.rj.id, at: me.rj.at } : null, rp: me.rp || null, fd: me.fd || null, fj: me.fj ? { h: me.fj.h, id: me.fj.id, at: me.fj.at } : null, fsc: me.fsc || null, bh: me.bh || null, bj: me.bj ? { h: me.bj.h, id: me.bj.id, at: me.bj.at } : null, bp: me.bp ? { id: me.bp.id } : null, bf: me.bf || null, bpw: me.bpw || 0, gv: me.gv || null, gr: me.gr || 0, ac: me.ac || null, aj: me.aj ? { h: me.aj.h, id: me.aj.id, at: me.aj.at } : null, ap: me.ap || null };
+  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id, at: me.bt.at } : null, say: mySay, rm: me.rm, hr: me.hold ? 1 : 0, hi: me.hold || null, ea: me.eat || 0, q: me.q || 0, bk: me.basket ? me.basket.length : -1, ch: me.ch || 0, pb: me.pb || null, mt: me.mat ? 1 : 0, bl: me.bl || 0, dv: me.dv ? { k: me.dv.k, at: me.dv.at } : null, em: me.em || null, lt: me.lit || 0, tw: me.tw || 0, gf: me.gf || null, ph: me.ph || null, pj: me.pj || null, rd: redness(), bq: me.bq || null, fr: me.rod ? 1 : 0, fs: me.fs || null, rc: me.rc || null, rj: me.rj ? { h: me.rj.h, id: me.rj.id, at: me.rj.at } : null, rp: me.rp || null, fd: me.fd || null, fj: me.fj ? { h: me.fj.h, id: me.fj.id, at: me.fj.at } : null, fsc: me.fsc || null, bh: me.bh || null, bj: me.bj ? { h: me.bj.h, id: me.bj.id, at: me.bj.at } : null, bp: me.bp ? { id: me.bp.id } : null, bf: me.bf || null, bpw: me.bpw || 0, gv: me.gv || null, gr: me.gr || 0, ac: me.ac || null, aj: me.aj ? { h: me.aj.h, id: me.aj.id, at: me.aj.at } : null, ap: me.ap || null, sh: me.sh || null, sa: me.sa || 0 };
   if (boarded && boarded.driver) { o.bx = +boatLocal.x.toFixed(2); o.bz = +boatLocal.z.toFixed(2); o.br = +boatLocal.r.toFixed(2); }
   else { o.bx = null; o.bz = null; o.br = null; }
   return o;
@@ -2491,6 +2525,7 @@ function refreshActions() {
   status = raceActions(acts, status);
   status = boatRaceActions(acts, status);
   status = begActions(acts, status);
+  status = shareActions(acts, status);
   status = circuitActions(acts, status);
   if ($("status").textContent !== status) { $("status").textContent = status; $("status").hidden = !status; }
   // rebuild the buttons only when they change, so a running timer in the status line never eats a tap
@@ -2500,7 +2535,7 @@ function refreshActions() {
 }
 $("actRow").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return; const a = b.dataset.act;
-  if (storeClick(a) || rentalClick(a) || deliveryClick(a) || boardClick(a) || fireClick(a) || photoClick(a) || beerClick(a) || fishClick(a) || raceClick(a) || diveClick(a) || duelClick(a) || boatRaceClick(a) || begClick(a) || circuitClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
+  if (storeClick(a) || rentalClick(a) || deliveryClick(a) || boardClick(a) || fireClick(a) || photoClick(a) || beerClick(a) || fishClick(a) || raceClick(a) || diveClick(a) || duelClick(a) || boatRaceClick(a) || begClick(a) || shareClick(a) || circuitClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
   if (a === "sit" || a === "lie") {
     if (me.st === "walk") {
       if (!canSpread()) { toast("잔디나 대교 위에서만 돗자리를 펼 수 있습니다"); return; }
@@ -2857,6 +2892,7 @@ function deliverShot(c) {
   }, "image/png");
 }
 $("shotClose").addEventListener("click", () => { $("shot").hidden = true; });
+$("shot").addEventListener("click", e => { if (e.target === $("shot")) $("shot").hidden = true; }); // tap outside the photo to close
 $("shotSave").addEventListener("click", async () => {
   if (!downloads || !shotBlob) return; const k = kst(), pad = n => String(n).padStart(2, "0");
   try { await downloads.save({ filename: `hangang-${k.getFullYear()}${pad(k.getMonth() + 1)}${pad(k.getDate())}-${pad(k.getHours())}${pad(k.getMinutes())}.png`, data: shotBlob }); toast("사진을 저장했습니다"); $("shot").hidden = true; }
@@ -3438,7 +3474,7 @@ function updateRentals(dt) {
 /* ================= 한강통닭 치킨 배달 ================= */
 // The order (menu + time) rides along in presence, and every screen plays the same timeline,
 // so everyone sees the same rider without any server.
-const DV_FEE = 1000, DV_MENU = ["halfchk", "chicken", "gangjeong"];
+const DV_FEE = 1000, DV_MENU = ["halfchk", "chicken", "yangchk", "gangjeong"];
 const DV_RIDE_IN = 90, DV_RIDE = 15, DV_LANE = 30.6, DV_WALK_SPEED = 1.7;
 const dvLogo = signTex([["한강통닭", 44, .55]], "#c0392b", "#fff6e0", 256, 96);
 
@@ -3806,10 +3842,13 @@ function eatTime(k) { return k === "ramen" || k === true ? EAT_TIME : (PRODUCTS[
 const EAT_WORDS = { ramen: ["후루릅~", "짭짭"], snack: ["바삭바삭", "와삭와삭"], drink: ["꿀꺽꿀꺽", "캬~"], ice: ["냠냠", "시원해~"], chicken: ["바삭!", "냠냠 쫄깃"] };
 function eatingFx(av, key, e, dist, kind) {
   if (e < 0) { u_lastBite[key] = -1; return; }
+  const share = PRODUCTS[kind] && PRODUCTS[kind].share;
+  if (share && e > 15.4 && e < 16.6 && Math.random() < .5) { av.userData.head.getWorldPosition(tmpV); sparksS.emit(tmpV.x + rnd(-.3, .3), tmpV.y + .5, tmpV.z + rnd(-.3, .3), rnd(-.4, .4), rnd(.8, 1.6), rnd(-.4, .4), HEART_C, rnd(.7, 1.1), .3, 1); }
   const chicken = PRODUCTS[kind] && PRODUCTS[kind].cat === "chicken", bite = Math.floor(e * (chicken ? .25 : .9));
   if (bite === u_lastBite[key]) return; u_lastBite[key] = bite;
   const cat = kind === "ramen" || kind === true || !PRODUCTS[kind] ? "ramen" : PRODUCTS[kind].cat, first = bite % 2 === 0;
-  showBubble(() => av, EAT_WORDS[cat][first ? 0 : 1], 1.1, "eat-" + key);
+  if (share && bite === 3) showBubble(() => av, "너무 맛있어~! 😋", 2.2, "eat-" + key);
+  else if (!(share && bite === 4)) showBubble(() => av, EAT_WORDS[cat][first ? 0 : 1], 1.1, "eat-" + key);
   if (audio.ready && dist < 14) {
     const v = clamp(1 - dist / 14, 0, 1);
     if (cat === "ramen") first ? audio.slurp(v) : audio.chomp(v);
@@ -3868,7 +3907,7 @@ function frame() {
     const myEat = me.eat ? (Date.now() - me.eat) / 1000 : -1;
     updateAvatar(myAvatar, dt, T, { moving: me.moving, speed: me.speed, crank: boarded ? boats[boarded.id].crank + (mySeat === 1 ? Math.PI / 2 : 0) : me.crank || 0, seat: mySeat, hold: me.hold, mat: !!me.mat, eatT: myEat, basket: me.basket ? me.basket.length : -1, cheer: cheerOf("me"), emote: activeEmote(me.em), rod: !!me.rod, fs: me.fs, lit: litOf(me.hold, me.lit), spin: me.hold === "sparkler" && me.lit ? spinOf(me.tw) : null });
     avatarRental(myAvatar, me.st === "bike", me.crank || 0, me.speed, !!me.mat && me.st !== "sit" && me.st !== "lie" && me.st !== "ride" && myAvatar.userData.cur.matP < .05, dt);
-    avatarSteed(myAvatar, me.st === "ride" ? ride.k : null, me.speed, dt);
+    avatarSteed(myAvatar, me.st === "ride" ? ride.k : null, me.speed, dt, ride.boost > 0);
     eatingFx(myAvatar, "me", myEat, 0, me.hold);
     if (me.eat && myEat >= eatTime(me.hold)) { noteDrink(me.hold); toast(me.hold === "ramen" ? "잘 먹었습니다! 국물까지 싹 비웠어요" : `${PRODUCTS[me.hold] ? PRODUCTS[me.hold].name : "간식"} 맛있게 먹었어요!`); me.hold = false; me.eat = 0; publish(true); actKey = ""; }
     const showGhost = me.st === "walk" && !anim && !me.moving && !me.bt && !!me.mat && canSpread();
@@ -3905,7 +3944,7 @@ function frame() {
     const oEat = p.hi && p.ea ? (Date.now() - p.ea) / 1000 : -1, oE = oEat >= 0 && oEat < eatTime(p.hi) ? oEat : -1;
     updateAvatar(o.obj, dt, T, { moving, speed: 3.6, seat, crank, hold: p.hi, eatT: oE, basket: p.bk, cheer: cheerOf(peer), mat: !!p.mt, emote: activeEmote(p.em), rod: !!p.fr, fs: p.fs, lit: litOf(p.hi, p.lt), spin: litOf(p.hi, p.lt) ? spinOf(p.tw) : null });
     avatarRental(o.obj, p.st === "bike", crank, stepD / Math.max(dt, 1e-3), !!p.mt && p.st !== "sit" && p.st !== "lie" && p.st !== "ride" && o.obj.userData.cur.matP < .05, dt);
-    avatarSteed(o.obj, steedK, stepD / Math.max(dt, 1e-3), dt);
+    avatarSteed(o.obj, steedK, stepD / Math.max(dt, 1e-3), dt, !!(p.ap && p.ap.b));
     eatingFx(o.obj, peer, oE, Math.hypot(o.x - cam.tx, o.z - cam.tz), p.hi);
   }
 
@@ -3998,6 +4037,7 @@ function frame() {
   updateDuel();
   updateBoatRace(dt);
   updateBeg();
+  updateShare();
   updateCircuit(dt);
   // bubbles follow their owners
   for (let i = bubbles.length - 1; i >= 0; i--) {
@@ -5345,17 +5385,17 @@ function updateBoatRace(dt) {
 /* ================= 탈것 동물: 경주 때 랜덤으로 배정 ================= */
 // rare 0 = 일반, 1 = 희귀, 2 = 전설. w = draw weight in percent (sums to 100)
 const STEEDS = [
-  { id: "pony", name: "망아지", icon: "🐴", rare: 0, w: 10.875 },
-  { id: "horse", name: "말", icon: "🐎", rare: 0, w: 10.875 },
-  { id: "donkey", name: "당나귀", icon: "🫏", rare: 0, w: 10.875 },
-  { id: "camel", name: "낙타", icon: "🐪", rare: 0, w: 10.875 },
-  { id: "alpaca", name: "알파카", icon: "🦙", rare: 0, w: 10.875 },
-  { id: "reindeer", name: "순록", icon: "🦌", rare: 0, w: 10.875 },
-  { id: "cow", name: "젖소", icon: "🐄", rare: 0, w: 10.875 },
-  { id: "ostrich", name: "타조", icon: "🪿", rare: 0, w: 10.875 },
-  { id: "zebra", name: "얼룩말", icon: "🦓", rare: 1, w: 8 },
-  { id: "redhare", name: "적토마", icon: "🔥", rare: 1, w: 4 },
-  { id: "unicorn", name: "유니콘", icon: "🦄", rare: 2, w: 1 }
+  { id: "pony", name: "망아지", icon: "🐴", rare: 0, w: 10.875, v: 0.95, acc: 1.35, cn: 0.55, ti: 1.5, lr: 1.3 },
+  { id: "horse", name: "말", icon: "🐎", rare: 0, w: 10.875, v: 1, acc: 1, cn: 1, ti: 1, lr: 1 },
+  { id: "donkey", name: "당나귀", icon: "🫏", rare: 0, w: 10.875, v: 0.92, acc: 1, cn: 0.8, ti: 0, lr: 1.05 },
+  { id: "camel", name: "낙타", icon: "🐪", rare: 0, w: 10.875, v: 0.94, acc: 0.85, cn: 1.4, ti: 0.5, lr: 0.85 },
+  { id: "alpaca", name: "알파카", icon: "🦙", rare: 0, w: 10.875, v: 0.9, acc: 0.85, cn: 0.9, ti: 0.6, lr: 1.1 },
+  { id: "reindeer", name: "순록", icon: "🦌", rare: 0, w: 10.875, v: 0.97, acc: 1, cn: 0.7, ti: 1, lr: 1 },
+  { id: "cow", name: "젖소", icon: "🐄", rare: 0, w: 10.875, v: 0.88, acc: 0.8, cn: 0.6, ti: 0.4, lr: 0.85 },
+  { id: "ostrich", name: "타조", icon: "🪿", rare: 0, w: 10.875, v: 1.03, acc: 1.25, cn: 1.6, ti: 1.3, lr: 1.7 },
+  { id: "zebra", name: "얼룩말", icon: "🦓", rare: 1, w: 8, v: 1.04, acc: 1.2, cn: 1, ti: 1, lr: 1.05 },
+  { id: "redhare", name: "적토마", icon: "🔥", rare: 1, w: 4, v: 1.07, acc: 1.1, cn: 0.9, ti: 0.9, lr: 1.05 },
+  { id: "unicorn", name: "유니콘", icon: "🦄", rare: 2, w: 1, v: 1.08, acc: 1.1, cn: 0.9, ti: 0.9, lr: 1 }
 ];
 const RARE_NAME = ["일반", "희귀", "전설"];
 function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
@@ -5491,7 +5531,7 @@ function makeSteed(k) {
 const hoofW = new THREE.Vector3(), FIRE_C = [new THREE.Color(0xff6a2a), new THREE.Color(0xffb347), new THREE.Color(0xff3b1f)];
 function animateSteed(g, speed, dt, T) {
   const u = g.userData, run = clamp(speed / 7, 0, 1), moving = speed > .4;
-  u.ph += dt * (moving ? 3 + speed * 1.15 : 0);
+  u.ph += dt * (moving ? (3 + speed * 1.15) * (STEEDS[u.k].lr || 1) : 0);
   const amp = moving ? .25 + .55 * run : 0, p = u.ph, biped = u.legs.length === 2;
   if (biped) { u.legs[0].rotation.x = Math.sin(p) * amp * 1.2; u.legs[1].rotation.x = Math.sin(p + Math.PI) * amp * 1.2; }
   else { const ph = [0, .55, Math.PI, Math.PI + .55]; u.legs.forEach((l, i) => { l.rotation.x = Math.sin(p + ph[i]) * amp; }); }
@@ -5503,16 +5543,18 @@ function animateSteed(g, speed, dt, T) {
   u.bob = bob * g.scale.y;
   if (!moving) return;
   const id = STEEDS[u.k].id;
-  if (id === "redhare" && Math.random() < .9) u.hooves.forEach(h => { if (Math.random() < .55) { h.getWorldPosition(hoofW); sparksS.emit(hoofW.x, hoofW.y + .05, hoofW.z, rnd(-.4, .4), rnd(.8, 2.2), rnd(-.4, .4), FIRE_C[Math.floor(Math.random() * 3)], rnd(.25, .5), -1.5, 3); } });
-  if (id === "unicorn") for (let i = 0; i < 3; i++) { u.tail.getWorldPosition(hoofW); sparksS.emit(hoofW.x + rnd(-.2, .2), hoofW.y + rnd(-.3, .2), hoofW.z + rnd(-.2, .2), rnd(-.3, .3), rnd(-.1, .6), rnd(-.3, .3), FW_COLS[Math.floor(Math.random() * FW_COLS.length)], rnd(.6, 1.1), .3, 2); }
+  const boost = !!u.boost;
+  if (id === "redhare" && Math.random() < .9) u.hooves.forEach(h => { if (Math.random() < (boost ? 1 : .55)) { h.getWorldPosition(hoofW); sparksS.emit(hoofW.x, hoofW.y + .05, hoofW.z, rnd(-.4, .4), rnd(.8, 2.2), rnd(-.4, .4), FIRE_C[Math.floor(Math.random() * 3)], rnd(.25, .5), -1.5, 3); } });
+  if (id === "redhare" && boost) for (let i = 0; i < 6; i++) { u.torso.getWorldPosition(hoofW); sparksM.emit(hoofW.x + rnd(-.4, .4), hoofW.y + rnd(.4, 1), hoofW.z + rnd(-.4, .4), rnd(-.6, .6), rnd(.5, 2), rnd(-.6, .6), FIRE_C[i % 3], rnd(.3, .6), -1, 3); }
+  if (id === "unicorn") for (let i = 0; i < (boost ? 14 : 3); i++) { u.tail.getWorldPosition(hoofW); sparksS.emit(hoofW.x + rnd(-.2, .2), hoofW.y + rnd(-.3, .2), hoofW.z + rnd(-.2, .2), rnd(-.3, .3), rnd(-.1, .6), rnd(-.3, .3), FW_COLS[Math.floor(Math.random() * FW_COLS.length)], rnd(.6, 1.1), .3, 2); }
 }
 // hang a steed under an avatar (the avatar sits on the saddle); k = null takes it away
-function avatarSteed(av, k, speed, dt) {
+function avatarSteed(av, k, speed, dt, boost) {
   const u = av.userData;
   if (u.steed && (k == null || u.steedK !== k)) { u.steed.parent.remove(u.steed); u.steed = null; }
   if (k == null) return;
   if (!u.steed) { u.steed = makeSteed(k); u.steedK = k; av.add(u.steed); }
-  u.steed.position.y = -u.steed.userData.rideY;
+  u.steed.position.y = -u.steed.userData.rideY; u.steed.userData.boost = !!boost;
   animateSteed(u.steed, speed, dt, T);
   u.inner.position.y += u.steed.userData.bob || 0;
 }
@@ -5669,7 +5711,7 @@ function circuitClick(a) {
   }
   return false;
 }
-BET_INFO.circuit = ["동물 레이스 판돈", "출발하면 모두에게 동물이 랜덤으로 배정돼요. 어떤 동물이든 빠르기는 같아요. 서킷 3바퀴를 먼저 도는 사람이 이겨요.", "2명 70·30% · 3명 55·30·15% · 4명 50·25·15·10%"];
+BET_INFO.circuit = ["동물 레이스 판돈", "출발하면 모두에게 동물이 랜덤으로 배정돼요. 동물마다 빠르기·가속·코너링·지구력이 달라요. 서킷 3바퀴를 먼저 도는 사람이 이겨요.", "2명 70·30% · 3명 55·30·15% · 4명 50·25·15·10%"];
 BET_FN.circuit = bet => {
   wallet.money -= bet; saveWallet(); me.ac = { id: Date.now(), bet, st: "open" }; me.aj = null; me.ap = null;
   toast(`${won(bet)}을 걸고 동물 레이스를 열었어요. 근처 사람들이 참가할 수 있어요`); publish(true); actKey = ""; refreshActions();
@@ -5677,15 +5719,21 @@ BET_FN.circuit = bet => {
 
 /* riding */
 const CIRC_VMAX = 11, CARROT_GAP = 230; // taps closer than this (ms) tire the animal
-const ride = { id: 0, s: 0, l: 0, v: 0, sta: 1, last: 0, tired: 0, bump: 0, t: 0, lap: 0, k: 1, said: 0, paid: 0 };
+const ride = { id: 0, s: 0, l: 0, v: 0, sta: 1, last: 0, tired: 0, bump: 0, t: 0, lap: 0, k: 1, said: 0, paid: 0, boost: 0, streak: 0, rbLap: -1 };
+const steedOf = () => STEEDS[ride.k] || STEEDS[1];
+const rideMax = () => CIRC_VMAX * steedOf().v * (ride.boost > 0 ? 1.18 : 1);
 function gridSlot(i) { return { s: -3.2 - Math.floor(i / 2) * 3.4, l: (i % 2 ? -1 : 1) * 1.25 }; }
 function carrot() {
   const r = myCirc(); if (!r || r.rc.st !== "go" || Date.now() < r.rc.go || (me.ap && me.ap.f)) return;
   const now = performance.now(), gap = now - ride.last; ride.last = now;
   if (ride.tired > 0) return;
-  if (gap < CARROT_GAP) { ride.sta -= .2; if (ride.sta <= 0) { ride.tired = 1.6; ride.sta = .6; ride.v *= .5; showBubble(() => myAvatar, "헥헥… 너무 급했어요", 1.4, "me"); return; } }
+  const S = steedOf();
+  // 적토마: five taps in a good rhythm light up the 불꽃 질주
+  ride.streak = gap > 280 && gap < 700 ? ride.streak + 1 : 0;
+  if (S.id === "redhare" && ride.streak >= 5 && ride.boost <= 0) { ride.boost = 2; ride.streak = 0; showBubble(() => myAvatar, "🔥 불꽃 질주!", 1.6, "me"); if (audio.ready) audio.ding(); }
+  if (gap < CARROT_GAP) { ride.sta -= .2 * S.ti; if (S.ti > 0 && ride.sta <= 0) { ride.tired = 1.6; ride.sta = .6; ride.v *= .5; showBubble(() => myAvatar, "헥헥… 너무 급했어요", 1.4, "me"); return; } }
   else ride.sta = Math.min(1, ride.sta + .06);
-  ride.v = Math.min(CIRC_VMAX, ride.v + 1.35);
+  ride.v = Math.min(rideMax(), ride.v + 1.35 * S.acc);
   if (audio.ready) audio.step("path", Math.random() < .5);
 }
 addEventListener("keydown", e => {
@@ -5699,7 +5747,7 @@ function circuitStep(dt, inp) {
   const idx = Math.max(0, r.list.findIndex(m => m.key === "me"));
   if (ride.id !== r.rc.id) {
     const g = gridSlot(idx), k = drawSteed(r.rc.id + ":" + myPeer);
-    Object.assign(ride, { id: r.rc.id, s: g.s, l: g.l, v: 0, sta: 1, last: 0, tired: 0, bump: 0, t: 0, lap: 0, k, said: 0 });
+    Object.assign(ride, { id: r.rc.id, s: g.s, l: g.l, v: 0, sta: 1, last: 0, tired: 0, bump: 0, t: 0, lap: 0, k, said: 0, boost: 0, streak: 0, rbLap: -1 });
     if (me.hold) { if (me.hold !== "ramen" && wallet.bag.length < BAG_MAX) { wallet.bag.push(me.hold); saveWallet(); } me.hold = null; me.eat = 0; }
     me.st = "ride"; me.em = null; rebuildMe(); me.ap = { id: r.rc.id, s: g.s, f: 0, k };
     const S = STEEDS[k]; toast(`${S.icon} ${S.name}${S.rare ? ` (${RARE_NAME[S.rare]})` : ""}이(가) 나왔어요!`);
@@ -5708,12 +5756,18 @@ function circuitStep(dt, inp) {
   const pn = performance.now(); dt = Math.min(.25, ride.t ? (pn - ride.t) / 1000 : dt); ride.t = pn;
   const before = Date.now() < r.rc.go, done = me.ap && me.ap.f;
   if (!before) {
-    ride.tired = Math.max(0, ride.tired - dt); ride.bump = Math.max(0, ride.bump - dt);
+    const S = steedOf();
+    ride.tired = Math.max(0, ride.tired - dt); ride.bump = Math.max(0, ride.bump - dt); ride.boost = Math.max(0, ride.boost - dt);
+    // 유니콘: halfway round every lap, a 3-second 무지개 질주 (no slowing down on the fence)
+    const lapNow = Math.floor(Math.max(0, ride.s) / circ.len);
+    if (S.id === "unicorn" && !done && ride.s > 0 && ride.s % circ.len > circ.len / 2 && ride.rbLap !== lapNow) { ride.rbLap = lapNow; ride.boost = 3; showBubble(() => myAvatar, "🌈 무지개 질주!", 1.6, "me"); if (audio.ready) audio.chime(); }
     ride.v *= Math.exp(-dt * (done ? 1.2 : .35)); if (ride.tired > 0) ride.v = Math.min(ride.v, 3);
+    if (ride.boost > 0 && !done) ride.v = Math.min(rideMax(), ride.v + dt * 5);
+    ride.v = Math.min(ride.v, rideMax());
     const c = circAt(ride.s), steer = clamp(inp.r, -1, 1);
-    ride.l += -steer * 3.4 * dt - c.k * ride.v * ride.v * .03 * dt; // steering, and the bends push you outward
+    ride.l += -steer * 3.4 * dt - c.k * ride.v * ride.v * .03 * S.cn * dt; // steering, and the bends push you outward
     const lim = CIRC_W / 2 - .45;
-    if (Math.abs(ride.l) > lim) { ride.l = Math.sign(ride.l) * lim; if (ride.bump <= 0 && ride.v > 4) { ride.bump = .8; ride.v *= .55; showBubble(() => myAvatar, "쿵!", .8, "me"); if (audio.ready) audio.chomp(.8); } }
+    if (Math.abs(ride.l) > lim) { ride.l = Math.sign(ride.l) * lim; if (ride.bump <= 0 && ride.v > 4 && !(S.id === "unicorn" && ride.boost > 0)) { ride.bump = .8; ride.v *= .55; showBubble(() => myAvatar, "쿵!", .8, "me"); if (audio.ready) audio.chomp(.8); } }
     ride.s += ride.v * dt / Math.max(.4, 1 - c.k * ride.l); // the inside line is shorter
   }
   const c = circAt(ride.s);
@@ -5722,7 +5776,7 @@ function circuitStep(dt, inp) {
   if (!done) {
     const lap = Math.floor(Math.max(0, ride.s) / circ.len);
     if (lap > ride.lap && lap < CIRC_LAPS) { ride.lap = lap; showBubble(() => myAvatar, lap === CIRC_LAPS - 1 ? "마지막 바퀴!" : `${lap + 1}바퀴째!`, 1.4, "me"); if (audio.ready) audio.pop(); }
-    me.ap = { id: r.rc.id, s: +ride.s.toFixed(1), f: 0, k: ride.k };
+    me.ap = { id: r.rc.id, s: +ride.s.toFixed(1), f: 0, k: ride.k, b: ride.boost > 0 ? 1 : 0 };
     if (ride.s >= CIRC_LAPS * circ.len) { me.ap.f = Date.now() - r.rc.go; if (audio.ready) audio.ding(); showBubble(() => myAvatar, `골인! ${(me.ap.f / 1000).toFixed(1)}초`, 2.5, "me"); publish(true); }
   }
   return true;
@@ -5732,16 +5786,22 @@ function circStatus(r) {
   if (me.ap && me.ap.f) return `🏁 골인! ${(me.ap.f / 1000).toFixed(1)}초 · 다른 선수를 기다려요`;
   const rank = 1 + r.list.filter(m => m.key !== "me" && ((circProg(m.key) || {}).f || (circProg(m.key) || {}).s > ride.s)).length;
   const bar = "■".repeat(Math.round(ride.sta * 5)) + "□".repeat(5 - Math.round(ride.sta * 5));
-  return `🏁 ${Math.min(CIRC_LAPS, ride.lap + 1)}/${CIRC_LAPS}바퀴 · ${rank}등 · 기운 ${bar}${ride.tired > 0 ? " · 지쳤어요!" : ""}`;
+  const S = steedOf(), fx = ride.boost > 0 ? (S.id === "unicorn" ? " · 🌈 무지개 질주!" : " · 🔥 불꽃 질주!") : ride.tired > 0 ? " · 지쳤어요!" : "";
+  return `🏁 ${S.icon} ${Math.min(CIRC_LAPS, ride.lap + 1)}/${CIRC_LAPS}바퀴 · ${rank}등 · ${S.ti ? "기운 " + bar : "지치지 않아요"}${fx}`;
 }
 
 /* countdown, rare-animal news, results */
 let circCd = "", circAnn = new Set();
+const steedSaid = {}, STEED_VOICE = { cow: "음메~ 🔔", alpaca: "퉤!", donkey: "히잉~", horse: "히히힝!", pony: "히힝!", ostrich: "꾸악!", camel: "후르르…", reindeer: "딸랑딸랑 🔔", zebra: "히히힝!", redhare: "히히힝!! 🔥", unicorn: "✨히히힝✨" };
 function updateCircuit(dt) {
   // everyone's rare animals make the news
   const ann = (n, ap) => { if (!ap || circAnn.has(ap.id + n)) return; circAnn.add(ap.id + n); const S = STEEDS[ap.k]; if (!S || !S.rare) return;
     const bar = $("annBar"); bar.textContent = `${S.icon} ${n}님이 ${RARE_NAME[S.rare]} 동물 ${S.name}을(를) 탔어요!`; bar.hidden = false; bar.classList.remove("go"); void bar.offsetWidth; bar.classList.add("go"); clearTimeout(bar._t); bar._t = setTimeout(() => { bar.hidden = true; }, 6000); if (audio.ready) audio.ding(); };
   if (me.st === "ride" && me.ap) ann(me.name, me.ap);
+  const voice = (key, ap, obj) => { if (!ap || ap.f) return; const S = STEEDS[ap.k], line = STEED_VOICE[S && S.id]; if (!line) return;
+    const n = Math.floor((Date.now() + (hashStr(key) % 9000)) / 9000); if (steedSaid[key] === n) return; const first = steedSaid[key] == null; steedSaid[key] = n; if (!first) showBubble(obj, line, 1.3, "sv-" + key); };
+  if (me.st === "ride") voice("me", me.ap, () => myAvatar);
+  for (const [peer, o] of others) if (o.p.st === "ride") voice(peer, o.p.ap, () => (others.get(peer) || {}).obj);
   for (const o of others.values()) if (o.p.st === "ride" && o.p.ap) ann(o.p.n, o.p.ap);
 
   const r = myCirc(), cd = $("countdown"), btn = $("whipBox");
@@ -5863,6 +5923,66 @@ function updateBeg() {
   };
   lines("me", me.em, () => myAvatar);
   for (const [peer, o] of others) lines(peer, o.p.em, () => (others.get(peer) || {}).obj);
+}
+/* ================= 치킨 나눠 먹기 ================= */
+// Someone eating chicken can pass a piece (3 at most) to a person sitting or standing close by.
+// The offer rides in the giver's presence ({to, id, k}); the receiver answers with sa = offer id.
+// Each piece given takes 20 seconds off the giver's own chicken.
+const SHARE_MAX = 3, SHARE_CUT = 20000, SHARE_TTL = 20000, SHARE_NEAR = 2.8;
+const HEART_C = new THREE.Color(0xff6b9a);
+const isShareKind = k => !!(PRODUCTS[k] && PRODUCTS[k].share);
+function myShareCount() { return me.shareKey === me.eat ? me.shareN || 0 : 0; }
+function canShareNow() {
+  if (!me.hold || !me.eat || isShareKind(me.hold) || !PRODUCTS[me.hold] || PRODUCTS[me.hold].cat !== "chicken") return false;
+  const left = eatTime(me.hold) - (Date.now() - me.eat) / 1000;
+  return left > SHARE_CUT / 1000 + 5 && myShareCount() < SHARE_MAX;
+}
+const takerOk = o => !o.p.hi && ["walk", "sit", "bench", "stool"].includes(o.p.st);
+function shareActions(acts, status) {
+  if (!started || anim || boarded) return status;
+  const now = Date.now();
+  // an offer for me
+  for (const [peer, o] of others) {
+    const s = o.p.sh; if (!s || s.to !== myPeer || now - s.id > SHARE_TTL || me.sa === s.id) continue;
+    if (me.hold || !["walk", "sit", "bench", "stool"].includes(me.st) || Math.hypot(o.x - me.x, o.z - me.z) > SHARE_NEAR + 1.5) continue;
+    acts.unshift(["shtake:" + peer, `🍗 ${o.p.n}님이 치킨을 나눠 줬어요! 받기`, "primary"]);
+  }
+  // offering mine
+  if (me.sh && now - me.sh.id < SHARE_TTL) { const o = others.get(me.sh.to); return `🍗 ${o ? o.p.n : "상대"}님이 받기를 기다리는 중…`; }
+  if (!canShareNow() || !["sit", "bench", "stool"].includes(me.st)) return status;
+  let best = null, bd = SHARE_NEAR;
+  for (const [peer, o] of others) { if (!takerOk(o)) continue; const d = Math.hypot(o.x - me.x, o.z - me.z); if (d < bd) { bd = d; best = [peer, o]; } }
+  if (best) acts.push(["share:" + best[0], `🍗 ${best[1].p.n}님에게 나눠 주기 (${SHARE_MAX - myShareCount()}번 남음)`, ""]);
+  return status;
+}
+function shareClick(a) {
+  if (a.startsWith("share:")) {
+    const peer = a.slice(6), o = others.get(peer);
+    if (!o || !takerOk(o) || !canShareNow()) { toast("지금은 나눠 줄 수 없어요"); return true; }
+    me.sh = { to: peer, id: Date.now(), k: PRODUCTS[me.hold].sauce ? "chkshareY" : "chkshare" };
+    showBubble(() => myAvatar, "자, 한 조각 먹어 봐!", 2, "me"); return true;
+  }
+  if (a.startsWith("shtake:")) {
+    const o = others.get(a.slice(7)), s = o && o.p.sh;
+    if (!s || s.to !== myPeer || Date.now() - s.id > SHARE_TTL) { toast("치킨이 식어 버렸어요… 다시 나눠 달라고 해 볼까요?"); return true; }
+    if (me.hold) { toast("손을 비우고 받아 주세요"); return true; }
+    me.hold = s.k; me.eat = Date.now(); me.sa = s.id; me.em = null;
+    showBubble(() => myAvatar, "고마워! 잘 먹을게 🍗", 2, "me"); if (audio.ready) audio.pop();
+    return true;
+  }
+  return false;
+}
+function updateShare() {
+  if (!started) return;
+  const now = Date.now();
+  if (me.sh) {
+    const o = others.get(me.sh.to);
+    if (o && o.p.sa === me.sh.id) { // they took it: my own chicken runs out 20 seconds sooner
+      const n = myShareCount() + 1; me.eat -= SHARE_CUT; me.shareKey = me.eat; me.shareN = n;
+      toast(`${o.p.n}님과 치킨을 나눠 먹어요 💛`); me.sh = null; publish(true); actKey = "";
+    } else if (now - me.sh.id > SHARE_TTL || !me.eat) { me.sh = null; publish(true); actKey = ""; }
+  }
+  if (me.sa && now - me.sa > 90000) me.sa = 0;
 }
 })();
 </script>

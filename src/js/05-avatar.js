@@ -172,10 +172,11 @@ function updateAvatar(av, dt, t, o = {}) {
   // carrying and eating: the ramen bowl or a snack from the store
   const realKind = o.hold === true ? "ramen" : (o.hold || null), isChicken = !!(PRODUCTS[realKind] && PRODUCTS[realKind].cat === "chicken");
   // eating chicken while seated: the box goes down in front and a drumstick comes up in hand
-  const boxEat = isChicken && o.eatT >= 0 && (u.pose === "sit" || u.pose === "stool" || u.pose === "bench") && !u.queue.length;
-  const holdKind = boxEat ? "drumstick" : realKind;
+  const PK = PRODUCTS[realKind] || {}, isShare = !!PK.share, sauce = !!PK.sauce;
+  const boxEat = isChicken && !isShare && o.eatT >= 0 && (u.pose === "sit" || u.pose === "stool" || u.pose === "bench") && !u.queue.length;
+  const holdKind = isShare || boxEat ? (sauce ? "drumstickY" : "drumstick") : realKind;
   const holding = !!holdKind && u.pose !== "lie" && u.pose !== "swim" && u.pose !== "tube";
-  if (boxEat && !u.chBox) { u.chBox = makeChickenBox(); av.add(u.chBox); }
+  if (boxEat && (!u.chBox || u.chBox.userData.sauce !== sauce)) { if (u.chBox) av.remove(u.chBox); u.chBox = makeChickenBox(sauce); u.chBox.userData.sauce = sauce; av.add(u.chBox); }
   if (u.chBox) {
     u.chBox.visible = boxEat;
     if (boxEat) { u.chBox.position.set(0, .02, -.75); const left = 1 - Math.min(1, o.eatT / eatTime(realKind)); u.chBox.userData.pieces.forEach((p, i) => { p.visible = i < Math.ceil(left * 10); }); }
@@ -189,7 +190,7 @@ function updateAvatar(av, dt, t, o = {}) {
       u.arms[1].add(ch); u.chop = ch;
     }
   }
-  if (u.bowl) { u.bowl.visible = holding; u.chop.visible = holding && o.eatT >= 0 && (holdKind === "ramen" || holdKind === "gangjeong" || holdKind === "chicken" || holdKind === "halfchk"); }
+  if (u.bowl) { u.bowl.visible = holding; u.chop.visible = holding && o.eatT >= 0 && (holdKind === "ramen" || holdKind === "gangjeong" || holdKind === "chicken" || holdKind === "halfchk" || holdKind === "yangchk"); }
   const bk = typeof o.basket === "number" ? o.basket : -1;
   if (bk >= 0) {
     if (!u.basketM) { u.basketM = makeBasket(); u.arms[0].add(u.basketM); u.basketM.position.set(0, -.4, 0); }
@@ -204,17 +205,28 @@ function updateAvatar(av, dt, t, o = {}) {
       const e = o.eatT, bite = (e * (isChicken ? .25 : .9)) % 1, lift = Math.max(0, Math.sin(Math.min(1, bite * (isChicken ? 3 : 1)) * Math.PI * 2));
       v.arL = 1.35; v.azL = -.2; v.arR = 1.55 + lift * 1.0 + Math.sin(e * 22) * .05 * lift; v.azR = -.42;
       v.nod += .22 - lift * .12; v.lean += .12; by = .36; bz = -.3;
+      if (isShare && e >= 12 && e < 16.4) {
+        // "너무 맛있어~!": a happy pause, then face buried in the chicken with a little nuzzle, then back up
+        const plant = e < 13 ? 0 : e < 13.5 ? ease((e - 13) / .5) : e < 15.4 ? 1 : 1 - ease((e - 15.4) / 1);
+        v.arR = 1.25 + (1 - plant) * .5; v.azR = -.42; v.arL = 1.3; v.azL = -.25;
+        v.nod += plant * .85 - (1 - plant) * .15; v.lean += plant * .5;
+        u.eatRoll = e < 13 ? Math.sin(e * 9) * .08 : plant * Math.sin(e * 15) * .16;
+        by = .3 - plant * .08; bz = -.36 - plant * .04;
+      }
       if (u.bowl.userData.soup) u.bowl.userData.soup.position.y = .12 - Math.min(1, e / EAT_TIME) * .07;
     } else if (u.bowl.userData.soup) u.bowl.userData.soup.position.y = .12;
     if (o.cheer > 0 && !(o.eatT >= 0)) { const c = o.cheer; v.arL += (2.25 - v.arL) * c; v.arR += (2.25 - v.arR) * c; v.azL = v.azR = -.18; by += .5 * c; bz -= .12 * c; v.nod -= .15 * c; }
-    const left = o.eatT >= 0 && holdKind !== "ramen" && holdKind !== "drumstick" ? 1 - Math.min(1, o.eatT / eatTime(holdKind)) * .6 : 1;
+    const left = o.eatT >= 0 && holdKind !== "ramen" && holdKind !== "drumstick" && holdKind !== "drumstickY" ? 1 - Math.min(1, o.eatT / eatTime(holdKind)) * .6 : 1;
     u.bowl.scale.setScalar(left * (u.bowl.userData.base || 1));
     let bx = 0;
     if (o.spin != null) { const a = o.spin; bx = Math.sin(a) * .28; by += .18 + Math.cos(a) * .28; v.arR = 1.6 + Math.cos(a) * .7; v.azR = -.2 + Math.sin(a) * .5; v.arL = .3; v.azL = .2; }
     u.bowl.position.set(bx, by, bz);
     if (u.bowl.userData.tip) u.bowl.userData.tip.visible = !!o.lit;
   }
-  v.roll = 0; v.glz = 0;
+  const smear = isShare && sauce && o.eatT >= 14 && o.eatT < 27;
+  if (smear && !u.smear) { u.smear = new THREE.Group(); [[.2, -.19, -.37, .07, .045], [-.1, -.25, -.39, .05, .03], [.05, -.27, -.39, .035, .025]].forEach(([x, y, z, sx, sy]) => { const m = new THREE.Mesh(G_SPH_S, SAUCE_M); m.position.set(x, y, z); m.scale.set(sx, sy, .02); u.smear.add(m); }); u.head.add(u.smear); }
+  if (u.smear) u.smear.visible = smear;
+  v.roll = u.eatRoll || 0; u.eatRoll = 0; v.glz = 0;
   if (o.rod && o.fs) rodPose(v, o.fs);
   if (o.emote) emotePose(v, o.emote.i, o.emote.t, u.pose === "stand", u, o.emote.s); else if (u.vR) u.vR.visible = false;
   u.torso.scale.y = 1 + Math.sin(ph * 2.1) * .012;

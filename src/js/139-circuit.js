@@ -149,7 +149,7 @@ function circuitClick(a) {
   }
   return false;
 }
-BET_INFO.circuit = ["동물 레이스 판돈", "출발하면 모두에게 동물이 랜덤으로 배정돼요. 어떤 동물이든 빠르기는 같아요. 서킷 3바퀴를 먼저 도는 사람이 이겨요.", "2명 70·30% · 3명 55·30·15% · 4명 50·25·15·10%"];
+BET_INFO.circuit = ["동물 레이스 판돈", "출발하면 모두에게 동물이 랜덤으로 배정돼요. 동물마다 빠르기·가속·코너링·지구력이 달라요. 서킷 3바퀴를 먼저 도는 사람이 이겨요.", "2명 70·30% · 3명 55·30·15% · 4명 50·25·15·10%"];
 BET_FN.circuit = bet => {
   wallet.money -= bet; saveWallet(); me.ac = { id: Date.now(), bet, st: "open" }; me.aj = null; me.ap = null;
   toast(`${won(bet)}을 걸고 동물 레이스를 열었어요. 근처 사람들이 참가할 수 있어요`); publish(true); actKey = ""; refreshActions();
@@ -157,15 +157,21 @@ BET_FN.circuit = bet => {
 
 /* riding */
 const CIRC_VMAX = 11, CARROT_GAP = 230; // taps closer than this (ms) tire the animal
-const ride = { id: 0, s: 0, l: 0, v: 0, sta: 1, last: 0, tired: 0, bump: 0, t: 0, lap: 0, k: 1, said: 0, paid: 0 };
+const ride = { id: 0, s: 0, l: 0, v: 0, sta: 1, last: 0, tired: 0, bump: 0, t: 0, lap: 0, k: 1, said: 0, paid: 0, boost: 0, streak: 0, rbLap: -1 };
+const steedOf = () => STEEDS[ride.k] || STEEDS[1];
+const rideMax = () => CIRC_VMAX * steedOf().v * (ride.boost > 0 ? 1.18 : 1);
 function gridSlot(i) { return { s: -3.2 - Math.floor(i / 2) * 3.4, l: (i % 2 ? -1 : 1) * 1.25 }; }
 function carrot() {
   const r = myCirc(); if (!r || r.rc.st !== "go" || Date.now() < r.rc.go || (me.ap && me.ap.f)) return;
   const now = performance.now(), gap = now - ride.last; ride.last = now;
   if (ride.tired > 0) return;
-  if (gap < CARROT_GAP) { ride.sta -= .2; if (ride.sta <= 0) { ride.tired = 1.6; ride.sta = .6; ride.v *= .5; showBubble(() => myAvatar, "헥헥… 너무 급했어요", 1.4, "me"); return; } }
+  const S = steedOf();
+  // 적토마: five taps in a good rhythm light up the 불꽃 질주
+  ride.streak = gap > 280 && gap < 700 ? ride.streak + 1 : 0;
+  if (S.id === "redhare" && ride.streak >= 5 && ride.boost <= 0) { ride.boost = 2; ride.streak = 0; showBubble(() => myAvatar, "🔥 불꽃 질주!", 1.6, "me"); if (audio.ready) audio.ding(); }
+  if (gap < CARROT_GAP) { ride.sta -= .2 * S.ti; if (S.ti > 0 && ride.sta <= 0) { ride.tired = 1.6; ride.sta = .6; ride.v *= .5; showBubble(() => myAvatar, "헥헥… 너무 급했어요", 1.4, "me"); return; } }
   else ride.sta = Math.min(1, ride.sta + .06);
-  ride.v = Math.min(CIRC_VMAX, ride.v + 1.35);
+  ride.v = Math.min(rideMax(), ride.v + 1.35 * S.acc);
   if (audio.ready) audio.step("path", Math.random() < .5);
 }
 addEventListener("keydown", e => {
@@ -179,7 +185,7 @@ function circuitStep(dt, inp) {
   const idx = Math.max(0, r.list.findIndex(m => m.key === "me"));
   if (ride.id !== r.rc.id) {
     const g = gridSlot(idx), k = drawSteed(r.rc.id + ":" + myPeer);
-    Object.assign(ride, { id: r.rc.id, s: g.s, l: g.l, v: 0, sta: 1, last: 0, tired: 0, bump: 0, t: 0, lap: 0, k, said: 0 });
+    Object.assign(ride, { id: r.rc.id, s: g.s, l: g.l, v: 0, sta: 1, last: 0, tired: 0, bump: 0, t: 0, lap: 0, k, said: 0, boost: 0, streak: 0, rbLap: -1 });
     if (me.hold) { if (me.hold !== "ramen" && wallet.bag.length < BAG_MAX) { wallet.bag.push(me.hold); saveWallet(); } me.hold = null; me.eat = 0; }
     me.st = "ride"; me.em = null; rebuildMe(); me.ap = { id: r.rc.id, s: g.s, f: 0, k };
     const S = STEEDS[k]; toast(`${S.icon} ${S.name}${S.rare ? ` (${RARE_NAME[S.rare]})` : ""}이(가) 나왔어요!`);
@@ -188,12 +194,18 @@ function circuitStep(dt, inp) {
   const pn = performance.now(); dt = Math.min(.25, ride.t ? (pn - ride.t) / 1000 : dt); ride.t = pn;
   const before = Date.now() < r.rc.go, done = me.ap && me.ap.f;
   if (!before) {
-    ride.tired = Math.max(0, ride.tired - dt); ride.bump = Math.max(0, ride.bump - dt);
+    const S = steedOf();
+    ride.tired = Math.max(0, ride.tired - dt); ride.bump = Math.max(0, ride.bump - dt); ride.boost = Math.max(0, ride.boost - dt);
+    // 유니콘: halfway round every lap, a 3-second 무지개 질주 (no slowing down on the fence)
+    const lapNow = Math.floor(Math.max(0, ride.s) / circ.len);
+    if (S.id === "unicorn" && !done && ride.s > 0 && ride.s % circ.len > circ.len / 2 && ride.rbLap !== lapNow) { ride.rbLap = lapNow; ride.boost = 3; showBubble(() => myAvatar, "🌈 무지개 질주!", 1.6, "me"); if (audio.ready) audio.chime(); }
     ride.v *= Math.exp(-dt * (done ? 1.2 : .35)); if (ride.tired > 0) ride.v = Math.min(ride.v, 3);
+    if (ride.boost > 0 && !done) ride.v = Math.min(rideMax(), ride.v + dt * 5);
+    ride.v = Math.min(ride.v, rideMax());
     const c = circAt(ride.s), steer = clamp(inp.r, -1, 1);
-    ride.l += -steer * 3.4 * dt - c.k * ride.v * ride.v * .03 * dt; // steering, and the bends push you outward
+    ride.l += -steer * 3.4 * dt - c.k * ride.v * ride.v * .03 * S.cn * dt; // steering, and the bends push you outward
     const lim = CIRC_W / 2 - .45;
-    if (Math.abs(ride.l) > lim) { ride.l = Math.sign(ride.l) * lim; if (ride.bump <= 0 && ride.v > 4) { ride.bump = .8; ride.v *= .55; showBubble(() => myAvatar, "쿵!", .8, "me"); if (audio.ready) audio.chomp(.8); } }
+    if (Math.abs(ride.l) > lim) { ride.l = Math.sign(ride.l) * lim; if (ride.bump <= 0 && ride.v > 4 && !(S.id === "unicorn" && ride.boost > 0)) { ride.bump = .8; ride.v *= .55; showBubble(() => myAvatar, "쿵!", .8, "me"); if (audio.ready) audio.chomp(.8); } }
     ride.s += ride.v * dt / Math.max(.4, 1 - c.k * ride.l); // the inside line is shorter
   }
   const c = circAt(ride.s);
@@ -202,7 +214,7 @@ function circuitStep(dt, inp) {
   if (!done) {
     const lap = Math.floor(Math.max(0, ride.s) / circ.len);
     if (lap > ride.lap && lap < CIRC_LAPS) { ride.lap = lap; showBubble(() => myAvatar, lap === CIRC_LAPS - 1 ? "마지막 바퀴!" : `${lap + 1}바퀴째!`, 1.4, "me"); if (audio.ready) audio.pop(); }
-    me.ap = { id: r.rc.id, s: +ride.s.toFixed(1), f: 0, k: ride.k };
+    me.ap = { id: r.rc.id, s: +ride.s.toFixed(1), f: 0, k: ride.k, b: ride.boost > 0 ? 1 : 0 };
     if (ride.s >= CIRC_LAPS * circ.len) { me.ap.f = Date.now() - r.rc.go; if (audio.ready) audio.ding(); showBubble(() => myAvatar, `골인! ${(me.ap.f / 1000).toFixed(1)}초`, 2.5, "me"); publish(true); }
   }
   return true;
@@ -212,16 +224,22 @@ function circStatus(r) {
   if (me.ap && me.ap.f) return `🏁 골인! ${(me.ap.f / 1000).toFixed(1)}초 · 다른 선수를 기다려요`;
   const rank = 1 + r.list.filter(m => m.key !== "me" && ((circProg(m.key) || {}).f || (circProg(m.key) || {}).s > ride.s)).length;
   const bar = "■".repeat(Math.round(ride.sta * 5)) + "□".repeat(5 - Math.round(ride.sta * 5));
-  return `🏁 ${Math.min(CIRC_LAPS, ride.lap + 1)}/${CIRC_LAPS}바퀴 · ${rank}등 · 기운 ${bar}${ride.tired > 0 ? " · 지쳤어요!" : ""}`;
+  const S = steedOf(), fx = ride.boost > 0 ? (S.id === "unicorn" ? " · 🌈 무지개 질주!" : " · 🔥 불꽃 질주!") : ride.tired > 0 ? " · 지쳤어요!" : "";
+  return `🏁 ${S.icon} ${Math.min(CIRC_LAPS, ride.lap + 1)}/${CIRC_LAPS}바퀴 · ${rank}등 · ${S.ti ? "기운 " + bar : "지치지 않아요"}${fx}`;
 }
 
 /* countdown, rare-animal news, results */
 let circCd = "", circAnn = new Set();
+const steedSaid = {}, STEED_VOICE = { cow: "음메~ 🔔", alpaca: "퉤!", donkey: "히잉~", horse: "히히힝!", pony: "히힝!", ostrich: "꾸악!", camel: "후르르…", reindeer: "딸랑딸랑 🔔", zebra: "히히힝!", redhare: "히히힝!! 🔥", unicorn: "✨히히힝✨" };
 function updateCircuit(dt) {
   // everyone's rare animals make the news
   const ann = (n, ap) => { if (!ap || circAnn.has(ap.id + n)) return; circAnn.add(ap.id + n); const S = STEEDS[ap.k]; if (!S || !S.rare) return;
     const bar = $("annBar"); bar.textContent = `${S.icon} ${n}님이 ${RARE_NAME[S.rare]} 동물 ${S.name}을(를) 탔어요!`; bar.hidden = false; bar.classList.remove("go"); void bar.offsetWidth; bar.classList.add("go"); clearTimeout(bar._t); bar._t = setTimeout(() => { bar.hidden = true; }, 6000); if (audio.ready) audio.ding(); };
   if (me.st === "ride" && me.ap) ann(me.name, me.ap);
+  const voice = (key, ap, obj) => { if (!ap || ap.f) return; const S = STEEDS[ap.k], line = STEED_VOICE[S && S.id]; if (!line) return;
+    const n = Math.floor((Date.now() + (hashStr(key) % 9000)) / 9000); if (steedSaid[key] === n) return; const first = steedSaid[key] == null; steedSaid[key] = n; if (!first) showBubble(obj, line, 1.3, "sv-" + key); };
+  if (me.st === "ride") voice("me", me.ap, () => myAvatar);
+  for (const [peer, o] of others) if (o.p.st === "ride") voice(peer, o.p.ap, () => (others.get(peer) || {}).obj);
   for (const o of others.values()) if (o.p.st === "ride" && o.p.ap) ann(o.p.n, o.p.ap);
 
   const r = myCirc(), cd = $("countdown"), btn = $("whipBox");

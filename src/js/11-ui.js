@@ -88,6 +88,7 @@ function deliverShot(c) {
   }, "image/png");
 }
 $("shotClose").addEventListener("click", () => { $("shot").hidden = true; });
+$("shot").addEventListener("click", e => { if (e.target === $("shot")) $("shot").hidden = true; }); // tap outside the photo to close
 $("shotSave").addEventListener("click", async () => {
   if (!downloads || !shotBlob) return; const k = kst(), pad = n => String(n).padStart(2, "0");
   try { await downloads.save({ filename: `hangang-${k.getFullYear()}${pad(k.getMonth() + 1)}${pad(k.getDate())}-${pad(k.getHours())}${pad(k.getMinutes())}.png`, data: shotBlob }); toast("사진을 저장했습니다"); $("shot").hidden = true; }

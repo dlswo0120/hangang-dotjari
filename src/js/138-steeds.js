@@ -1,17 +1,17 @@
 /* ================= 탈것 동물: 경주 때 랜덤으로 배정 ================= */
 // rare 0 = 일반, 1 = 희귀, 2 = 전설. w = draw weight in percent (sums to 100)
 const STEEDS = [
-  { id: "pony", name: "망아지", icon: "🐴", rare: 0, w: 10.875 },
-  { id: "horse", name: "말", icon: "🐎", rare: 0, w: 10.875 },
-  { id: "donkey", name: "당나귀", icon: "🫏", rare: 0, w: 10.875 },
-  { id: "camel", name: "낙타", icon: "🐪", rare: 0, w: 10.875 },
-  { id: "alpaca", name: "알파카", icon: "🦙", rare: 0, w: 10.875 },
-  { id: "reindeer", name: "순록", icon: "🦌", rare: 0, w: 10.875 },
-  { id: "cow", name: "젖소", icon: "🐄", rare: 0, w: 10.875 },
-  { id: "ostrich", name: "타조", icon: "🪿", rare: 0, w: 10.875 },
-  { id: "zebra", name: "얼룩말", icon: "🦓", rare: 1, w: 8 },
-  { id: "redhare", name: "적토마", icon: "🔥", rare: 1, w: 4 },
-  { id: "unicorn", name: "유니콘", icon: "🦄", rare: 2, w: 1 }
+  { id: "pony", name: "망아지", icon: "🐴", rare: 0, w: 10.875, v: 0.95, acc: 1.35, cn: 0.55, ti: 1.5, lr: 1.3 },
+  { id: "horse", name: "말", icon: "🐎", rare: 0, w: 10.875, v: 1, acc: 1, cn: 1, ti: 1, lr: 1 },
+  { id: "donkey", name: "당나귀", icon: "🫏", rare: 0, w: 10.875, v: 0.92, acc: 1, cn: 0.8, ti: 0, lr: 1.05 },
+  { id: "camel", name: "낙타", icon: "🐪", rare: 0, w: 10.875, v: 0.94, acc: 0.85, cn: 1.4, ti: 0.5, lr: 0.85 },
+  { id: "alpaca", name: "알파카", icon: "🦙", rare: 0, w: 10.875, v: 0.9, acc: 0.85, cn: 0.9, ti: 0.6, lr: 1.1 },
+  { id: "reindeer", name: "순록", icon: "🦌", rare: 0, w: 10.875, v: 0.97, acc: 1, cn: 0.7, ti: 1, lr: 1 },
+  { id: "cow", name: "젖소", icon: "🐄", rare: 0, w: 10.875, v: 0.88, acc: 0.8, cn: 0.6, ti: 0.4, lr: 0.85 },
+  { id: "ostrich", name: "타조", icon: "🪿", rare: 0, w: 10.875, v: 1.03, acc: 1.25, cn: 1.6, ti: 1.3, lr: 1.7 },
+  { id: "zebra", name: "얼룩말", icon: "🦓", rare: 1, w: 8, v: 1.04, acc: 1.2, cn: 1, ti: 1, lr: 1.05 },
+  { id: "redhare", name: "적토마", icon: "🔥", rare: 1, w: 4, v: 1.07, acc: 1.1, cn: 0.9, ti: 0.9, lr: 1.05 },
+  { id: "unicorn", name: "유니콘", icon: "🦄", rare: 2, w: 1, v: 1.08, acc: 1.1, cn: 0.9, ti: 0.9, lr: 1 }
 ];
 const RARE_NAME = ["일반", "희귀", "전설"];
 function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
@@ -147,7 +147,7 @@ function makeSteed(k) {
 const hoofW = new THREE.Vector3(), FIRE_C = [new THREE.Color(0xff6a2a), new THREE.Color(0xffb347), new THREE.Color(0xff3b1f)];
 function animateSteed(g, speed, dt, T) {
   const u = g.userData, run = clamp(speed / 7, 0, 1), moving = speed > .4;
-  u.ph += dt * (moving ? 3 + speed * 1.15 : 0);
+  u.ph += dt * (moving ? (3 + speed * 1.15) * (STEEDS[u.k].lr || 1) : 0);
   const amp = moving ? .25 + .55 * run : 0, p = u.ph, biped = u.legs.length === 2;
   if (biped) { u.legs[0].rotation.x = Math.sin(p) * amp * 1.2; u.legs[1].rotation.x = Math.sin(p + Math.PI) * amp * 1.2; }
   else { const ph = [0, .55, Math.PI, Math.PI + .55]; u.legs.forEach((l, i) => { l.rotation.x = Math.sin(p + ph[i]) * amp; }); }
@@ -159,16 +159,18 @@ function animateSteed(g, speed, dt, T) {
   u.bob = bob * g.scale.y;
   if (!moving) return;
   const id = STEEDS[u.k].id;
-  if (id === "redhare" && Math.random() < .9) u.hooves.forEach(h => { if (Math.random() < .55) { h.getWorldPosition(hoofW); sparksS.emit(hoofW.x, hoofW.y + .05, hoofW.z, rnd(-.4, .4), rnd(.8, 2.2), rnd(-.4, .4), FIRE_C[Math.floor(Math.random() * 3)], rnd(.25, .5), -1.5, 3); } });
-  if (id === "unicorn") for (let i = 0; i < 3; i++) { u.tail.getWorldPosition(hoofW); sparksS.emit(hoofW.x + rnd(-.2, .2), hoofW.y + rnd(-.3, .2), hoofW.z + rnd(-.2, .2), rnd(-.3, .3), rnd(-.1, .6), rnd(-.3, .3), FW_COLS[Math.floor(Math.random() * FW_COLS.length)], rnd(.6, 1.1), .3, 2); }
+  const boost = !!u.boost;
+  if (id === "redhare" && Math.random() < .9) u.hooves.forEach(h => { if (Math.random() < (boost ? 1 : .55)) { h.getWorldPosition(hoofW); sparksS.emit(hoofW.x, hoofW.y + .05, hoofW.z, rnd(-.4, .4), rnd(.8, 2.2), rnd(-.4, .4), FIRE_C[Math.floor(Math.random() * 3)], rnd(.25, .5), -1.5, 3); } });
+  if (id === "redhare" && boost) for (let i = 0; i < 6; i++) { u.torso.getWorldPosition(hoofW); sparksM.emit(hoofW.x + rnd(-.4, .4), hoofW.y + rnd(.4, 1), hoofW.z + rnd(-.4, .4), rnd(-.6, .6), rnd(.5, 2), rnd(-.6, .6), FIRE_C[i % 3], rnd(.3, .6), -1, 3); }
+  if (id === "unicorn") for (let i = 0; i < (boost ? 14 : 3); i++) { u.tail.getWorldPosition(hoofW); sparksS.emit(hoofW.x + rnd(-.2, .2), hoofW.y + rnd(-.3, .2), hoofW.z + rnd(-.2, .2), rnd(-.3, .3), rnd(-.1, .6), rnd(-.3, .3), FW_COLS[Math.floor(Math.random() * FW_COLS.length)], rnd(.6, 1.1), .3, 2); }
 }
 // hang a steed under an avatar (the avatar sits on the saddle); k = null takes it away
-function avatarSteed(av, k, speed, dt) {
+function avatarSteed(av, k, speed, dt, boost) {
   const u = av.userData;
   if (u.steed && (k == null || u.steedK !== k)) { u.steed.parent.remove(u.steed); u.steed = null; }
   if (k == null) return;
   if (!u.steed) { u.steed = makeSteed(k); u.steedK = k; av.add(u.steed); }
-  u.steed.position.y = -u.steed.userData.rideY;
+  u.steed.position.y = -u.steed.userData.rideY; u.steed.userData.boost = !!boost;
   animateSteed(u.steed, speed, dt, T);
   u.inner.position.y += u.steed.userData.bob || 0;
 }
