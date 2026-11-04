@@ -98,12 +98,16 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .err{color:#ffb4a2;font-size:13px;margin:-10px 0 0;min-height:1em}
 
 /* photo */
-.shot{position:fixed;inset:0;z-index:12;background:rgba(8,10,14,.72);display:grid;place-items:center;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px}
+.shot{position:fixed;inset:0;z-index:12;background:rgba(8,10,14,.72);display:grid;place-items:center;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-top:max(16px,env(safe-area-inset-top,0px));padding-bottom:max(16px,env(safe-area-inset-bottom,0px))}
 .shot-card{display:flex;flex-direction:column;gap:12px;width:min(560px,100%)}
-.shot-card img{width:100%;max-height:min(62vh,62dvh);object-fit:contain;border-radius:16px;border:1px solid var(--line);display:block;background:#0c0f14}
-.shot-actions .btn{min-height:44px}
-.shot-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;align-items:center}
-.shot-actions p{margin:0 auto 0 0;font-size:12px;color:var(--ink-soft)}
+.shot-card img{width:auto;max-width:100%;max-height:calc(100vh - 190px);max-height:calc(100dvh - 190px - env(safe-area-inset-bottom,0px));object-fit:contain;border-radius:16px;border:1px solid var(--line);display:block;margin:0 auto;background:#0c0f14;box-shadow:0 10px 40px rgba(0,0,0,.45)}
+.shot-actions{display:flex;flex-direction:column;gap:10px}
+.shot-btns{display:grid;grid-template-columns:1fr 1.5fr;gap:10px}
+@media (orientation:landscape) and (max-height:520px){.shot-card{flex-direction:row;align-items:center;width:min(900px,100%)}.shot-card img{max-height:calc(100dvh - 40px);max-width:calc(100% - 230px)}.shot-actions{width:210px;flex:none}.shot-btns{grid-template-columns:1fr}}
+.shot-btns .btn{min-height:54px;border-radius:16px;font-size:17px;font-weight:800;touch-action:manipulation}
+.shot-btns #shotClose{background:rgba(255,255,255,.94);color:#1d2228;border-color:transparent}
+.shot-btns #shotSave{background:#f2b46b;color:#2a1d0f;border-color:transparent;box-shadow:0 6px 18px rgba(242,180,107,.35)}
+.shot-actions p{margin:0;text-align:center;font-size:13px;color:#e8edf3}.shot-actions p:empty{display:none}
 .btn{border:1px solid var(--line);background:var(--glass-strong);border-radius:999px;padding:10px 18px;font-size:14px}
 .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
 @media (prefers-reduced-motion:reduce){.toast{animation:none}}
@@ -471,8 +475,10 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
     <img id="shotImg" alt="방금 찍은 한강 사진">
     <div class="shot-actions">
       <p id="shotTip"></p>
-      <button class="btn" id="shotClose">닫기</button>
-      <button class="btn primary" id="shotSave" hidden>저장</button>
+      <div class="shot-btns">
+        <button class="btn" id="shotClose">닫기</button>
+        <button class="btn primary" id="shotSave">📥 사진 저장</button>
+      </div>
     </div>
   </div>
 </div>
@@ -667,7 +673,7 @@ window.HANGANG_CONFIG = {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
-const APP_VERSION = "2026.11.04c", UPDATES = [{"v": "2026.11.04c", "date": "11월 4일", "items": ["모바일에서 사진을 찍으면 화면이 가려지던 문제를 고쳤어요. 사진 바깥을 누르면 닫혀요", "치킨 나눠 먹기: 치킨을 먹는 중에 근처 사람에게 한 조각씩 나눠 줄 수 있어요 (최대 3명, 한 번 줄 때마다 내 치킨이 20초 줄어요)", "나눠 받은 치킨을 세 입 먹으면 \"너무 맛있어~!\" 하고 얼굴을 파묻어요. 양념치킨이면 볼에 양념이 묻어요", "편의점과 치킨 배달에 양념치킨이 생겼어요", "동물 레이스: 동물마다 빠르기·가속·코너링·지구력이 달라요. 적토마는 박자를 5번 맞추면 🔥불꽃 질주, 유니콘은 바퀴마다 🌈무지개 질주를 해요"]}, {"v": "2026.11.04b", "date": "11월 4일", "items": ["두 번째 대교 동쪽에 '한강 동물 레이스' 서킷이 생겼어요. 헤어핀·S자·시케인이 있는 코스를 3바퀴 돌아요 (2~4명, 판돈 500~2,000원)", "출발하면 동물 11종 중 하나가 랜덤으로 공짜 배정돼요. 얼룩말·적토마는 가끔, 유니콘은 아주 드물게 나와요. 빠르기는 모두 같아요", "Space·W(모바일은 🥕 버튼)를 박자 맞춰 누르면 달려요. 너무 급하게 누르면 지쳐요. 코너 안쪽이 더 빨라요", "돈이 1,000원 아래로 떨어지면 감정 표현에 '용돈 구걸'이 생겨요. 근처 사람이 500~2,000원을 깡통에 넣어 줄 수 있어요 (주기 하루 3,000원, 받기 하루 5,000원까지)"]}, {"v": "2026.11.04", "date": "11월 4일", "items": ["새 춤 3가지: 공중 미끄럼 걸음, 엄지 흔들기 응원, 손 탑 쌓기 (말하기 → 춤추기)", "엄지 흔들기 응원과 손 탑 쌓기는 앉아서도 출 수 있어요", "달리기 경주 출발 카운트를 3·2·1로 맞췄어요"]}, {"v": "2026.11.03g", "date": "11월 3일", "items": ["치킨이 훨씬 커졌어요. 앉아서 먹으면 앞에 치킨 상자를 놓고 닭다리를 들고 먹어요", "치킨은 2분 동안 천천히 먹어요. 먹는 중에도 짠이나 감정 표현을 할 수 있어요", "김은 라면과 치킨에서만 모락모락 나요"]}, {"v": "2026.11.03f", "date": "11월 3일", "items": ["낚시 대결을 최대 4명까지 함께할 수 있어요. 낚시 창에서 실시간 순위를 볼 수 있어요"]}, {"v": "2026.11.03e", "date": "11월 3일", "items": ["아주 드물게 유리병 편지·지갑·금반지·보물상자·아기 고래가 낚여요. 누가 낚으면 모두에게 알려 줘요", "지갑은 주인에게 돌려주면 사례금을 받아요. 돈을 주는 보물은 하루 한 번씩만 보상이 있어요", "낚싯대를 빌린 채로 달리기·자전거·먹기 같은 다른 활동도 할 수 있어요. 안 쓸 때는 등에 메고 다녀요"]}, {"v": "2026.11.03d", "date": "11월 3일", "items": ["낚싯대를 휘둘러 던질 때마다 찌가 날아가는 거리·방향·높이가 조금씩 달라요", "찌가 떨어진 자리에 물결이 퍼지고, 낚은 물고기는 낚싯줄 끝에 매달려 올라와요"]}, {"v": "2026.11.03c", "date": "11월 3일", "items": ["낚시 손맛이 바뀌었어요: 입질이 오면 바늘이 초록 칸에 왔을 때 눌러서 2번 맞추면 낚여요", "대교 난간에 기대어 강바람을 쐬고, 다이빙도 할 수 있어요", "낚시 데크에서 1:1 낚시 대결(3분 점수전, 이긴 사람 80%)을 열 수 있어요", "오리배 경주가 생겼어요: 2~3팀이 빨간 깃발 부표를 돌아와요. 둘이 A·D로 같이 페달을 밟을수록 빨라요"]}, {"v": "2026.11.03b", "date": "11월 3일", "items": ["공원 서쪽 끝에 '한강 달리기 대회' 트랙이 생겼어요. 2~4명이 판돈(500~2,000원)을 걸고 달려요", "A(왼발)·D(오른발)를 번갈아 눌러 달려요. 같은 발을 두 번 누르면 휘청! 휴대폰은 화면 버튼으로 달려요", "1등이 가장 많이 가져가고, 꼴찌도 조금은 돌려받아요"]}, {"v": "2026.11.03", "date": "11월 3일", "items": ["편의점 냉장고에서 한강소주·캔맥주·생맥주 잔을 팔아요 (19세 이상)", "냉장고 옆 셀프 생맥주 기계에서 맥주와 거품을 7:3으로 맞춰 따라 보세요", "한두 잔 마시면 볼이 살짝 빨개져요", "낚시 데크와 낚싯대 대여함(30분 1,000원)이 생겼어요. 9가지를 낚고 방생하면 용돈을 받아요 (하루 4,000원까지)", "잡은 물고기는 '내 낚시 도감'에 기록돼요"]}, {"v": "2026.11.02i", "date": "11월 2일", "items": ["스파클러 불꽃이 더 크고 화려해졌어요", "분수 폭죽과 연발 폭죽이 하늘 높이 올라가요", "화면을 아래로 끌면 하늘을 올려다볼 수 있어요"]}, {"v": "2026.11.02h", "date": "11월 2일", "items": ["강가에 '한강 불꽃 가게'가 생겼어요. 밤 8시~10시에만 열어요", "스파클러(500원)는 손에 들고, 분수 폭죽(1,500원)과 연발 폭죽(3,000원)은 잔디에 놓고 즐겨요", "불붙은 스파클러를 든 사람 곁에서 불을 옮겨 받을 수 있어요", "카메라 버튼에서 혼자·둘이·단체 포즈를 골라 앞에서 사진을 찍어요. 같이 찍은 사람도 사진을 받아요"]}];
+const APP_VERSION = "2026.11.04c", UPDATES = [{"v": "2026.11.04c", "date": "11월 4일", "items": ["모바일 사진 화면을 세로 화면에 맞게 다시 만들었어요. 큰 '닫기'·'📥 사진 저장' 버튼이 항상 보이고, 사진 바깥을 눌러도 닫혀요", "휴대폰에서 '사진 저장'을 누르고 '이미지 저장'을 고르면 사진 앱에 바로 들어가요", "치킨 나눠 먹기: 치킨을 먹는 중에 근처 사람에게 한 조각씩 나눠 줄 수 있어요 (최대 3명, 한 번 줄 때마다 내 치킨이 20초 줄어요)", "나눠 받은 치킨을 세 입 먹으면 \"너무 맛있어~!\" 하고 얼굴을 파묻어요. 양념치킨이면 볼에 양념이 묻어요", "편의점과 치킨 배달에 양념치킨이 생겼어요", "동물 레이스: 동물마다 빠르기·가속·코너링·지구력이 달라요. 적토마는 박자를 5번 맞추면 🔥불꽃 질주, 유니콘은 바퀴마다 🌈무지개 질주를 해요"]}, {"v": "2026.11.04b", "date": "11월 4일", "items": ["두 번째 대교 동쪽에 '한강 동물 레이스' 서킷이 생겼어요. 헤어핀·S자·시케인이 있는 코스를 3바퀴 돌아요 (2~4명, 판돈 500~2,000원)", "출발하면 동물 11종 중 하나가 랜덤으로 공짜 배정돼요. 얼룩말·적토마는 가끔, 유니콘은 아주 드물게 나와요. 빠르기는 모두 같아요", "Space·W(모바일은 🥕 버튼)를 박자 맞춰 누르면 달려요. 너무 급하게 누르면 지쳐요. 코너 안쪽이 더 빨라요", "돈이 1,000원 아래로 떨어지면 감정 표현에 '용돈 구걸'이 생겨요. 근처 사람이 500~2,000원을 깡통에 넣어 줄 수 있어요 (주기 하루 3,000원, 받기 하루 5,000원까지)"]}, {"v": "2026.11.04", "date": "11월 4일", "items": ["새 춤 3가지: 공중 미끄럼 걸음, 엄지 흔들기 응원, 손 탑 쌓기 (말하기 → 춤추기)", "엄지 흔들기 응원과 손 탑 쌓기는 앉아서도 출 수 있어요", "달리기 경주 출발 카운트를 3·2·1로 맞췄어요"]}, {"v": "2026.11.03g", "date": "11월 3일", "items": ["치킨이 훨씬 커졌어요. 앉아서 먹으면 앞에 치킨 상자를 놓고 닭다리를 들고 먹어요", "치킨은 2분 동안 천천히 먹어요. 먹는 중에도 짠이나 감정 표현을 할 수 있어요", "김은 라면과 치킨에서만 모락모락 나요"]}, {"v": "2026.11.03f", "date": "11월 3일", "items": ["낚시 대결을 최대 4명까지 함께할 수 있어요. 낚시 창에서 실시간 순위를 볼 수 있어요"]}, {"v": "2026.11.03e", "date": "11월 3일", "items": ["아주 드물게 유리병 편지·지갑·금반지·보물상자·아기 고래가 낚여요. 누가 낚으면 모두에게 알려 줘요", "지갑은 주인에게 돌려주면 사례금을 받아요. 돈을 주는 보물은 하루 한 번씩만 보상이 있어요", "낚싯대를 빌린 채로 달리기·자전거·먹기 같은 다른 활동도 할 수 있어요. 안 쓸 때는 등에 메고 다녀요"]}, {"v": "2026.11.03d", "date": "11월 3일", "items": ["낚싯대를 휘둘러 던질 때마다 찌가 날아가는 거리·방향·높이가 조금씩 달라요", "찌가 떨어진 자리에 물결이 퍼지고, 낚은 물고기는 낚싯줄 끝에 매달려 올라와요"]}, {"v": "2026.11.03c", "date": "11월 3일", "items": ["낚시 손맛이 바뀌었어요: 입질이 오면 바늘이 초록 칸에 왔을 때 눌러서 2번 맞추면 낚여요", "대교 난간에 기대어 강바람을 쐬고, 다이빙도 할 수 있어요", "낚시 데크에서 1:1 낚시 대결(3분 점수전, 이긴 사람 80%)을 열 수 있어요", "오리배 경주가 생겼어요: 2~3팀이 빨간 깃발 부표를 돌아와요. 둘이 A·D로 같이 페달을 밟을수록 빨라요"]}, {"v": "2026.11.03b", "date": "11월 3일", "items": ["공원 서쪽 끝에 '한강 달리기 대회' 트랙이 생겼어요. 2~4명이 판돈(500~2,000원)을 걸고 달려요", "A(왼발)·D(오른발)를 번갈아 눌러 달려요. 같은 발을 두 번 누르면 휘청! 휴대폰은 화면 버튼으로 달려요", "1등이 가장 많이 가져가고, 꼴찌도 조금은 돌려받아요"]}, {"v": "2026.11.03", "date": "11월 3일", "items": ["편의점 냉장고에서 한강소주·캔맥주·생맥주 잔을 팔아요 (19세 이상)", "냉장고 옆 셀프 생맥주 기계에서 맥주와 거품을 7:3으로 맞춰 따라 보세요", "한두 잔 마시면 볼이 살짝 빨개져요", "낚시 데크와 낚싯대 대여함(30분 1,000원)이 생겼어요. 9가지를 낚고 방생하면 용돈을 받아요 (하루 4,000원까지)", "잡은 물고기는 '내 낚시 도감'에 기록돼요"]}, {"v": "2026.11.02i", "date": "11월 2일", "items": ["스파클러 불꽃이 더 크고 화려해졌어요", "분수 폭죽과 연발 폭죽이 하늘 높이 올라가요", "화면을 아래로 끌면 하늘을 올려다볼 수 있어요"]}, {"v": "2026.11.02h", "date": "11월 2일", "items": ["강가에 '한강 불꽃 가게'가 생겼어요. 밤 8시~10시에만 열어요", "스파클러(500원)는 손에 들고, 분수 폭죽(1,500원)과 연발 폭죽(3,000원)은 잔디에 놓고 즐겨요", "불붙은 스파클러를 든 사람 곁에서 불을 옮겨 받을 수 있어요", "카메라 버튼에서 혼자·둘이·단체 포즈를 골라 앞에서 사진을 찍어요. 같이 찍은 사람도 사진을 받아요"]}];
 "use strict";
 const $ = id => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -2887,16 +2893,27 @@ function snapNow() {
 function deliverShot(c) {
   c.toBlob(b => {
     if (!b) return; shotBlob = b; const img = $("shotImg"); if (img.src) URL.revokeObjectURL(img.src); img.src = URL.createObjectURL(b);
-    $("shotSave").hidden = !downloads; $("shotTip").textContent = !downloads ? "이미지를 길게 누르거나 우클릭해서 저장할 수 있습니다." : touchy && navigator.canShare ? "저장을 누른 뒤 '이미지 저장'을 고르면 사진 앱에 들어가요" : "";
+    $("shotTip").textContent = touchy ? "'사진 저장'을 누르고 '이미지 저장'을 고르면 사진 앱에 들어가요" : "";
     $("shot").hidden = false;
   }, "image/png");
 }
 $("shotClose").addEventListener("click", () => { $("shot").hidden = true; });
 $("shot").addEventListener("click", e => { if (e.target === $("shot")) $("shot").hidden = true; }); // tap outside the photo to close
 $("shotSave").addEventListener("click", async () => {
-  if (!downloads || !shotBlob) return; const k = kst(), pad = n => String(n).padStart(2, "0");
-  try { await downloads.save({ filename: `hangang-${k.getFullYear()}${pad(k.getMonth() + 1)}${pad(k.getDate())}-${pad(k.getHours())}${pad(k.getMinutes())}.png`, data: shotBlob }); toast("사진을 저장했습니다"); $("shot").hidden = true; }
-  catch (e) { if (e && e.code !== "declined" && e.code !== "cancelled") $("shotTip").textContent = "저장하지 못했습니다. 이미지를 길게 눌러 저장해 주세요."; }
+  if (!shotBlob) return; const k = kst(), pad = n => String(n).padStart(2, "0");
+  const filename = `hangang-${k.getFullYear()}${pad(k.getMonth() + 1)}${pad(k.getDate())}-${pad(k.getHours())}${pad(k.getMinutes())}.png`;
+  try {
+    if (downloads) { await downloads.save({ filename, data: shotBlob }); toast("사진을 저장했습니다"); $("shot").hidden = true; return; }
+    // phones: the share sheet has '이미지 저장' (straight into the photo app)
+    const file = typeof File === "function" ? new File([shotBlob], filename, { type: "image/png" }) : null;
+    if (touchy && file && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: "한강 돗자리" }); return; }
+    // computers: a normal download
+    const a = document.createElement("a"); a.href = URL.createObjectURL(shotBlob); a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000); toast("사진을 저장했습니다");
+  } catch (e) {
+    if (e && (e.name === "AbortError" || e.code === "declined" || e.code === "cancelled")) return;
+    $("shotTip").textContent = "저장하지 못했어요. 사진을 길게 눌러 저장해 주세요.";
+  }
 });
 
 /* ================= 업데이트 공지 · 새 버전 안내 ================= */

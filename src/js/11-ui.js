@@ -83,15 +83,26 @@ function snapNow() {
 function deliverShot(c) {
   c.toBlob(b => {
     if (!b) return; shotBlob = b; const img = $("shotImg"); if (img.src) URL.revokeObjectURL(img.src); img.src = URL.createObjectURL(b);
-    $("shotSave").hidden = !downloads; $("shotTip").textContent = !downloads ? "이미지를 길게 누르거나 우클릭해서 저장할 수 있습니다." : touchy && navigator.canShare ? "저장을 누른 뒤 '이미지 저장'을 고르면 사진 앱에 들어가요" : "";
+    $("shotTip").textContent = touchy ? "'사진 저장'을 누르고 '이미지 저장'을 고르면 사진 앱에 들어가요" : "";
     $("shot").hidden = false;
   }, "image/png");
 }
 $("shotClose").addEventListener("click", () => { $("shot").hidden = true; });
 $("shot").addEventListener("click", e => { if (e.target === $("shot")) $("shot").hidden = true; }); // tap outside the photo to close
 $("shotSave").addEventListener("click", async () => {
-  if (!downloads || !shotBlob) return; const k = kst(), pad = n => String(n).padStart(2, "0");
-  try { await downloads.save({ filename: `hangang-${k.getFullYear()}${pad(k.getMonth() + 1)}${pad(k.getDate())}-${pad(k.getHours())}${pad(k.getMinutes())}.png`, data: shotBlob }); toast("사진을 저장했습니다"); $("shot").hidden = true; }
-  catch (e) { if (e && e.code !== "declined" && e.code !== "cancelled") $("shotTip").textContent = "저장하지 못했습니다. 이미지를 길게 눌러 저장해 주세요."; }
+  if (!shotBlob) return; const k = kst(), pad = n => String(n).padStart(2, "0");
+  const filename = `hangang-${k.getFullYear()}${pad(k.getMonth() + 1)}${pad(k.getDate())}-${pad(k.getHours())}${pad(k.getMinutes())}.png`;
+  try {
+    if (downloads) { await downloads.save({ filename, data: shotBlob }); toast("사진을 저장했습니다"); $("shot").hidden = true; return; }
+    // phones: the share sheet has '이미지 저장' (straight into the photo app)
+    const file = typeof File === "function" ? new File([shotBlob], filename, { type: "image/png" }) : null;
+    if (touchy && file && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: "한강 돗자리" }); return; }
+    // computers: a normal download
+    const a = document.createElement("a"); a.href = URL.createObjectURL(shotBlob); a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000); toast("사진을 저장했습니다");
+  } catch (e) {
+    if (e && (e.name === "AbortError" || e.code === "declined" || e.code === "cancelled")) return;
+    $("shotTip").textContent = "저장하지 못했어요. 사진을 길게 눌러 저장해 주세요.";
+  }
 });
 
