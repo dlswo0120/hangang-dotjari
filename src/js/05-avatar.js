@@ -227,6 +227,12 @@ function updateAvatar(av, dt, t, o = {}) {
   if (smear && !u.smear) { u.smear = new THREE.Group(); [[.2, -.19, -.37, .07, .045], [-.1, -.25, -.39, .05, .03], [.05, -.27, -.39, .035, .025]].forEach(([x, y, z, sx, sy]) => { const m = new THREE.Mesh(G_SPH_S, SAUCE_M); m.position.set(x, y, z); m.scale.set(sx, sy, .02); u.smear.add(m); }); u.head.add(u.smear); }
   if (u.smear) u.smear.visible = smear;
   v.roll = u.eatRoll || 0; u.eatRoll = 0; v.glz = 0;
+  if (o.jump >= 0) { // knees tucked up, arms flung out
+    const s = Math.sin(Math.PI * o.jump), tuck = o.jump < .15 ? -o.jump / .15 : s; // a quick crouch to push off
+    v.knL -= .95 * Math.max(0, tuck); v.knR -= .95 * Math.max(0, tuck); v.thL += .55 * Math.max(0, tuck); v.thR += .45 * Math.max(0, tuck);
+    v.azL += 1.1 * s; v.azR += 1.1 * s; v.arL -= .2 * s; v.arR -= .2 * s; v.nod -= .12 * s;
+    if (tuck < 0) { v.hipY += tuck * .08; v.knL += tuck * .5; v.knR += tuck * .5; v.thL -= tuck * .3; v.thR -= tuck * .3; }
+  }
   if (o.rod && o.fs) rodPose(v, o.fs);
   if (o.emote) emotePose(v, o.emote.i, o.emote.t, u.pose === "stand", u, o.emote.s); else if (u.vR) u.vR.visible = false;
   u.torso.scale.y = 1 + Math.sin(ph * 2.1) * .012;

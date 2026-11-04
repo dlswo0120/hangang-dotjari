@@ -143,6 +143,10 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .modal-btns .paper-go{background:#f2b46b;color:#2a1d0f}
 body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mung #keys,body.mung #bagBtn{opacity:0!important;pointer-events:none!important;transition:opacity 1.6s}
 #hudLeft,#hudRight,#actions,#joy,#keys,#bagBtn{transition:opacity .4s}
+.jump-btn{position:fixed;z-index:6;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));width:64px;height:64px;border-radius:50%;border:1px solid var(--line);background:rgba(244,239,230,.9);color:#1d2228;font-size:22px;font-weight:800;line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;box-shadow:0 4px 14px rgba(0,0,0,.3);touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.jump-btn span{font-size:11px}.jump-btn:active{transform:scale(.92)}.jump-btn[hidden]{display:none}
+body.touchy .actions{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+body.mung #jumpBtn{opacity:0!important;pointer-events:none!important}
 .mung-hint{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:6;padding:9px 16px;border-radius:999px;background:rgba(10,14,20,.45);color:rgba(255,255,255,.85);font-size:13px;pointer-events:none;white-space:nowrap;opacity:0}
 .mung-hint.show{animation:mungHint 6s ease forwards}
 @keyframes mungHint{0%{opacity:0}12%{opacity:1}70%{opacity:1}100%{opacity:0}}

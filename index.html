@@ -155,6 +155,10 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .modal-btns .paper-go{background:#f2b46b;color:#2a1d0f}
 body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mung #keys,body.mung #bagBtn{opacity:0!important;pointer-events:none!important;transition:opacity 1.6s}
 #hudLeft,#hudRight,#actions,#joy,#keys,#bagBtn{transition:opacity .4s}
+.jump-btn{position:fixed;z-index:6;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));width:64px;height:64px;border-radius:50%;border:1px solid var(--line);background:rgba(244,239,230,.9);color:#1d2228;font-size:22px;font-weight:800;line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;box-shadow:0 4px 14px rgba(0,0,0,.3);touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.jump-btn span{font-size:11px}.jump-btn:active{transform:scale(.92)}.jump-btn[hidden]{display:none}
+body.touchy .actions{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+body.mung #jumpBtn{opacity:0!important;pointer-events:none!important}
 .mung-hint{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:6;padding:9px 16px;border-radius:999px;background:rgba(10,14,20,.45);color:rgba(255,255,255,.85);font-size:13px;pointer-events:none;white-space:nowrap;opacity:0}
 .mung-hint.show{animation:mungHint 6s ease forwards}
 @keyframes mungHint{0%{opacity:0}12%{opacity:1}70%{opacity:1}100%{opacity:0}}
@@ -292,7 +296,8 @@ body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mu
 </div>
 
 <div class="joy" id="joy" hidden aria-label="이동 패드"><div class="joy-knob" id="knob"></div></div>
-<div class="pill keys" id="keys" hidden><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동</span><span><kbd>Shift</kbd> 달리기</span><span><kbd>1</kbd>~<kbd>6</kbd> 말하기</span><span>드래그로 둘러보기</span></div>
+<button class="jump-btn" id="jumpBtn" hidden aria-label="점프">⤴<span>점프</span></button>
+<div class="pill keys" id="keys" hidden><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동</span><span><kbd>Shift</kbd> 달리기</span><span><kbd>Space</kbd> 점프</span><span><kbd>1</kbd>~<kbd>6</kbd> 말하기</span><span>드래그로 둘러보기</span></div>
 <div class="actions" id="actions" hidden>
   <div class="pill status ramen" id="ramenChip" hidden></div>
   <div class="pill status" id="status" hidden></div>
@@ -673,7 +678,7 @@ window.HANGANG_CONFIG = {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
-const APP_VERSION = "2026.11.04c", UPDATES = [{"v": "2026.11.04c", "date": "11월 4일", "items": ["모바일 사진 화면을 세로 화면에 맞게 다시 만들었어요. 큰 '닫기'·'📥 사진 저장' 버튼이 항상 보이고, 사진 바깥을 눌러도 닫혀요", "휴대폰에서 '사진 저장'을 누르고 '이미지 저장'을 고르면 사진 앱에 바로 들어가요", "치킨 나눠 먹기: 치킨을 먹는 중에 근처 사람에게 한 조각씩 나눠 줄 수 있어요 (최대 3명, 한 번 줄 때마다 내 치킨이 20초 줄어요)", "나눠 받은 치킨을 세 입 먹으면 \"너무 맛있어~!\" 하고 얼굴을 파묻어요. 양념치킨이면 볼에 양념이 묻어요", "편의점과 치킨 배달에 양념치킨이 생겼어요", "동물 레이스: 동물마다 빠르기·가속·코너링·지구력이 달라요. 적토마는 박자를 5번 맞추면 🔥불꽃 질주, 유니콘은 바퀴마다 🌈무지개 질주를 해요"]}, {"v": "2026.11.04b", "date": "11월 4일", "items": ["두 번째 대교 동쪽에 '한강 동물 레이스' 서킷이 생겼어요. 헤어핀·S자·시케인이 있는 코스를 3바퀴 돌아요 (2~4명, 판돈 500~2,000원)", "출발하면 동물 11종 중 하나가 랜덤으로 공짜 배정돼요. 얼룩말·적토마는 가끔, 유니콘은 아주 드물게 나와요. 빠르기는 모두 같아요", "Space·W(모바일은 🥕 버튼)를 박자 맞춰 누르면 달려요. 너무 급하게 누르면 지쳐요. 코너 안쪽이 더 빨라요", "돈이 1,000원 아래로 떨어지면 감정 표현에 '용돈 구걸'이 생겨요. 근처 사람이 500~2,000원을 깡통에 넣어 줄 수 있어요 (주기 하루 3,000원, 받기 하루 5,000원까지)"]}, {"v": "2026.11.04", "date": "11월 4일", "items": ["새 춤 3가지: 공중 미끄럼 걸음, 엄지 흔들기 응원, 손 탑 쌓기 (말하기 → 춤추기)", "엄지 흔들기 응원과 손 탑 쌓기는 앉아서도 출 수 있어요", "달리기 경주 출발 카운트를 3·2·1로 맞췄어요"]}, {"v": "2026.11.03g", "date": "11월 3일", "items": ["치킨이 훨씬 커졌어요. 앉아서 먹으면 앞에 치킨 상자를 놓고 닭다리를 들고 먹어요", "치킨은 2분 동안 천천히 먹어요. 먹는 중에도 짠이나 감정 표현을 할 수 있어요", "김은 라면과 치킨에서만 모락모락 나요"]}, {"v": "2026.11.03f", "date": "11월 3일", "items": ["낚시 대결을 최대 4명까지 함께할 수 있어요. 낚시 창에서 실시간 순위를 볼 수 있어요"]}, {"v": "2026.11.03e", "date": "11월 3일", "items": ["아주 드물게 유리병 편지·지갑·금반지·보물상자·아기 고래가 낚여요. 누가 낚으면 모두에게 알려 줘요", "지갑은 주인에게 돌려주면 사례금을 받아요. 돈을 주는 보물은 하루 한 번씩만 보상이 있어요", "낚싯대를 빌린 채로 달리기·자전거·먹기 같은 다른 활동도 할 수 있어요. 안 쓸 때는 등에 메고 다녀요"]}, {"v": "2026.11.03d", "date": "11월 3일", "items": ["낚싯대를 휘둘러 던질 때마다 찌가 날아가는 거리·방향·높이가 조금씩 달라요", "찌가 떨어진 자리에 물결이 퍼지고, 낚은 물고기는 낚싯줄 끝에 매달려 올라와요"]}, {"v": "2026.11.03c", "date": "11월 3일", "items": ["낚시 손맛이 바뀌었어요: 입질이 오면 바늘이 초록 칸에 왔을 때 눌러서 2번 맞추면 낚여요", "대교 난간에 기대어 강바람을 쐬고, 다이빙도 할 수 있어요", "낚시 데크에서 1:1 낚시 대결(3분 점수전, 이긴 사람 80%)을 열 수 있어요", "오리배 경주가 생겼어요: 2~3팀이 빨간 깃발 부표를 돌아와요. 둘이 A·D로 같이 페달을 밟을수록 빨라요"]}, {"v": "2026.11.03b", "date": "11월 3일", "items": ["공원 서쪽 끝에 '한강 달리기 대회' 트랙이 생겼어요. 2~4명이 판돈(500~2,000원)을 걸고 달려요", "A(왼발)·D(오른발)를 번갈아 눌러 달려요. 같은 발을 두 번 누르면 휘청! 휴대폰은 화면 버튼으로 달려요", "1등이 가장 많이 가져가고, 꼴찌도 조금은 돌려받아요"]}, {"v": "2026.11.03", "date": "11월 3일", "items": ["편의점 냉장고에서 한강소주·캔맥주·생맥주 잔을 팔아요 (19세 이상)", "냉장고 옆 셀프 생맥주 기계에서 맥주와 거품을 7:3으로 맞춰 따라 보세요", "한두 잔 마시면 볼이 살짝 빨개져요", "낚시 데크와 낚싯대 대여함(30분 1,000원)이 생겼어요. 9가지를 낚고 방생하면 용돈을 받아요 (하루 4,000원까지)", "잡은 물고기는 '내 낚시 도감'에 기록돼요"]}, {"v": "2026.11.02i", "date": "11월 2일", "items": ["스파클러 불꽃이 더 크고 화려해졌어요", "분수 폭죽과 연발 폭죽이 하늘 높이 올라가요", "화면을 아래로 끌면 하늘을 올려다볼 수 있어요"]}, {"v": "2026.11.02h", "date": "11월 2일", "items": ["강가에 '한강 불꽃 가게'가 생겼어요. 밤 8시~10시에만 열어요", "스파클러(500원)는 손에 들고, 분수 폭죽(1,500원)과 연발 폭죽(3,000원)은 잔디에 놓고 즐겨요", "불붙은 스파클러를 든 사람 곁에서 불을 옮겨 받을 수 있어요", "카메라 버튼에서 혼자·둘이·단체 포즈를 골라 앞에서 사진을 찍어요. 같이 찍은 사람도 사진을 받아요"]}];
+const APP_VERSION = "2026.11.04d", UPDATES = [{"v": "2026.11.04d", "date": "11월 4일", "items": ["점프가 생겼어요! PC는 Space, 모바일은 오른쪽 아래 '⤴ 점프' 버튼을 눌러요", "대교 난간 옆에서 점프해도 떨어지지 않아요 (뛰어내리고 싶으면 난간에 기대서 다이빙!)"]}, {"v": "2026.11.04c", "date": "11월 4일", "items": ["모바일 사진 화면을 세로 화면에 맞게 다시 만들었어요. 큰 '닫기'·'📥 사진 저장' 버튼이 항상 보이고, 사진 바깥을 눌러도 닫혀요", "휴대폰에서 '사진 저장'을 누르고 '이미지 저장'을 고르면 사진 앱에 바로 들어가요", "치킨 나눠 먹기: 치킨을 먹는 중에 근처 사람에게 한 조각씩 나눠 줄 수 있어요 (최대 3명, 한 번 줄 때마다 내 치킨이 20초 줄어요)", "나눠 받은 치킨을 세 입 먹으면 \"너무 맛있어~!\" 하고 얼굴을 파묻어요. 양념치킨이면 볼에 양념이 묻어요", "편의점과 치킨 배달에 양념치킨이 생겼어요", "동물 레이스: 동물마다 빠르기·가속·코너링·지구력이 달라요. 적토마는 박자를 5번 맞추면 🔥불꽃 질주, 유니콘은 바퀴마다 🌈무지개 질주를 해요"]}, {"v": "2026.11.04b", "date": "11월 4일", "items": ["두 번째 대교 동쪽에 '한강 동물 레이스' 서킷이 생겼어요. 헤어핀·S자·시케인이 있는 코스를 3바퀴 돌아요 (2~4명, 판돈 500~2,000원)", "출발하면 동물 11종 중 하나가 랜덤으로 공짜 배정돼요. 얼룩말·적토마는 가끔, 유니콘은 아주 드물게 나와요. 빠르기는 모두 같아요", "Space·W(모바일은 🥕 버튼)를 박자 맞춰 누르면 달려요. 너무 급하게 누르면 지쳐요. 코너 안쪽이 더 빨라요", "돈이 1,000원 아래로 떨어지면 감정 표현에 '용돈 구걸'이 생겨요. 근처 사람이 500~2,000원을 깡통에 넣어 줄 수 있어요 (주기 하루 3,000원, 받기 하루 5,000원까지)"]}, {"v": "2026.11.04", "date": "11월 4일", "items": ["새 춤 3가지: 공중 미끄럼 걸음, 엄지 흔들기 응원, 손 탑 쌓기 (말하기 → 춤추기)", "엄지 흔들기 응원과 손 탑 쌓기는 앉아서도 출 수 있어요", "달리기 경주 출발 카운트를 3·2·1로 맞췄어요"]}, {"v": "2026.11.03g", "date": "11월 3일", "items": ["치킨이 훨씬 커졌어요. 앉아서 먹으면 앞에 치킨 상자를 놓고 닭다리를 들고 먹어요", "치킨은 2분 동안 천천히 먹어요. 먹는 중에도 짠이나 감정 표현을 할 수 있어요", "김은 라면과 치킨에서만 모락모락 나요"]}, {"v": "2026.11.03f", "date": "11월 3일", "items": ["낚시 대결을 최대 4명까지 함께할 수 있어요. 낚시 창에서 실시간 순위를 볼 수 있어요"]}, {"v": "2026.11.03e", "date": "11월 3일", "items": ["아주 드물게 유리병 편지·지갑·금반지·보물상자·아기 고래가 낚여요. 누가 낚으면 모두에게 알려 줘요", "지갑은 주인에게 돌려주면 사례금을 받아요. 돈을 주는 보물은 하루 한 번씩만 보상이 있어요", "낚싯대를 빌린 채로 달리기·자전거·먹기 같은 다른 활동도 할 수 있어요. 안 쓸 때는 등에 메고 다녀요"]}, {"v": "2026.11.03d", "date": "11월 3일", "items": ["낚싯대를 휘둘러 던질 때마다 찌가 날아가는 거리·방향·높이가 조금씩 달라요", "찌가 떨어진 자리에 물결이 퍼지고, 낚은 물고기는 낚싯줄 끝에 매달려 올라와요"]}, {"v": "2026.11.03c", "date": "11월 3일", "items": ["낚시 손맛이 바뀌었어요: 입질이 오면 바늘이 초록 칸에 왔을 때 눌러서 2번 맞추면 낚여요", "대교 난간에 기대어 강바람을 쐬고, 다이빙도 할 수 있어요", "낚시 데크에서 1:1 낚시 대결(3분 점수전, 이긴 사람 80%)을 열 수 있어요", "오리배 경주가 생겼어요: 2~3팀이 빨간 깃발 부표를 돌아와요. 둘이 A·D로 같이 페달을 밟을수록 빨라요"]}, {"v": "2026.11.03b", "date": "11월 3일", "items": ["공원 서쪽 끝에 '한강 달리기 대회' 트랙이 생겼어요. 2~4명이 판돈(500~2,000원)을 걸고 달려요", "A(왼발)·D(오른발)를 번갈아 눌러 달려요. 같은 발을 두 번 누르면 휘청! 휴대폰은 화면 버튼으로 달려요", "1등이 가장 많이 가져가고, 꼴찌도 조금은 돌려받아요"]}, {"v": "2026.11.03", "date": "11월 3일", "items": ["편의점 냉장고에서 한강소주·캔맥주·생맥주 잔을 팔아요 (19세 이상)", "냉장고 옆 셀프 생맥주 기계에서 맥주와 거품을 7:3으로 맞춰 따라 보세요", "한두 잔 마시면 볼이 살짝 빨개져요", "낚시 데크와 낚싯대 대여함(30분 1,000원)이 생겼어요. 9가지를 낚고 방생하면 용돈을 받아요 (하루 4,000원까지)", "잡은 물고기는 '내 낚시 도감'에 기록돼요"]}, {"v": "2026.11.02i", "date": "11월 2일", "items": ["스파클러 불꽃이 더 크고 화려해졌어요", "분수 폭죽과 연발 폭죽이 하늘 높이 올라가요", "화면을 아래로 끌면 하늘을 올려다볼 수 있어요"]}];
 "use strict";
 const $ = id => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -1447,6 +1452,12 @@ function updateAvatar(av, dt, t, o = {}) {
   if (smear && !u.smear) { u.smear = new THREE.Group(); [[.2, -.19, -.37, .07, .045], [-.1, -.25, -.39, .05, .03], [.05, -.27, -.39, .035, .025]].forEach(([x, y, z, sx, sy]) => { const m = new THREE.Mesh(G_SPH_S, SAUCE_M); m.position.set(x, y, z); m.scale.set(sx, sy, .02); u.smear.add(m); }); u.head.add(u.smear); }
   if (u.smear) u.smear.visible = smear;
   v.roll = u.eatRoll || 0; u.eatRoll = 0; v.glz = 0;
+  if (o.jump >= 0) { // knees tucked up, arms flung out
+    const s = Math.sin(Math.PI * o.jump), tuck = o.jump < .15 ? -o.jump / .15 : s; // a quick crouch to push off
+    v.knL -= .95 * Math.max(0, tuck); v.knR -= .95 * Math.max(0, tuck); v.thL += .55 * Math.max(0, tuck); v.thR += .45 * Math.max(0, tuck);
+    v.azL += 1.1 * s; v.azR += 1.1 * s; v.arL -= .2 * s; v.arR -= .2 * s; v.nod -= .12 * s;
+    if (tuck < 0) { v.hipY += tuck * .08; v.knL += tuck * .5; v.knR += tuck * .5; v.thL -= tuck * .3; v.thR -= tuck * .3; }
+  }
   if (o.rod && o.fs) rodPose(v, o.fs);
   if (o.emote) emotePose(v, o.emote.i, o.emote.t, u.pose === "stand", u, o.emote.s); else if (u.vR) u.vR.visible = false;
   u.torso.scale.y = 1 + Math.sin(ph * 2.1) * .012;
@@ -2270,7 +2281,7 @@ function cleanPresence(p) {
   if (p.gv && typeof p.gv === "object" && typeof p.gv.to === "string" && typeof p.gv.id === "number" && RACE_BETS.includes(p.gv.a)) o.gv = { to: p.gv.to.slice(0, 80), id: p.gv.id, a: p.gv.a };
   o.gr = num(p.gr, 0, RECV_DAY_MAX, 0);
   if (p.sh && typeof p.sh === "object" && typeof p.sh.to === "string" && typeof p.sh.id === "number" && (p.sh.k === "chkshare" || p.sh.k === "chkshareY")) o.sh = { to: p.sh.to.slice(0, 80), id: p.sh.id, k: p.sh.k };
-  o.sa = num(p.sa, 0, 1e15, 0);
+  o.sa = num(p.sa, 0, 1e15, 0); o.jp = num(p.jp, 0, 1e15, 0);
   if (p.ac && typeof p.ac === "object" && typeof p.ac.id === "number" && RACE_BETS.includes(p.ac.bet)) o.ac = { id: p.ac.id, bet: p.ac.bet, st: p.ac.st === "go" ? "go" : "open", go: num(p.ac.go, 0, 1e15, 0) };
   if (p.aj && typeof p.aj === "object" && typeof p.aj.h === "string" && typeof p.aj.id === "number") o.aj = { h: p.aj.h.slice(0, 80), id: p.aj.id, at: num(p.aj.at, 0, 1e15, 0) };
   if (p.ap && typeof p.ap === "object" && typeof p.ap.id === "number") o.ap = { id: p.ap.id, s: num(p.ap.s, -20, 2000, 0), f: num(p.ap.f, 0, 600000, 0), k: Number.isInteger(p.ap.k) ? clamp(p.ap.k, 0, STEEDS.length - 1) : 1, b: p.ap.b === 1 ? 1 : 0 };
@@ -2335,7 +2346,7 @@ function syncPeers(peers) {
 })();
 let lastPub = 0, lastPubKey = "", mySay = null;
 function presenceObj() {
-  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id, at: me.bt.at } : null, say: mySay, rm: me.rm, hr: me.hold ? 1 : 0, hi: me.hold || null, ea: me.eat || 0, q: me.q || 0, bk: me.basket ? me.basket.length : -1, ch: me.ch || 0, pb: me.pb || null, mt: me.mat ? 1 : 0, bl: me.bl || 0, dv: me.dv ? { k: me.dv.k, at: me.dv.at } : null, em: me.em || null, lt: me.lit || 0, tw: me.tw || 0, gf: me.gf || null, ph: me.ph || null, pj: me.pj || null, rd: redness(), bq: me.bq || null, fr: me.rod ? 1 : 0, fs: me.fs || null, rc: me.rc || null, rj: me.rj ? { h: me.rj.h, id: me.rj.id, at: me.rj.at } : null, rp: me.rp || null, fd: me.fd || null, fj: me.fj ? { h: me.fj.h, id: me.fj.id, at: me.fj.at } : null, fsc: me.fsc || null, bh: me.bh || null, bj: me.bj ? { h: me.bj.h, id: me.bj.id, at: me.bj.at } : null, bp: me.bp ? { id: me.bp.id } : null, bf: me.bf || null, bpw: me.bpw || 0, gv: me.gv || null, gr: me.gr || 0, ac: me.ac || null, aj: me.aj ? { h: me.aj.h, id: me.aj.id, at: me.aj.at } : null, ap: me.ap || null, sh: me.sh || null, sa: me.sa || 0 };
+  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id, at: me.bt.at } : null, say: mySay, rm: me.rm, hr: me.hold ? 1 : 0, hi: me.hold || null, ea: me.eat || 0, q: me.q || 0, bk: me.basket ? me.basket.length : -1, ch: me.ch || 0, pb: me.pb || null, mt: me.mat ? 1 : 0, bl: me.bl || 0, dv: me.dv ? { k: me.dv.k, at: me.dv.at } : null, em: me.em || null, lt: me.lit || 0, tw: me.tw || 0, gf: me.gf || null, ph: me.ph || null, pj: me.pj || null, rd: redness(), bq: me.bq || null, fr: me.rod ? 1 : 0, fs: me.fs || null, rc: me.rc || null, rj: me.rj ? { h: me.rj.h, id: me.rj.id, at: me.rj.at } : null, rp: me.rp || null, fd: me.fd || null, fj: me.fj ? { h: me.fj.h, id: me.fj.id, at: me.fj.at } : null, fsc: me.fsc || null, bh: me.bh || null, bj: me.bj ? { h: me.bj.h, id: me.bj.id, at: me.bj.at } : null, bp: me.bp ? { id: me.bp.id } : null, bf: me.bf || null, bpw: me.bpw || 0, gv: me.gv || null, gr: me.gr || 0, ac: me.ac || null, aj: me.aj ? { h: me.aj.h, id: me.aj.id, at: me.aj.at } : null, ap: me.ap || null, sh: me.sh || null, sa: me.sa || 0, jp: me.jp || 0 };
   if (boarded && boarded.driver) { o.bx = +boatLocal.x.toFixed(2); o.bz = +boatLocal.z.toFixed(2); o.br = +boatLocal.r.toFixed(2); }
   else { o.bx = null; o.bz = null; o.br = null; }
   return o;
@@ -3915,14 +3926,14 @@ function frame() {
     let mySeat = -1;
     if (boarded) { const s = seatOf(boarded.id, myPeer); mySeat = s.idx; me.x = s.x; me.z = s.z; me.r = s.r; myAvatar.position.set(s.x, s.y, s.z); myAvatar.rotation.y = s.r; }
     else {
-      const baseY = me.st === "swim" ? (me.tube ? -0.95 : -0.85) + Math.sin(T * 2) * 0.04 : me.st === "bike" ? me.y + .84 : me.st === "ride" ? me.y + steedRideY(ride.k) : me.y;
+      const baseY = me.st === "swim" ? (me.tube ? -0.95 : -0.85) + Math.sin(T * 2) * 0.04 : me.st === "bike" ? me.y + .84 : me.st === "ride" ? me.y + steedRideY(ride.k) : me.y + jumpH(me.jp);
       tmpV.set(me.x, anim ? me.y : baseY, me.z);
       if (anim || tmpV.distanceTo(myAvatar.position) > 6) myAvatar.position.copy(tmpV); else myAvatar.position.lerp(tmpV, 1 - Math.exp(-dt * 16));
       const tr = me.st === "sit" || me.st === "lie" ? 0 : me.r;
       myAvatar.rotation.y = lerpAngle(myAvatar.rotation.y, tr, 1 - Math.exp(-dt * 14));
     }
     const myEat = me.eat ? (Date.now() - me.eat) / 1000 : -1;
-    updateAvatar(myAvatar, dt, T, { moving: me.moving, speed: me.speed, crank: boarded ? boats[boarded.id].crank + (mySeat === 1 ? Math.PI / 2 : 0) : me.crank || 0, seat: mySeat, hold: me.hold, mat: !!me.mat, eatT: myEat, basket: me.basket ? me.basket.length : -1, cheer: cheerOf("me"), emote: activeEmote(me.em), rod: !!me.rod, fs: me.fs, lit: litOf(me.hold, me.lit), spin: me.hold === "sparkler" && me.lit ? spinOf(me.tw) : null });
+    updateAvatar(myAvatar, dt, T, { moving: me.moving, speed: me.speed, crank: boarded ? boats[boarded.id].crank + (mySeat === 1 ? Math.PI / 2 : 0) : me.crank || 0, seat: mySeat, hold: me.hold, mat: !!me.mat, eatT: myEat, basket: me.basket ? me.basket.length : -1, cheer: cheerOf("me"), jump: jumpPhase(me.jp), emote: activeEmote(me.em), rod: !!me.rod, fs: me.fs, lit: litOf(me.hold, me.lit), spin: me.hold === "sparkler" && me.lit ? spinOf(me.tw) : null });
     avatarRental(myAvatar, me.st === "bike", me.crank || 0, me.speed, !!me.mat && me.st !== "sit" && me.st !== "lie" && me.st !== "ride" && myAvatar.userData.cur.matP < .05, dt);
     avatarSteed(myAvatar, me.st === "ride" ? ride.k : null, me.speed, dt, ride.boost > 0);
     eatingFx(myAvatar, "me", myEat, 0, me.hold);
@@ -3951,7 +3962,7 @@ function frame() {
     if (p.st === "boat" && p.bt) { const b = boats[p.bt.id]; if (b.crew && b.crew.includes(peer)) { const s = seatOf(p.bt.id, peer); tx = s.x; tz = s.z; tr = s.r; ty = s.y; onBoat = true; seat = s.idx; crank = b.crank + (seat === 1 ? Math.PI / 2 : 0); } }
     if (p.st === "sit" || p.st === "lie") tr = 0;
     const steedK = p.st === "ride" ? (p.ap ? p.ap.k : 1) : null;
-    if (!onBoat) ty = p.y + (p.st === "bike" ? .84 : steedK != null ? steedRideY(steedK) : 0);
+    if (!onBoat) ty = p.y + (p.st === "bike" ? .84 : steedK != null ? steedRideY(steedK) : jumpH(p.jp));
     if (p.st === "swim") ty = (p.tb ? -0.95 : -0.85) + Math.sin(T * 2 + p.x) * 0.04;
     const k = onBoat ? 1 : Math.min(1, dt * 10);
     const moving = Math.hypot(tx - o.x, tz - o.z) > 0.03, stepD = Math.hypot(tx - o.x, tz - o.z) * k;
@@ -3959,7 +3970,7 @@ function frame() {
     o.x += (tx - o.x) * k; o.z += (tz - o.z) * k; o.r = lerpAngle(o.r, tr, k);
     o.obj.position.set(o.x, ty, o.z); o.obj.rotation.y = o.r;
     const oEat = p.hi && p.ea ? (Date.now() - p.ea) / 1000 : -1, oE = oEat >= 0 && oEat < eatTime(p.hi) ? oEat : -1;
-    updateAvatar(o.obj, dt, T, { moving, speed: 3.6, seat, crank, hold: p.hi, eatT: oE, basket: p.bk, cheer: cheerOf(peer), mat: !!p.mt, emote: activeEmote(p.em), rod: !!p.fr, fs: p.fs, lit: litOf(p.hi, p.lt), spin: litOf(p.hi, p.lt) ? spinOf(p.tw) : null });
+    updateAvatar(o.obj, dt, T, { moving, speed: 3.6, seat, crank, hold: p.hi, eatT: oE, basket: p.bk, cheer: cheerOf(peer), jump: jumpPhase(p.jp), mat: !!p.mt, emote: activeEmote(p.em), rod: !!p.fr, fs: p.fs, lit: litOf(p.hi, p.lt), spin: litOf(p.hi, p.lt) ? spinOf(p.tw) : null });
     avatarRental(o.obj, p.st === "bike", crank, stepD / Math.max(dt, 1e-3), !!p.mt && p.st !== "sit" && p.st !== "lie" && p.st !== "ride" && o.obj.userData.cur.matP < .05, dt);
     avatarSteed(o.obj, steedK, stepD / Math.max(dt, 1e-3), dt, !!(p.ap && p.ap.b));
     eatingFx(o.obj, peer, oE, Math.hypot(o.x - cam.tx, o.z - cam.tz), p.hi);
@@ -4055,6 +4066,7 @@ function frame() {
   updateBoatRace(dt);
   updateBeg();
   updateShare();
+  updateJump();
   updateCircuit(dt);
   // bubbles follow their owners
   for (let i = bubbles.length - 1; i >= 0; i--) {
@@ -6000,6 +6012,36 @@ function updateShare() {
     } else if (now - me.sh.id > SHARE_TTL || !me.eat) { me.sh = null; publish(true); actKey = ""; }
   }
   if (me.sa && now - me.sa > 90000) me.sa = 0;
+}
+/* ================= 점프 ================= */
+// A jump only lifts the avatar for a moment; x/z keep going through the usual walking limits,
+// so jumping next to the bridge rail (or any edge) can never drop anyone off.
+const JUMP_T = .62, JUMP_H = .85;
+function jumpPhase(at) { if (!at) return -1; const u = (Date.now() - at) / 1000 / JUMP_T; return u >= 0 && u < 1 ? u : -1; }
+const jumpH = at => { const u = jumpPhase(at); return u < 0 ? 0 : JUMP_H * 4 * u * (1 - u); };
+function canJump() {
+  return started && !anim && !boarded && me.st === "walk" && !me.q && jumpPhase(me.jp) < 0
+    && !(me.fs && me.fs.s !== "idle") && !inRaceNow() && !circLive() && !(me.em && EMOTES[me.em.i] && EMOTES[me.em.i].id === "dive");
+}
+let jumpLanded = 0;
+function doJump() {
+  if (!canJump()) return;
+  me.jp = Date.now(); if (me.em) me.em = null;
+  if (audio.ready) audio.tone(audio.sfx, "sine", 320, 640, .12, .07);
+  publish(true);
+}
+addEventListener("keydown", e => {
+  if (e.key !== " " || e.repeat || (e.target && e.target.closest && e.target.closest("input,textarea"))) return;
+  if (circLive()) return; // Space is the carrot during the animal race
+  e.preventDefault(); doJump();
+});
+$("jumpBtn").addEventListener("pointerdown", e => { e.preventDefault(); doJump(); });
+if (touchy) document.body.classList.add("touchy");
+function updateJump() {
+  // a soft thud on landing
+  if (me.jp && jumpLanded !== me.jp && jumpPhase(me.jp) < 0 && Date.now() - me.jp > JUMP_T * 1000) { jumpLanded = me.jp; if (audio.ready) audio.step(me.level !== "ground" ? "deck" : "grass", true); }
+  const btn = $("jumpBtn"), show = touchy && started && me.st === "walk" && !boarded && !inRaceNow() && !circLive();
+  if (btn.hidden === show) btn.hidden = !show;
 }
 })();
 </script>
