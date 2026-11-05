@@ -13,7 +13,7 @@
   <div class="pill tools">
     <div class="count" title="지금 같이 있는 사람">
       <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c.6-3.4 3-5 6-5s5.4 1.6 6 5"/><path d="M16 5.5a3 3 0 0 1 0 5.6M18 14.4c1.6.7 2.6 2.3 3 4.6"/></svg>
-      <span><span id="count">1</span><span class="of" style="opacity:.55">/30</span></span>
+      <span><span id="count">1</span><span class="of" id="countOf" style="opacity:.55">/20</span></span>
     </div>
     <button class="tool" id="soundBtn" aria-label="소리 끄기"><svg viewBox="0 0 24 24" id="soundIcon"><path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg></button>
     <button class="tool" id="setBtn" aria-label="설정" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
@@ -27,6 +27,14 @@
     </div>
     <p id="weatherNote">날씨는 관리자가 정합니다. 시간대는 한국 시간에 맞춰 자동으로 바뀝니다.</p>
     <button class="fwtest" id="fwTest" hidden>불꽃놀이 미리보기 (나만 보기)</button>
+    <div id="roomBox" hidden>
+      <h3>방</h3>
+      <p id="roomLine"></p>
+      <div class="room-row"><button class="btn" id="roomInvite">🔗 이 방 초대 링크 복사</button><select id="roomPick" aria-label="다른 방으로 이동"></select></div>
+    </div>
+    <h3>화질</h3>
+    <div class="seg" id="qualitySeg"><button data-q="auto">자동</button><button data-q="high">높음</button><button data-q="low">낮음</button></div>
+    <p id="qualityNote"></p>
     <h3>소리</h3>
     <label class="slider" for="volWater">물소리<input type="range" id="volWater" min="0" max="100" value="70"></label>
     <label class="slider" for="volNature">자연<input type="range" id="volNature" min="0" max="100" value="55"></label>

@@ -27,7 +27,8 @@ function seatOf(boatIdx, peer) {
   return { x: tmpV.x, z: tmpV.z, y: tmpV.y, r: b.r, idx };
 }
 function frame() {
-  const dt = Math.min(clock.getDelta(), 0.05); T += dt;
+  const rawDt = clock.getDelta(), dt = Math.min(rawDt, 0.05); T += dt;
+  qualityTick(Math.min(rawDt, .5));
   waterU.t.value = T; skyU.t.value = T;
   streaks.forEach(s => { s.m.opacity = envStreak * (0.55 + 0.25 * Math.sin(T * 1.7 + s.ph) + 0.15 * Math.sin(T * 4.3 + s.ph * 2)); });
 
@@ -97,12 +98,13 @@ function frame() {
   // others
   for (const [peer, o] of others) {
     const p = o.p; let tx = p.x, tz = p.z, tr = p.r, ty = 0, onBoat = false, seat = -1, crank = 0;
+    if (p.st === "walk" || p.st === "ride" || p.st === "bike" || p.st === "swim") { const s = sampleAt(o, performance.now()); if (s) { tx = s.x; tz = s.z; tr = s.r; } }
     if (p.st === "boat" && p.bt) { const b = boats[p.bt.id]; if (b.crew && b.crew.includes(peer)) { const s = seatOf(p.bt.id, peer); tx = s.x; tz = s.z; tr = s.r; ty = s.y; onBoat = true; seat = s.idx; crank = b.crank + (seat === 1 ? Math.PI / 2 : 0); } }
     if (p.st === "sit" || p.st === "lie") tr = 0;
     const steedK = p.st === "ride" ? (p.ap ? p.ap.k : 1) : null;
     if (!onBoat) ty = p.y + (p.st === "bike" ? .84 : steedK != null ? steedRideY(steedK) : jumpH(p.jp));
     if (p.st === "swim") ty = (p.tb ? -0.95 : -0.85) + Math.sin(T * 2 + p.x) * 0.04;
-    const k = onBoat ? 1 : Math.min(1, dt * 10);
+    const k = onBoat ? 1 : Math.min(1, dt * 16);
     const moving = Math.hypot(tx - o.x, tz - o.z) > 0.03, stepD = Math.hypot(tx - o.x, tz - o.z) * k;
     if (p.st === "bike") { o.crank = (o.crank || 0) + stepD * 1.3; crank = o.crank; }
     o.x += (tx - o.x) * k; o.z += (tz - o.z) * k; o.r = lerpAngle(o.r, tr, k);

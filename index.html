@@ -155,6 +155,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .modal-btns .paper-go{background:#f2b46b;color:#2a1d0f}
 body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mung #keys,body.mung #bagBtn{opacity:0!important;pointer-events:none!important;transition:opacity 1.6s}
 #hudLeft,#hudRight,#actions,#joy,#keys,#bagBtn{transition:opacity .4s}
+.room-row{display:flex;gap:8px;flex-wrap:wrap}.room-row .btn{font-size:13px;padding:9px 14px}.room-row select{background:rgba(255,255,255,.07);color:inherit;border:1px solid var(--line);border-radius:999px;padding:8px 12px;font:inherit;font-size:13px}
 .jump-btn{position:fixed;z-index:6;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));width:64px;height:64px;border-radius:50%;border:1px solid var(--line);background:rgba(244,239,230,.9);color:#1d2228;font-size:22px;font-weight:800;line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;box-shadow:0 4px 14px rgba(0,0,0,.3);touch-action:manipulation;user-select:none;-webkit-user-select:none}
 .jump-btn span{font-size:11px}.jump-btn:active{transform:scale(.92)}.jump-btn[hidden]{display:none}
 body.touchy .actions{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
@@ -256,7 +257,7 @@ body.mung #jumpBtn{opacity:0!important;pointer-events:none!important}
   <div class="pill tools">
     <div class="count" title="지금 같이 있는 사람">
       <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c.6-3.4 3-5 6-5s5.4 1.6 6 5"/><path d="M16 5.5a3 3 0 0 1 0 5.6M18 14.4c1.6.7 2.6 2.3 3 4.6"/></svg>
-      <span><span id="count">1</span><span class="of" style="opacity:.55">/30</span></span>
+      <span><span id="count">1</span><span class="of" id="countOf" style="opacity:.55">/20</span></span>
     </div>
     <button class="tool" id="soundBtn" aria-label="소리 끄기"><svg viewBox="0 0 24 24" id="soundIcon"><path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg></button>
     <button class="tool" id="setBtn" aria-label="설정" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
@@ -270,6 +271,14 @@ body.mung #jumpBtn{opacity:0!important;pointer-events:none!important}
     </div>
     <p id="weatherNote">날씨는 관리자가 정합니다. 시간대는 한국 시간에 맞춰 자동으로 바뀝니다.</p>
     <button class="fwtest" id="fwTest" hidden>불꽃놀이 미리보기 (나만 보기)</button>
+    <div id="roomBox" hidden>
+      <h3>방</h3>
+      <p id="roomLine"></p>
+      <div class="room-row"><button class="btn" id="roomInvite">🔗 이 방 초대 링크 복사</button><select id="roomPick" aria-label="다른 방으로 이동"></select></div>
+    </div>
+    <h3>화질</h3>
+    <div class="seg" id="qualitySeg"><button data-q="auto">자동</button><button data-q="high">높음</button><button data-q="low">낮음</button></div>
+    <p id="qualityNote"></p>
     <h3>소리</h3>
     <label class="slider" for="volWater">물소리<input type="range" id="volWater" min="0" max="100" value="70"></label>
     <label class="slider" for="volNature">자연<input type="range" id="volNature" min="0" max="100" value="55"></label>
@@ -544,7 +553,18 @@ window.HANGANG_CONFIG = {
 
   const sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, { realtime: { params: { eventsPerSecond: 20 } } });
   const myId = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
-  const channel = sb.channel(CFG.roomName || "hangang-dotjari", { config: { presence: { key: myId }, broadcast: { self: false } } });
+  /* ---------- 방 나누기: 한 방 20명, 꽉 차면 다음 방 (무료 플랜 동시 접속 200명 = 방 10개) ---------- */
+  const ROOM_CAP = CFG.roomCap || 20, ROOM_MAX = 10, BASE = CFG.roomName || "hangang-dotjari";
+  const chanName = n => n === 1 ? BASE : BASE + "-" + n; // 1번 방은 예전 이름 그대로라 옛 버전 사용자와도 만남
+  const askedRoom = (() => { const n = parseInt(new URLSearchParams(location.search).get("room"), 10); return n >= 1 && n <= ROOM_MAX ? n : 0; })();
+  let channel = null, roomNo = 0, movedFrom = 0;
+
+  /* ---------- 연결 상태 표시 ---------- */
+  let netPill = null;
+  function netNote(text) {
+    if (!netPill) { netPill = document.createElement("div"); netPill.style.cssText = "position:fixed;left:50%;top:calc(64px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:40;background:rgba(18,23,30,.82);color:#f4efe6;border:1px solid rgba(244,239,230,.16);border-radius:999px;padding:7px 14px;font-size:13px;pointer-events:none;transition:opacity .3s"; document.body.appendChild(netPill); }
+    netPill.textContent = text || ""; netPill.style.opacity = text ? "1" : "0";
+  }
 
   /* ---------- room: 접속자 상태 ---------- */
   const states = new Map();       // 다른 사람 id -> 상태
@@ -560,42 +580,89 @@ window.HANGANG_CONFIG = {
   }
   const schedule = () => { if (!emitQueued) { emitQueued = true; requestAnimationFrame(emitPeers); } };
 
-  let lastSend = 0, sendTimer = null;
+  /* ---------- 보내기: 위치만 바뀌면 작은 메시지, 나머지는 바뀔 때만 전체 ---------- */
+  // 사람이 많을수록 위치를 덜 자주 보냄 (5명까지 0.2초 → 20명이면 0.6초). 받는 쪽은 사이를 부드럽게 이어 그림
+  const POS_KEYS = ["x", "z", "y", "r", "bx", "bz", "br"];
+  const sendGap = () => Math.min(600, 200 + Math.max(0, members.size - 5) * 27);
+  let lastSend = 0, sendTimer = null, lastFull = "", needFull = true;
+  const restKey = () => { const o = {}; for (const k in mine) if (!POS_KEYS.includes(k)) o[k] = mine[k]; return JSON.stringify(o); };
   function sendState() {
-    if (!subscribed || !Object.keys(mine).length) return;
+    if (!subscribed || !channel || !Object.keys(mine).length) return;
     lastSend = performance.now();
-    channel.send({ type: "broadcast", event: "s", payload: { id: myId, s: mine } });
+    const rest = restKey();
+    if (needFull || rest !== lastFull) { lastFull = rest; needFull = false; channel.send({ type: "broadcast", event: "s", payload: { id: myId, s: mine } }); }
+    else channel.send({ type: "broadcast", event: "p", payload: { id: myId, p: [mine.x, mine.z, mine.y, mine.r, mine.bx ?? null, mine.bz ?? null, mine.br ?? null] } });
   }
   function queueSend(force) {
-    const wait = 200 - (performance.now() - lastSend);
+    const wait = sendGap() - (performance.now() - lastSend);
     if (force || wait <= 0) { clearTimeout(sendTimer); sendTimer = null; sendState(); }
     else if (!sendTimer) sendTimer = setTimeout(() => { sendTimer = null; sendState(); }, wait);
   }
+  // 오래 조용하면 한 번씩 전체 상태를 보내서, 놓친 메시지가 있어도 다시 맞춰짐
+  setInterval(() => { if (subscribed && performance.now() - lastSend > 15000) { needFull = true; sendState(); } }, 5000);
 
-  channel.on("presence", { event: "sync" }, () => {
-    members = new Set(Object.keys(channel.presenceState()));
-    for (const id of [...states.keys()]) if (!members.has(id)) states.delete(id);
-    schedule();
-  });
-  channel.on("presence", { event: "join" }, ({ key }) => { if (key !== myId) queueSend(true); });
-  channel.on("broadcast", { event: "s" }, ({ payload }) => {
-    if (!payload || typeof payload.id !== "string" || payload.id === myId || !payload.s || typeof payload.s !== "object") return;
-    states.set(payload.id, payload.s); members.add(payload.id); schedule();
-  });
-
+  function joinRoom(n) {
+    return new Promise(resolve => {
+      const ch = sb.channel(chanName(n), { config: { presence: { key: myId }, broadcast: { self: false } } });
+      let decided = false, everJoined = false;
+      const decide = full => {
+        if (decided) return; decided = true;
+        if (full) { try { sb.removeChannel(ch); } catch (e) {} resolve(false); return; }
+        channel = ch; roomNo = n; everJoined = true;
+        ch.track({ at: Date.now() }).then(() => { subscribed = true; needFull = true; queueSend(true); schedule(); netNote(""); });
+        resolve(true);
+      };
+      ch.on("presence", { event: "sync" }, () => {
+        const ids = Object.keys(ch.presenceState());
+        if (!decided) { decide(ids.filter(id => id !== myId).length >= ROOM_CAP); return; }
+        if (ch !== channel) return;
+        members = new Set(ids);
+        for (const id of [...states.keys()]) if (!members.has(id)) states.delete(id);
+        schedule();
+      });
+      ch.on("presence", { event: "join" }, ({ key }) => { if (ch === channel && key !== myId) { needFull = true; queueSend(true); } });
+      ch.on("broadcast", { event: "s" }, ({ payload }) => {
+        if (ch !== channel || !payload || typeof payload.id !== "string" || payload.id === myId || !payload.s || typeof payload.s !== "object") return;
+        states.set(payload.id, payload.s); members.add(payload.id); schedule();
+      });
+      ch.on("broadcast", { event: "p" }, ({ payload }) => {
+        if (ch !== channel || !payload || typeof payload.id !== "string" || !Array.isArray(payload.p)) return;
+        const st = states.get(payload.id); if (!st) return; // 전체 상태를 받기 전이면 무시 (곧 전체가 옴)
+        const [x, z, y, r, bx, bz, br] = payload.p;
+        const next = Object.assign({}, st, { x, z, y, r }); if (bx !== null) { next.bx = bx; next.bz = bz; next.br = br; } else { delete next.bx; delete next.bz; delete next.br; }
+        states.set(payload.id, next); schedule();
+      });
+      ch.on("broadcast", { event: "weather" }, ({ payload }) => {
+        if (payload && typeof payload.w === "string") weatherListeners.forEach(f => f(payload.w));
+      });
+      ch.subscribe((status, err) => {
+        if (status === "SUBSCRIBED") {
+          if (!decided) setTimeout(() => decide(Object.keys(ch.presenceState()).filter(id => id !== myId).length >= ROOM_CAP), 1500); // 빈 방이면 sync가 늦게 옴
+          else if (ch === channel) { ch.track({ at: Date.now() }).then(() => { subscribed = true; needFull = true; queueSend(true); netNote(""); }); }
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          const msg = String((err && err.message) || "");
+          if (!decided) { if (/too_many|connections/i.test(msg)) { decided = true; resolve("busy"); } return; }
+          if (ch === channel && everJoined) { subscribed = false; netNote(/too_many/i.test(msg) ? "지금 한강에 사람이 아주 많아요. 잠시 후 다시 연결할게요…" : "📶 다시 연결하는 중…"); }
+        }
+      });
+    });
+  }
   const weatherListeners = [];
-  channel.on("broadcast", { event: "weather" }, ({ payload }) => {
-    if (payload && typeof payload.w === "string") weatherListeners.forEach(f => f(payload.w));
-  });
-
-  channel.subscribe(async status => {
-    if (status === "SUBSCRIBED") { subscribed = true; await channel.track({ at: Date.now() }); queueSend(true); schedule(); }
-  });
-  addEventListener("pagehide", () => { try { channel.untrack(); sb.removeChannel(channel); } catch (e) {} });
+  (async () => {
+    const order = askedRoom ? [askedRoom].concat([...Array(ROOM_MAX).keys()].map(i => i + 1).filter(n => n !== askedRoom)) : [...Array(ROOM_MAX).keys()].map(i => i + 1);
+    for (const n of order) {
+      const ok = await joinRoom(n);
+      if (ok === true) { if (askedRoom && n !== askedRoom) movedFrom = askedRoom; return; }
+      if (ok === "busy") break;
+    }
+    netNote("지금 한강이 꽉 찼어요. 조금 뒤에 다시 들어와 주세요 🙏");
+  })();
+  addEventListener("pagehide", () => { try { if (channel) { channel.untrack(); sb.removeChannel(channel); } } catch (e) {} });
+  addEventListener("online", () => { if (channel && !subscribed) netNote("📶 다시 연결하는 중…"); });
 
   const room = {
     async presence(patch) {
-      // 앉기·눕기 같은 상태 변화와 말풍선은 바로 보내고, 걷는 위치는 0.2초마다 묶어서 보냄
+      // 앉기·눕기 같은 상태 변화와 말풍선은 바로 보내고, 걷는 위치는 묶어서 보냄
       const urgent = ("st" in patch && patch.st !== mine.st) || (patch.say && (!mine.say || patch.say.at !== mine.say.at)) || ("bt" in patch && JSON.stringify(patch.bt ?? null) !== JSON.stringify(mine.bt ?? null));
       for (const k in patch) { if (patch[k] === null) delete mine[k]; else mine[k] = patch[k]; }
       queueSend(urgent);
@@ -604,6 +671,8 @@ window.HANGANG_CONFIG = {
     onPeers(handler) { peerListeners.push(handler); setTimeout(emitPeers, 0); return () => { const i = peerListeners.indexOf(handler); if (i >= 0) peerListeners.splice(i, 1); }; },
     peers() { return []; },
     connected() { return subscribed; },
+    // 방 정보: 몇 번 방인지, 정원, 다른 방 주소
+    info() { return { no: roomNo, cap: ROOM_CAP, max: ROOM_MAX, movedFrom, link: n => location.origin + location.pathname + "?room=" + n }; },
     async leave() { subscribed = false; try { await channel.untrack(); } catch (e) {} try { sb.removeChannel(channel); } catch (e) {} }
   };
 
@@ -626,7 +695,7 @@ window.HANGANG_CONFIG = {
           const code = store.get(ADMIN_KEY) || "";
           const { data, error } = await sb.rpc("set_weather", { p_code: code, p_weather: w });
           if (error || data !== true) throw new Error("not_permitted");
-          channel.send({ type: "broadcast", event: "weather", payload: { w } });
+          if (channel) channel.send({ type: "broadcast", event: "weather", payload: { w } });
         }
       };
     }
@@ -678,7 +747,7 @@ window.HANGANG_CONFIG = {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
-const APP_VERSION = "2026.11.05", UPDATES = [{"v": "2026.11.05", "date": "11월 5일", "items": ["피크닉 테이블 의자에 앉아 치킨을 먹으면 치킨 상자가 바닥이 아니라 테이블 위에 놓여요"]}, {"v": "2026.11.04d", "date": "11월 4일", "items": ["점프가 생겼어요! PC는 Space, 모바일은 오른쪽 아래 '⤴ 점프' 버튼을 눌러요", "대교 난간 옆에서 점프해도 떨어지지 않아요 (뛰어내리고 싶으면 난간에 기대서 다이빙!)"]}, {"v": "2026.11.04c", "date": "11월 4일", "items": ["모바일 사진 화면을 세로 화면에 맞게 다시 만들었어요. 큰 '닫기'·'📥 사진 저장' 버튼이 항상 보이고, 사진 바깥을 눌러도 닫혀요", "휴대폰에서 '사진 저장'을 누르고 '이미지 저장'을 고르면 사진 앱에 바로 들어가요", "치킨 나눠 먹기: 치킨을 먹는 중에 근처 사람에게 한 조각씩 나눠 줄 수 있어요 (최대 3명, 한 번 줄 때마다 내 치킨이 20초 줄어요)", "나눠 받은 치킨을 세 입 먹으면 \"너무 맛있어~!\" 하고 얼굴을 파묻어요. 양념치킨이면 볼에 양념이 묻어요", "편의점과 치킨 배달에 양념치킨이 생겼어요", "동물 레이스: 동물마다 빠르기·가속·코너링·지구력이 달라요. 적토마는 박자를 5번 맞추면 🔥불꽃 질주, 유니콘은 바퀴마다 🌈무지개 질주를 해요"]}, {"v": "2026.11.04b", "date": "11월 4일", "items": ["두 번째 대교 동쪽에 '한강 동물 레이스' 서킷이 생겼어요. 헤어핀·S자·시케인이 있는 코스를 3바퀴 돌아요 (2~4명, 판돈 500~2,000원)", "출발하면 동물 11종 중 하나가 랜덤으로 공짜 배정돼요. 얼룩말·적토마는 가끔, 유니콘은 아주 드물게 나와요. 빠르기는 모두 같아요", "Space·W(모바일은 🥕 버튼)를 박자 맞춰 누르면 달려요. 너무 급하게 누르면 지쳐요. 코너 안쪽이 더 빨라요", "돈이 1,000원 아래로 떨어지면 감정 표현에 '용돈 구걸'이 생겨요. 근처 사람이 500~2,000원을 깡통에 넣어 줄 수 있어요 (주기 하루 3,000원, 받기 하루 5,000원까지)"]}, {"v": "2026.11.04", "date": "11월 4일", "items": ["새 춤 3가지: 공중 미끄럼 걸음, 엄지 흔들기 응원, 손 탑 쌓기 (말하기 → 춤추기)", "엄지 흔들기 응원과 손 탑 쌓기는 앉아서도 출 수 있어요", "달리기 경주 출발 카운트를 3·2·1로 맞췄어요"]}, {"v": "2026.11.03g", "date": "11월 3일", "items": ["치킨이 훨씬 커졌어요. 앉아서 먹으면 앞에 치킨 상자를 놓고 닭다리를 들고 먹어요", "치킨은 2분 동안 천천히 먹어요. 먹는 중에도 짠이나 감정 표현을 할 수 있어요", "김은 라면과 치킨에서만 모락모락 나요"]}, {"v": "2026.11.03f", "date": "11월 3일", "items": ["낚시 대결을 최대 4명까지 함께할 수 있어요. 낚시 창에서 실시간 순위를 볼 수 있어요"]}, {"v": "2026.11.03e", "date": "11월 3일", "items": ["아주 드물게 유리병 편지·지갑·금반지·보물상자·아기 고래가 낚여요. 누가 낚으면 모두에게 알려 줘요", "지갑은 주인에게 돌려주면 사례금을 받아요. 돈을 주는 보물은 하루 한 번씩만 보상이 있어요", "낚싯대를 빌린 채로 달리기·자전거·먹기 같은 다른 활동도 할 수 있어요. 안 쓸 때는 등에 메고 다녀요"]}, {"v": "2026.11.03d", "date": "11월 3일", "items": ["낚싯대를 휘둘러 던질 때마다 찌가 날아가는 거리·방향·높이가 조금씩 달라요", "찌가 떨어진 자리에 물결이 퍼지고, 낚은 물고기는 낚싯줄 끝에 매달려 올라와요"]}, {"v": "2026.11.03c", "date": "11월 3일", "items": ["낚시 손맛이 바뀌었어요: 입질이 오면 바늘이 초록 칸에 왔을 때 눌러서 2번 맞추면 낚여요", "대교 난간에 기대어 강바람을 쐬고, 다이빙도 할 수 있어요", "낚시 데크에서 1:1 낚시 대결(3분 점수전, 이긴 사람 80%)을 열 수 있어요", "오리배 경주가 생겼어요: 2~3팀이 빨간 깃발 부표를 돌아와요. 둘이 A·D로 같이 페달을 밟을수록 빨라요"]}, {"v": "2026.11.03b", "date": "11월 3일", "items": ["공원 서쪽 끝에 '한강 달리기 대회' 트랙이 생겼어요. 2~4명이 판돈(500~2,000원)을 걸고 달려요", "A(왼발)·D(오른발)를 번갈아 눌러 달려요. 같은 발을 두 번 누르면 휘청! 휴대폰은 화면 버튼으로 달려요", "1등이 가장 많이 가져가고, 꼴찌도 조금은 돌려받아요"]}, {"v": "2026.11.03", "date": "11월 3일", "items": ["편의점 냉장고에서 한강소주·캔맥주·생맥주 잔을 팔아요 (19세 이상)", "냉장고 옆 셀프 생맥주 기계에서 맥주와 거품을 7:3으로 맞춰 따라 보세요", "한두 잔 마시면 볼이 살짝 빨개져요", "낚시 데크와 낚싯대 대여함(30분 1,000원)이 생겼어요. 9가지를 낚고 방생하면 용돈을 받아요 (하루 4,000원까지)", "잡은 물고기는 '내 낚시 도감'에 기록돼요"]}];
+const APP_VERSION = "2026.11.05b", UPDATES = [{"v": "2026.11.05b", "date": "11월 5일", "items": ["사람이 많아져도 끊기지 않게: 한 방에 20명까지 들어가고, 꽉 차면 다음 방(최대 10개)으로 자동 입장해요", "설정 → 방에서 지금 몇 번 방인지 보고, 초대 링크를 복사하거나 다른 방으로 옮길 수 있어요", "다른 사람 움직임이 훨씬 부드러워졌어요. 사람이 많을수록 데이터를 아껴 보내요", "연결이 잠깐 끊겨도 화면이 멈추지 않고 '다시 연결하는 중' 표시 후 이어져요", "설정 → 화질: 자동(휴대폰 성능에 맞춰 조절)·높음·낮음을 고를 수 있어요"]}, {"v": "2026.11.05", "date": "11월 5일", "items": ["피크닉 테이블 의자에 앉아 치킨을 먹으면 치킨 상자가 바닥이 아니라 테이블 위에 놓여요"]}, {"v": "2026.11.04d", "date": "11월 4일", "items": ["점프가 생겼어요! PC는 Space, 모바일은 오른쪽 아래 '⤴ 점프' 버튼을 눌러요", "대교 난간 옆에서 점프해도 떨어지지 않아요 (뛰어내리고 싶으면 난간에 기대서 다이빙!)"]}, {"v": "2026.11.04c", "date": "11월 4일", "items": ["모바일 사진 화면을 세로 화면에 맞게 다시 만들었어요. 큰 '닫기'·'📥 사진 저장' 버튼이 항상 보이고, 사진 바깥을 눌러도 닫혀요", "휴대폰에서 '사진 저장'을 누르고 '이미지 저장'을 고르면 사진 앱에 바로 들어가요", "치킨 나눠 먹기: 치킨을 먹는 중에 근처 사람에게 한 조각씩 나눠 줄 수 있어요 (최대 3명, 한 번 줄 때마다 내 치킨이 20초 줄어요)", "나눠 받은 치킨을 세 입 먹으면 \"너무 맛있어~!\" 하고 얼굴을 파묻어요. 양념치킨이면 볼에 양념이 묻어요", "편의점과 치킨 배달에 양념치킨이 생겼어요", "동물 레이스: 동물마다 빠르기·가속·코너링·지구력이 달라요. 적토마는 박자를 5번 맞추면 🔥불꽃 질주, 유니콘은 바퀴마다 🌈무지개 질주를 해요"]}, {"v": "2026.11.04b", "date": "11월 4일", "items": ["두 번째 대교 동쪽에 '한강 동물 레이스' 서킷이 생겼어요. 헤어핀·S자·시케인이 있는 코스를 3바퀴 돌아요 (2~4명, 판돈 500~2,000원)", "출발하면 동물 11종 중 하나가 랜덤으로 공짜 배정돼요. 얼룩말·적토마는 가끔, 유니콘은 아주 드물게 나와요. 빠르기는 모두 같아요", "Space·W(모바일은 🥕 버튼)를 박자 맞춰 누르면 달려요. 너무 급하게 누르면 지쳐요. 코너 안쪽이 더 빨라요", "돈이 1,000원 아래로 떨어지면 감정 표현에 '용돈 구걸'이 생겨요. 근처 사람이 500~2,000원을 깡통에 넣어 줄 수 있어요 (주기 하루 3,000원, 받기 하루 5,000원까지)"]}, {"v": "2026.11.04", "date": "11월 4일", "items": ["새 춤 3가지: 공중 미끄럼 걸음, 엄지 흔들기 응원, 손 탑 쌓기 (말하기 → 춤추기)", "엄지 흔들기 응원과 손 탑 쌓기는 앉아서도 출 수 있어요", "달리기 경주 출발 카운트를 3·2·1로 맞췄어요"]}, {"v": "2026.11.03g", "date": "11월 3일", "items": ["치킨이 훨씬 커졌어요. 앉아서 먹으면 앞에 치킨 상자를 놓고 닭다리를 들고 먹어요", "치킨은 2분 동안 천천히 먹어요. 먹는 중에도 짠이나 감정 표현을 할 수 있어요", "김은 라면과 치킨에서만 모락모락 나요"]}, {"v": "2026.11.03f", "date": "11월 3일", "items": ["낚시 대결을 최대 4명까지 함께할 수 있어요. 낚시 창에서 실시간 순위를 볼 수 있어요"]}, {"v": "2026.11.03e", "date": "11월 3일", "items": ["아주 드물게 유리병 편지·지갑·금반지·보물상자·아기 고래가 낚여요. 누가 낚으면 모두에게 알려 줘요", "지갑은 주인에게 돌려주면 사례금을 받아요. 돈을 주는 보물은 하루 한 번씩만 보상이 있어요", "낚싯대를 빌린 채로 달리기·자전거·먹기 같은 다른 활동도 할 수 있어요. 안 쓸 때는 등에 메고 다녀요"]}, {"v": "2026.11.03d", "date": "11월 3일", "items": ["낚싯대를 휘둘러 던질 때마다 찌가 날아가는 거리·방향·높이가 조금씩 달라요", "찌가 떨어진 자리에 물결이 퍼지고, 낚은 물고기는 낚싯줄 끝에 매달려 올라와요"]}, {"v": "2026.11.03c", "date": "11월 3일", "items": ["낚시 손맛이 바뀌었어요: 입질이 오면 바늘이 초록 칸에 왔을 때 눌러서 2번 맞추면 낚여요", "대교 난간에 기대어 강바람을 쐬고, 다이빙도 할 수 있어요", "낚시 데크에서 1:1 낚시 대결(3분 점수전, 이긴 사람 80%)을 열 수 있어요", "오리배 경주가 생겼어요: 2~3팀이 빨간 깃발 부표를 돌아와요. 둘이 A·D로 같이 페달을 밟을수록 빨라요"]}, {"v": "2026.11.03b", "date": "11월 3일", "items": ["공원 서쪽 끝에 '한강 달리기 대회' 트랙이 생겼어요. 2~4명이 판돈(500~2,000원)을 걸고 달려요", "A(왼발)·D(오른발)를 번갈아 눌러 달려요. 같은 발을 두 번 누르면 휘청! 휴대폰은 화면 버튼으로 달려요", "1등이 가장 많이 가져가고, 꼴찌도 조금은 돌려받아요"]}];
 "use strict";
 const $ = id => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -2310,7 +2379,23 @@ function cleanPresence(p) {
 }
 function poseOf(p) { return p.st === "walk" ? "stand" : p.st === "swim" ? (p.tb ? "tube" : "swim") : p.st === "bench" ? "boat" : p.st; }
 const MACROS = ["자리요", "가세요", "나와주세요", "안녕하세요", "반갑습니다", "감사합니다"];
-const MAX_PEOPLE = 30;
+const MAX_PEOPLE = 20; // one room; the public build opens more rooms when this one is full
+/* smooth movement: others are drawn a little in the past, between the positions they sent */
+function addSample(cur, p) {
+  const now = performance.now(), b = cur.buf || (cur.buf = []), last = b[b.length - 1];
+  if (last && last.x === p.x && last.z === p.z && last.r === p.r) { last.still = now; return; }
+  if (last && Math.hypot(p.x - last.x, p.z - last.z) > 8) b.length = 0; // teleport (race start, boat): no gliding across the map
+  if (last) { const gap = now - Math.max(last.t, last.still || 0); cur.gap = cur.gap ? cur.gap * .8 + Math.min(1000, gap) * .2 : Math.min(1000, gap); }
+  if (last && last.still) b.push({ t: last.still, x: last.x, z: last.z, r: last.r }); // they stood still until now
+  b.push({ t: now, x: p.x, z: p.z, r: p.r }); while (b.length > 8) b.shift();
+}
+function sampleAt(cur, now) {
+  const b = cur.buf; if (!b || !b.length) return null;
+  const delay = clamp((cur.gap || 200) * 1.15 + 40, 90, 800), t = now - delay;
+  if (t <= b[0].t) return b[0];
+  for (let i = b.length - 1; i > 0; i--) if (b[i - 1].t <= t) { const a = b[i - 1], c = b[i]; if (t >= c.t) return c; const k = (t - a.t) / Math.max(1, c.t - a.t); return { x: a.x + (c.x - a.x) * k, z: a.z + (c.z - a.z) * k, r: lerpAngle(a.r, c.r, k) }; }
+  return b[b.length - 1];
+}
 function syncPeers(peers) {
   const live = new Set();
   for (const peer of peers) {
@@ -2327,7 +2412,7 @@ function syncPeers(peers) {
       cur = Object.assign(cur || { x: p.x, z: p.z, r: p.r }, { key, obj });
       others.set(peer.peer, cur);
     } else setAvatarState(cur.obj, p.st, p.tb);
-    cur.p = p;
+    cur.p = p; addSample(cur, p);
     const sayAt = p.say ? p.say.at : 0;
     if (cur.lastSay === undefined) cur.lastSay = sayAt;
     else if (sayAt !== cur.lastSay) { cur.lastSay = sayAt; if (p.say) { const id = peer.peer; showBubble(() => (others.get(id) || {}).obj, MACROS[p.say.i], 4, id); if (audio.ready) audio.pop(); } }
@@ -2336,7 +2421,11 @@ function syncPeers(peers) {
   for (const [peer, o] of others) if (!live.has(peer)) { scene.remove(o.obj); others.delete(peer); seen.delete(peer); }
   evaluateBoat();
   $("count").textContent = String(others.size + (started ? 1 : 0) || 1);
-  if (!started) { $("capLine").hidden = false; $("capLine").textContent = others.size >= MAX_PEOPLE ? `지금 ${MAX_PEOPLE}명이 모두 와 있어서 자리가 없습니다` : `지금 ${others.size}명이 강가에 있습니다 · 최대 ${MAX_PEOPLE}명`; }
+  if (!started) {
+    const info = room && typeof room.info === "function" ? room.info() : null;
+    $("capLine").hidden = false;
+    $("capLine").textContent = info && info.no ? `${info.no}번 방 · 지금 ${others.size}명이 강가에 있습니다 · 방마다 최대 ${info.cap}명` : others.size >= MAX_PEOPLE ? `지금 ${MAX_PEOPLE}명이 모두 와 있어서 자리가 없습니다` : `지금 ${others.size}명이 강가에 있습니다 · 최대 ${MAX_PEOPLE}명`;
+  }
 }
 (async () => {
   try {
@@ -3890,7 +3979,8 @@ function seatOf(boatIdx, peer) {
   return { x: tmpV.x, z: tmpV.z, y: tmpV.y, r: b.r, idx };
 }
 function frame() {
-  const dt = Math.min(clock.getDelta(), 0.05); T += dt;
+  const rawDt = clock.getDelta(), dt = Math.min(rawDt, 0.05); T += dt;
+  qualityTick(Math.min(rawDt, .5));
   waterU.t.value = T; skyU.t.value = T;
   streaks.forEach(s => { s.m.opacity = envStreak * (0.55 + 0.25 * Math.sin(T * 1.7 + s.ph) + 0.15 * Math.sin(T * 4.3 + s.ph * 2)); });
 
@@ -3960,12 +4050,13 @@ function frame() {
   // others
   for (const [peer, o] of others) {
     const p = o.p; let tx = p.x, tz = p.z, tr = p.r, ty = 0, onBoat = false, seat = -1, crank = 0;
+    if (p.st === "walk" || p.st === "ride" || p.st === "bike" || p.st === "swim") { const s = sampleAt(o, performance.now()); if (s) { tx = s.x; tz = s.z; tr = s.r; } }
     if (p.st === "boat" && p.bt) { const b = boats[p.bt.id]; if (b.crew && b.crew.includes(peer)) { const s = seatOf(p.bt.id, peer); tx = s.x; tz = s.z; tr = s.r; ty = s.y; onBoat = true; seat = s.idx; crank = b.crank + (seat === 1 ? Math.PI / 2 : 0); } }
     if (p.st === "sit" || p.st === "lie") tr = 0;
     const steedK = p.st === "ride" ? (p.ap ? p.ap.k : 1) : null;
     if (!onBoat) ty = p.y + (p.st === "bike" ? .84 : steedK != null ? steedRideY(steedK) : jumpH(p.jp));
     if (p.st === "swim") ty = (p.tb ? -0.95 : -0.85) + Math.sin(T * 2 + p.x) * 0.04;
-    const k = onBoat ? 1 : Math.min(1, dt * 10);
+    const k = onBoat ? 1 : Math.min(1, dt * 16);
     const moving = Math.hypot(tx - o.x, tz - o.z) > 0.03, stepD = Math.hypot(tx - o.x, tz - o.z) * k;
     if (p.st === "bike") { o.crank = (o.crank || 0) + stepD * 1.3; crank = o.crank; }
     o.x += (tx - o.x) * k; o.z += (tz - o.z) * k; o.r = lerpAngle(o.r, tr, k);
@@ -6043,6 +6134,68 @@ function updateJump() {
   if (me.jp && jumpLanded !== me.jp && jumpPhase(me.jp) < 0 && Date.now() - me.jp > JUMP_T * 1000) { jumpLanded = me.jp; if (audio.ready) audio.step(me.level !== "ground" ? "deck" : "grass", true); }
   const btn = $("jumpBtn"), show = touchy && started && me.st === "walk" && !boarded && !inRaceNow() && !circLive();
   if (btn.hidden === show) btn.hidden = !show;
+}
+/* ================= 방 정보 · 화질 자동 조절 ================= */
+/* rooms (public build only: the Supabase glue gives room.info) */
+let roomToldMove = false;
+function updateRoomBox() {
+  const info = room && typeof room.info === "function" ? room.info() : null;
+  if (!info || !info.no) { $("roomBox").hidden = true; return; }
+  $("roomBox").hidden = false;
+  const n = others.size + 1;
+  $("roomLine").textContent = `지금 ${info.no}번 방이에요 · ${n}/${info.cap}명. 친구와 같은 방에서 만나려면 초대 링크를 보내 주세요.`;
+  $("countOf").textContent = "/" + info.cap;
+  const pick = $("roomPick");
+  if (pick.options.length !== info.max + 1) {
+    pick.textContent = ""; const head = document.createElement("option"); head.value = ""; head.textContent = "다른 방으로 이동"; pick.appendChild(head);
+    for (let i = 1; i <= info.max; i++) { const o = document.createElement("option"); o.value = String(i); o.textContent = `${i}번 방${i === info.no ? " (지금)" : ""}`; pick.appendChild(o); }
+  }
+  if (started && info.movedFrom && !roomToldMove) { roomToldMove = true; toast(`${info.movedFrom}번 방이 꽉 차서 ${info.no}번 방으로 왔어요`); }
+}
+$("roomPick").addEventListener("change", e => {
+  const n = +e.target.value, info = room && room.info ? room.info() : null; e.target.value = "";
+  if (!info || !n || n === info.no) return;
+  location.href = info.link(n); // a fresh page joins that room (it falls back to another one if it is full)
+});
+$("roomInvite").addEventListener("click", async () => {
+  const info = room && room.info ? room.info() : null; if (!info) return;
+  const url = info.link(info.no);
+  try { await navigator.clipboard.writeText(url); toast("초대 링크를 복사했어요. 친구에게 보내 주세요!"); }
+  catch (e) { prompt("이 주소를 복사해서 보내 주세요", url); }
+});
+setInterval(updateRoomBox, 2000);
+
+/* quality: measure the frame rate and step the picture down (or back up) to keep things smooth */
+const Q_KEY = "hangang-quality", Q_NAMES = ["높음", "중간", "낮음", "아주 낮음"];
+let qMode = (() => { try { return localStorage.getItem(Q_KEY) || "auto"; } catch (e) { return "auto"; } })();
+let qLevel = -1, qAcc = 0, qFrames = 0, qChangedAt = 0, qGood = 0, qWarm = 0;
+function applyQuality(level) {
+  level = clamp(level, 0, 3); if (level === qLevel) return; qLevel = level;
+  const dpr = devicePixelRatio || 1, pr = [Math.min(dpr, 2), Math.min(dpr, 1.5), 1, .8][level];
+  renderer.setPixelRatio(pr); resize();
+  sun.castShadow = level < 2; // the shadow pass is the heaviest single cost
+  qChangedAt = performance.now(); showQuality();
+}
+function showQuality() {
+  [...$("qualitySeg").children].forEach(b => b.setAttribute("aria-pressed", String(b.dataset.q === qMode)));
+  $("qualityNote").textContent = qMode === "auto" ? `휴대폰 성능에 맞춰 자동으로 바꿔요 · 지금 '${Q_NAMES[qLevel]}'` : qMode === "high" ? "가장 선명하게 보여요. 끊기면 '자동'을 골라 주세요" : "그림자를 끄고 해상도를 낮춰서 가볍게 돌아가요";
+}
+$("qualitySeg").addEventListener("click", e => {
+  const b = e.target.closest("button[data-q]"); if (!b) return; qMode = b.dataset.q;
+  try { localStorage.setItem(Q_KEY, qMode); } catch (err) {}
+  qGood = 0; applyQuality(qMode === "high" ? 0 : qMode === "low" ? 2 : LOW_END ? 1 : 0); showQuality();
+});
+applyQuality(qMode === "high" ? 0 : qMode === "low" ? 2 : LOW_END ? 1 : 0);
+function qualityTick(dt) {
+  if (qMode !== "auto" || document.hidden || !started) { qAcc = 0; qFrames = 0; qWarm = 0; return; }
+  if ((qWarm += dt) < 6) return; // loading and the first look around are always a bit heavy
+  qAcc += dt; qFrames++;
+  if (qAcc < 3) return;
+  const fps = qFrames / qAcc; qAcc = 0; qFrames = 0;
+  const since = performance.now() - qChangedAt;
+  if (fps < 40 && qLevel < 3 && since > 4000) { qGood = 0; applyQuality(qLevel + 1); }
+  else if (fps > 57) { if (++qGood >= 10 && qLevel > 0 && since > 60000) { qGood = 0; applyQuality(qLevel - 1); } } // 30 smooth seconds before trying one step up
+  else qGood = 0;
 }
 })();
 </script>

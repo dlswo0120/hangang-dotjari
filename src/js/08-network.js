@@ -53,7 +53,23 @@ function cleanPresence(p) {
 }
 function poseOf(p) { return p.st === "walk" ? "stand" : p.st === "swim" ? (p.tb ? "tube" : "swim") : p.st === "bench" ? "boat" : p.st; }
 const MACROS = ["자리요", "가세요", "나와주세요", "안녕하세요", "반갑습니다", "감사합니다"];
-const MAX_PEOPLE = 30;
+const MAX_PEOPLE = 20; // one room; the public build opens more rooms when this one is full
+/* smooth movement: others are drawn a little in the past, between the positions they sent */
+function addSample(cur, p) {
+  const now = performance.now(), b = cur.buf || (cur.buf = []), last = b[b.length - 1];
+  if (last && last.x === p.x && last.z === p.z && last.r === p.r) { last.still = now; return; }
+  if (last && Math.hypot(p.x - last.x, p.z - last.z) > 8) b.length = 0; // teleport (race start, boat): no gliding across the map
+  if (last) { const gap = now - Math.max(last.t, last.still || 0); cur.gap = cur.gap ? cur.gap * .8 + Math.min(1000, gap) * .2 : Math.min(1000, gap); }
+  if (last && last.still) b.push({ t: last.still, x: last.x, z: last.z, r: last.r }); // they stood still until now
+  b.push({ t: now, x: p.x, z: p.z, r: p.r }); while (b.length > 8) b.shift();
+}
+function sampleAt(cur, now) {
+  const b = cur.buf; if (!b || !b.length) return null;
+  const delay = clamp((cur.gap || 200) * 1.15 + 40, 90, 800), t = now - delay;
+  if (t <= b[0].t) return b[0];
+  for (let i = b.length - 1; i > 0; i--) if (b[i - 1].t <= t) { const a = b[i - 1], c = b[i]; if (t >= c.t) return c; const k = (t - a.t) / Math.max(1, c.t - a.t); return { x: a.x + (c.x - a.x) * k, z: a.z + (c.z - a.z) * k, r: lerpAngle(a.r, c.r, k) }; }
+  return b[b.length - 1];
+}
 function syncPeers(peers) {
   const live = new Set();
   for (const peer of peers) {
@@ -70,7 +86,7 @@ function syncPeers(peers) {
       cur = Object.assign(cur || { x: p.x, z: p.z, r: p.r }, { key, obj });
       others.set(peer.peer, cur);
     } else setAvatarState(cur.obj, p.st, p.tb);
-    cur.p = p;
+    cur.p = p; addSample(cur, p);
     const sayAt = p.say ? p.say.at : 0;
     if (cur.lastSay === undefined) cur.lastSay = sayAt;
     else if (sayAt !== cur.lastSay) { cur.lastSay = sayAt; if (p.say) { const id = peer.peer; showBubble(() => (others.get(id) || {}).obj, MACROS[p.say.i], 4, id); if (audio.ready) audio.pop(); } }
@@ -79,7 +95,11 @@ function syncPeers(peers) {
   for (const [peer, o] of others) if (!live.has(peer)) { scene.remove(o.obj); others.delete(peer); seen.delete(peer); }
   evaluateBoat();
   $("count").textContent = String(others.size + (started ? 1 : 0) || 1);
-  if (!started) { $("capLine").hidden = false; $("capLine").textContent = others.size >= MAX_PEOPLE ? `지금 ${MAX_PEOPLE}명이 모두 와 있어서 자리가 없습니다` : `지금 ${others.size}명이 강가에 있습니다 · 최대 ${MAX_PEOPLE}명`; }
+  if (!started) {
+    const info = room && typeof room.info === "function" ? room.info() : null;
+    $("capLine").hidden = false;
+    $("capLine").textContent = info && info.no ? `${info.no}번 방 · 지금 ${others.size}명이 강가에 있습니다 · 방마다 최대 ${info.cap}명` : others.size >= MAX_PEOPLE ? `지금 ${MAX_PEOPLE}명이 모두 와 있어서 자리가 없습니다` : `지금 ${others.size}명이 강가에 있습니다 · 최대 ${MAX_PEOPLE}명`;
+  }
 }
 (async () => {
   try {

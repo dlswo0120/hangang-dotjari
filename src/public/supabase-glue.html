@@ -54,7 +54,18 @@ window.HANGANG_CONFIG = {
 
   const sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, { realtime: { params: { eventsPerSecond: 20 } } });
   const myId = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
-  const channel = sb.channel(CFG.roomName || "hangang-dotjari", { config: { presence: { key: myId }, broadcast: { self: false } } });
+  /* ---------- 방 나누기: 한 방 20명, 꽉 차면 다음 방 (무료 플랜 동시 접속 200명 = 방 10개) ---------- */
+  const ROOM_CAP = CFG.roomCap || 20, ROOM_MAX = 10, BASE = CFG.roomName || "hangang-dotjari";
+  const chanName = n => n === 1 ? BASE : BASE + "-" + n; // 1번 방은 예전 이름 그대로라 옛 버전 사용자와도 만남
+  const askedRoom = (() => { const n = parseInt(new URLSearchParams(location.search).get("room"), 10); return n >= 1 && n <= ROOM_MAX ? n : 0; })();
+  let channel = null, roomNo = 0, movedFrom = 0;
+
+  /* ---------- 연결 상태 표시 ---------- */
+  let netPill = null;
+  function netNote(text) {
+    if (!netPill) { netPill = document.createElement("div"); netPill.style.cssText = "position:fixed;left:50%;top:calc(64px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:40;background:rgba(18,23,30,.82);color:#f4efe6;border:1px solid rgba(244,239,230,.16);border-radius:999px;padding:7px 14px;font-size:13px;pointer-events:none;transition:opacity .3s"; document.body.appendChild(netPill); }
+    netPill.textContent = text || ""; netPill.style.opacity = text ? "1" : "0";
+  }
 
   /* ---------- room: 접속자 상태 ---------- */
   const states = new Map();       // 다른 사람 id -> 상태
@@ -70,42 +81,89 @@ window.HANGANG_CONFIG = {
   }
   const schedule = () => { if (!emitQueued) { emitQueued = true; requestAnimationFrame(emitPeers); } };
 
-  let lastSend = 0, sendTimer = null;
+  /* ---------- 보내기: 위치만 바뀌면 작은 메시지, 나머지는 바뀔 때만 전체 ---------- */
+  // 사람이 많을수록 위치를 덜 자주 보냄 (5명까지 0.2초 → 20명이면 0.6초). 받는 쪽은 사이를 부드럽게 이어 그림
+  const POS_KEYS = ["x", "z", "y", "r", "bx", "bz", "br"];
+  const sendGap = () => Math.min(600, 200 + Math.max(0, members.size - 5) * 27);
+  let lastSend = 0, sendTimer = null, lastFull = "", needFull = true;
+  const restKey = () => { const o = {}; for (const k in mine) if (!POS_KEYS.includes(k)) o[k] = mine[k]; return JSON.stringify(o); };
   function sendState() {
-    if (!subscribed || !Object.keys(mine).length) return;
+    if (!subscribed || !channel || !Object.keys(mine).length) return;
     lastSend = performance.now();
-    channel.send({ type: "broadcast", event: "s", payload: { id: myId, s: mine } });
+    const rest = restKey();
+    if (needFull || rest !== lastFull) { lastFull = rest; needFull = false; channel.send({ type: "broadcast", event: "s", payload: { id: myId, s: mine } }); }
+    else channel.send({ type: "broadcast", event: "p", payload: { id: myId, p: [mine.x, mine.z, mine.y, mine.r, mine.bx ?? null, mine.bz ?? null, mine.br ?? null] } });
   }
   function queueSend(force) {
-    const wait = 200 - (performance.now() - lastSend);
+    const wait = sendGap() - (performance.now() - lastSend);
     if (force || wait <= 0) { clearTimeout(sendTimer); sendTimer = null; sendState(); }
     else if (!sendTimer) sendTimer = setTimeout(() => { sendTimer = null; sendState(); }, wait);
   }
+  // 오래 조용하면 한 번씩 전체 상태를 보내서, 놓친 메시지가 있어도 다시 맞춰짐
+  setInterval(() => { if (subscribed && performance.now() - lastSend > 15000) { needFull = true; sendState(); } }, 5000);
 
-  channel.on("presence", { event: "sync" }, () => {
-    members = new Set(Object.keys(channel.presenceState()));
-    for (const id of [...states.keys()]) if (!members.has(id)) states.delete(id);
-    schedule();
-  });
-  channel.on("presence", { event: "join" }, ({ key }) => { if (key !== myId) queueSend(true); });
-  channel.on("broadcast", { event: "s" }, ({ payload }) => {
-    if (!payload || typeof payload.id !== "string" || payload.id === myId || !payload.s || typeof payload.s !== "object") return;
-    states.set(payload.id, payload.s); members.add(payload.id); schedule();
-  });
-
+  function joinRoom(n) {
+    return new Promise(resolve => {
+      const ch = sb.channel(chanName(n), { config: { presence: { key: myId }, broadcast: { self: false } } });
+      let decided = false, everJoined = false;
+      const decide = full => {
+        if (decided) return; decided = true;
+        if (full) { try { sb.removeChannel(ch); } catch (e) {} resolve(false); return; }
+        channel = ch; roomNo = n; everJoined = true;
+        ch.track({ at: Date.now() }).then(() => { subscribed = true; needFull = true; queueSend(true); schedule(); netNote(""); });
+        resolve(true);
+      };
+      ch.on("presence", { event: "sync" }, () => {
+        const ids = Object.keys(ch.presenceState());
+        if (!decided) { decide(ids.filter(id => id !== myId).length >= ROOM_CAP); return; }
+        if (ch !== channel) return;
+        members = new Set(ids);
+        for (const id of [...states.keys()]) if (!members.has(id)) states.delete(id);
+        schedule();
+      });
+      ch.on("presence", { event: "join" }, ({ key }) => { if (ch === channel && key !== myId) { needFull = true; queueSend(true); } });
+      ch.on("broadcast", { event: "s" }, ({ payload }) => {
+        if (ch !== channel || !payload || typeof payload.id !== "string" || payload.id === myId || !payload.s || typeof payload.s !== "object") return;
+        states.set(payload.id, payload.s); members.add(payload.id); schedule();
+      });
+      ch.on("broadcast", { event: "p" }, ({ payload }) => {
+        if (ch !== channel || !payload || typeof payload.id !== "string" || !Array.isArray(payload.p)) return;
+        const st = states.get(payload.id); if (!st) return; // 전체 상태를 받기 전이면 무시 (곧 전체가 옴)
+        const [x, z, y, r, bx, bz, br] = payload.p;
+        const next = Object.assign({}, st, { x, z, y, r }); if (bx !== null) { next.bx = bx; next.bz = bz; next.br = br; } else { delete next.bx; delete next.bz; delete next.br; }
+        states.set(payload.id, next); schedule();
+      });
+      ch.on("broadcast", { event: "weather" }, ({ payload }) => {
+        if (payload && typeof payload.w === "string") weatherListeners.forEach(f => f(payload.w));
+      });
+      ch.subscribe((status, err) => {
+        if (status === "SUBSCRIBED") {
+          if (!decided) setTimeout(() => decide(Object.keys(ch.presenceState()).filter(id => id !== myId).length >= ROOM_CAP), 1500); // 빈 방이면 sync가 늦게 옴
+          else if (ch === channel) { ch.track({ at: Date.now() }).then(() => { subscribed = true; needFull = true; queueSend(true); netNote(""); }); }
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          const msg = String((err && err.message) || "");
+          if (!decided) { if (/too_many|connections/i.test(msg)) { decided = true; resolve("busy"); } return; }
+          if (ch === channel && everJoined) { subscribed = false; netNote(/too_many/i.test(msg) ? "지금 한강에 사람이 아주 많아요. 잠시 후 다시 연결할게요…" : "📶 다시 연결하는 중…"); }
+        }
+      });
+    });
+  }
   const weatherListeners = [];
-  channel.on("broadcast", { event: "weather" }, ({ payload }) => {
-    if (payload && typeof payload.w === "string") weatherListeners.forEach(f => f(payload.w));
-  });
-
-  channel.subscribe(async status => {
-    if (status === "SUBSCRIBED") { subscribed = true; await channel.track({ at: Date.now() }); queueSend(true); schedule(); }
-  });
-  addEventListener("pagehide", () => { try { channel.untrack(); sb.removeChannel(channel); } catch (e) {} });
+  (async () => {
+    const order = askedRoom ? [askedRoom].concat([...Array(ROOM_MAX).keys()].map(i => i + 1).filter(n => n !== askedRoom)) : [...Array(ROOM_MAX).keys()].map(i => i + 1);
+    for (const n of order) {
+      const ok = await joinRoom(n);
+      if (ok === true) { if (askedRoom && n !== askedRoom) movedFrom = askedRoom; return; }
+      if (ok === "busy") break;
+    }
+    netNote("지금 한강이 꽉 찼어요. 조금 뒤에 다시 들어와 주세요 🙏");
+  })();
+  addEventListener("pagehide", () => { try { if (channel) { channel.untrack(); sb.removeChannel(channel); } } catch (e) {} });
+  addEventListener("online", () => { if (channel && !subscribed) netNote("📶 다시 연결하는 중…"); });
 
   const room = {
     async presence(patch) {
-      // 앉기·눕기 같은 상태 변화와 말풍선은 바로 보내고, 걷는 위치는 0.2초마다 묶어서 보냄
+      // 앉기·눕기 같은 상태 변화와 말풍선은 바로 보내고, 걷는 위치는 묶어서 보냄
       const urgent = ("st" in patch && patch.st !== mine.st) || (patch.say && (!mine.say || patch.say.at !== mine.say.at)) || ("bt" in patch && JSON.stringify(patch.bt ?? null) !== JSON.stringify(mine.bt ?? null));
       for (const k in patch) { if (patch[k] === null) delete mine[k]; else mine[k] = patch[k]; }
       queueSend(urgent);
@@ -114,6 +172,8 @@ window.HANGANG_CONFIG = {
     onPeers(handler) { peerListeners.push(handler); setTimeout(emitPeers, 0); return () => { const i = peerListeners.indexOf(handler); if (i >= 0) peerListeners.splice(i, 1); }; },
     peers() { return []; },
     connected() { return subscribed; },
+    // 방 정보: 몇 번 방인지, 정원, 다른 방 주소
+    info() { return { no: roomNo, cap: ROOM_CAP, max: ROOM_MAX, movedFrom, link: n => location.origin + location.pathname + "?room=" + n }; },
     async leave() { subscribed = false; try { await channel.untrack(); } catch (e) {} try { sb.removeChannel(channel); } catch (e) {} }
   };
 
@@ -136,7 +196,7 @@ window.HANGANG_CONFIG = {
           const code = store.get(ADMIN_KEY) || "";
           const { data, error } = await sb.rpc("set_weather", { p_code: code, p_weather: w });
           if (error || data !== true) throw new Error("not_permitted");
-          channel.send({ type: "broadcast", event: "weather", payload: { w } });
+          if (channel) channel.send({ type: "broadcast", event: "weather", payload: { w } });
         }
       };
     }
