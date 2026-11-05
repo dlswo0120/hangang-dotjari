@@ -10,17 +10,37 @@ const FISH = [
   { k: "pirami", name: "피라미", rare: 0, w: 14, cm: [8, 16], col: 0xb8c4cc, pay: 150, desc: "작지만 반짝반짝 빛나요" },
   { k: "bluegill", name: "블루길", rare: 0, w: 10, cm: [12, 24], col: 0x4f7a8a, pay: 300, alien: true, desc: "외래종이라 강에 돌려보내지 않고 수거해요" },
   { k: "bass", name: "배스", rare: 0, w: 9, cm: [25, 55], col: 0x5f7a3a, pay: 300, alien: true, desc: "외래종이라 강에 돌려보내지 않고 수거해요" },
+  { k: "kkeuri", name: "끄리", rare: 0, w: 5, cm: [20, 40], col: 0x9aa8b8, pay: 200, body: [.08, .1, .32], desc: "입이 커서 먹이를 덥석 물어요" },
+  { k: "moraemuji", name: "모래무지", rare: 0, w: 5, cm: [12, 25], col: 0xc8b48a, pay: 200, body: [.07, .07, .3], desc: "모래 속에 숨어 있다가 걸렸어요" },
+  { k: "chammaja", name: "참마자", rare: 0, w: 5, cm: [15, 30], col: 0xa8a090, pay: 200, body: [.07, .08, .3], desc: "몸에 점무늬가 콕콕" },
+  { k: "napjaru", name: "납자루", rare: 0, w: 5, cm: [6, 10], col: 0x8a7ad0, pay: 150, body: [.05, .09, .18], desc: "무지갯빛이 도는 작은 물고기예요" },
+  { k: "bbaga", name: "동자개", rare: 0, w: 5, cm: [15, 30], col: 0xc89a3a, pay: 200, body: [.09, .08, .28], desc: "빠가빠가 소리를 내서 '빠가사리'라고도 불러요" },
+  { k: "sungeo", name: "숭어", rare: 0, w: 5, cm: [30, 70], col: 0x8a96a4, pay: 200, body: [.09, .1, .34], desc: "한강 숭어는 물 위로 점프를 잘해요" },
+  { k: "eel", name: "뱀장어", rare: 1, w: 2.5, cm: [40, 90], col: 0x3a4a3a, pay: 600, desc: "미끌미끌… 손에서 자꾸 빠져나가요" },
+  { k: "chamge", name: "참게", rare: 1, w: 2.5, cm: [6, 10], col: 0x5a4a34, pay: 600, shape: "up", desc: "털 난 집게발로 낚싯줄을 꽉 잡았어요" },
+  { k: "saeu", name: "징거미새우", rare: 1, w: 2.5, cm: [8, 15], col: 0x8a9a7a, pay: 500, shape: "up", desc: "팔이 몸보다 길어요" },
+  { k: "jara", name: "자라", rare: 1, w: 2, cm: [20, 35], col: 0x6a7a4a, pay: 700, shape: "up", desc: "놀라서 목을 쏙 집어넣었어요" },
+  { k: "gamulchi", name: "가물치", rare: 1, w: 2, cm: [40, 85], col: 0x3f4a3a, pay: 700, body: [.1, .11, .38], desc: "힘이 엄청 세서 팔이 저려요" },
+  { k: "ungeo", name: "웅어", rare: 1, w: 2, cm: [20, 30], col: 0xd8dce2, pay: 600, body: [.05, .08, .32], desc: "옛날 한강의 명물이었던 물고기예요" },
   { k: "jjukku", name: "쭈꾸미", rare: 1, w: 4, cm: [12, 24], col: 0x9a6a7a, pay: 600, shape: "up", desc: "민물에 웬 쭈꾸미…? 누가 놓쳤나 봐요" },
   { k: "gold", name: "황금 잉어", rare: 2, w: 2, cm: [55, 95], col: 0xffcf3a, pay: 3000, icon: "✨", ann: true },
   { k: "octo", name: "문어", rare: 2, w: 1.4, cm: [40, 90], col: 0xd2553a, pay: 2000, icon: "🐙", ann: true, shape: "up", desc: "여덟 다리로 낚싯줄을 꽉 붙잡고 버텼어요!" },
+  { k: "hwangso", name: "황쏘가리", rare: 2, w: 1, cm: [20, 45], col: 0xf2c230, pay: 2500, icon: "🟡", ann: true, body: [.08, .1, .3], desc: "천연기념물이에요! 사진만 찍고 바로 놓아줘요" },
+  { k: "puffer", name: "복어", rare: 2, w: .9, cm: [15, 30], col: 0xd8c27a, pay: 2000, icon: "🐡", ann: true, shape: "up", desc: "화가 나서 빵빵하게 부풀었어요" },
+  { k: "sturgeon", name: "철갑상어", rare: 2, w: .7, cm: [80, 160], col: 0x6a7480, pay: 2500, icon: "🦈", ann: true, desc: "공룡 시대부터 살아온 갑옷 물고기예요" },
   { k: "boot", name: "장화", rare: 3, w: 7, cm: [0, 0], col: 0x3a4a3a, pay: 100 },
   { k: "can", name: "깡통", rare: 3, w: 7, cm: [0, 0], col: 0xb0b6bc, pay: 100 },
   { k: "cupra", name: "컵라면 용기", rare: 3, w: 5, cm: [0, 0], col: 0xf4f1ea, pay: 100, desc: "누가 라면 먹고 버렸어요… 분리수거!" },
   { k: "bag", name: "비닐봉지", rare: 3, w: 4, cm: [0, 0], col: 0xdfe8ef, pay: 100, desc: "물고기 같았는데 비닐봉지였어요" },
   { k: "slipper", name: "슬리퍼 한 짝", rare: 3, w: 3, cm: [0, 0], col: 0x3f7fd0, pay: 100, desc: "나머지 한 짝은 어디 갔을까요" },
+  { k: "ball", name: "축구공", rare: 3, w: 3, cm: [0, 0], col: 0xffffff, pay: 100, desc: "누가 한강에서 공 차다가 빠뜨렸나 봐요" },
+  { k: "umbrella", name: "우산", rare: 3, w: 3, cm: [0, 0], col: 0x3a6fd0, pay: 100, desc: "비 오는 날 날아간 우산이에요" },
+  { k: "wheel", name: "자전거 바퀴", rare: 3, w: 2, cm: [0, 0], col: 0x2a2a2a, pay: 100, desc: "자전거는 어디 있을까요…" },
   // deep sea: rare, more likely on a long cast and at night
   { k: "angler", name: "초롱아귀", rare: 5, w: .8, cm: [20, 45], col: 0x3a3f4a, pay: 1500, icon: "🏮", ann: true, deep: true, desc: "심해에서 초롱을 켜고 올라왔어요" },
   { k: "oar", name: "산갈치", rare: 5, w: .5, cm: [180, 420], col: 0xd8dde4, pay: 1500, icon: "🎏", ann: true, deep: true, desc: "길고 은빛인 전설의 심해어예요" },
+  { k: "coela", name: "실러캔스", rare: 5, w: .35, cm: [120, 190], col: 0x2f4a7a, pay: 1500, icon: "🦴", ann: true, deep: true, desc: "4억 년 전 모습 그대로인 살아 있는 화석이에요" },
+  { k: "jelly", name: "심해 해파리", rare: 5, w: .5, cm: [15, 40], col: 0xb48cff, pay: 1500, icon: "🪼", ann: true, deep: true, shape: "up", desc: "깜깜한 바닷속에서 스스로 빛을 내요" },
   { k: "blob", name: "블롭피쉬", rare: 5, w: .6, cm: [20, 35], col: 0xf0b0b8, pay: 1500, icon: "🫠", ann: true, deep: true, shape: "up", desc: "올라오자마자 시무룩해졌어요" },
   // treasures: very rare, announced to everyone, money ones pay once a day each
   { k: "letter", name: "유리병 편지", rare: 4, w: 1, ann: true, cm: [0, 0], col: 0x9fe0d0, pay: 0, pts: 50, speed: 1.1, icon: "🍾" },
@@ -185,9 +205,10 @@ const castRelease = () => {
   drawFish();
 };
 ["pointerup", "pointerleave", "pointercancel"].forEach(ev => $("fishBtn").addEventListener(ev, castRelease));
+const RARE_BOOST = 1.35; // more kinds of common fish shouldn't make the rare ones rarer
 function rollFish() {
   const h = kst().getHours(), night = h >= 20 || h < 5, far = fishing.power > .7;
-  const wt = f => f.w * (f.deep ? (far ? 2.2 : 1) * (night ? 1.6 : 1) : 1);
+  const wt = f => f.w * (f.rare === 2 || f.rare >= 4 ? RARE_BOOST : 1) * (f.deep ? (far ? 2.2 : 1) * (night ? 1.6 : 1) : 1);
   const total = FISH.reduce((s, f) => s + wt(f), 0); let r = Math.random() * total;
   for (const f of FISH) { r -= wt(f); if (r <= 0) return f; } return FISH[0];
 }
@@ -285,6 +306,28 @@ function makeFishMesh(k) {
     add(new THREE.SphereGeometry(.018, 6, 4), new THREE.MeshBasicMaterial({ color: 0x111111 }), .025, .02, -.36);
     return g;
   }
+  if (k === "eel") { const mm = mat(F.col); for (let i = 0; i < 9; i++) { const sgm = add(new THREE.SphereGeometry(.045, 8, 6), mm, Math.sin(i * .9) * .05, 0, -.4 + i * .1); sgm.scale.set(1, 1, 1.6); } add(new THREE.SphereGeometry(.012, 6, 4), new THREE.MeshBasicMaterial({ color: 0x111111 }), .03, .02, -.44); return g; }
+  if (k === "chamge") { const mm = mat(F.col); add(new THREE.SphereGeometry(.12, 12, 8), mm, 0, .06, 0).scale.set(1.2, .5, 1);
+    [-1, 1].forEach(s => { for (let i = 0; i < 3; i++) add(new THREE.CylinderGeometry(.012, .008, .16, 5), mm, s * .14, .02, -.05 + i * .06).rotation.z = s * 1.1;
+      const cl = add(new THREE.SphereGeometry(.05, 8, 6), mm, s * .12, .07, -.14); cl.scale.set(1, .7, 1.2); add(new THREE.SphereGeometry(.03, 6, 4), mat(0x2a2218), s * .12, .07, -.15).scale.set(1.3, 1.3, 1); // hairy mitts
+      add(new THREE.SphereGeometry(.014, 6, 4), new THREE.MeshBasicMaterial({ color: 0x111111 }), s * .04, .12, -.1); }); return g; }
+  if (k === "saeu") { const mm = new THREE.MeshPhongMaterial({ color: F.col, transparent: true, opacity: .85 }); for (let i = 0; i < 5; i++) add(new THREE.SphereGeometry(.035 - i * .004, 8, 6), mm, 0, .2 - i * .045, i * .012).scale.set(1, .8, 1.3);
+    [-1, 1].forEach(s => add(new THREE.CylinderGeometry(.008, .006, .34, 5), mm, s * .05, .35, -.02).rotation.z = s * .25); return g; }
+  if (k === "jara") { const mm = mat(F.col); add(new THREE.SphereGeometry(.16, 14, 8), mm, 0, .05, 0).scale.set(1, .35, 1.15); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => add(new THREE.SphereGeometry(.04, 6, 4), mm, sx * .13, .02, sz * .12).scale.set(1.4, .5, 1)); add(new THREE.SphereGeometry(.03, 8, 6), mm, 0, .05, -.19); return g; } // head tucked in
+  if (k === "puffer") { const mm = mat(F.col); add(new THREE.SphereGeometry(.16, 14, 10), mm, 0, .16, 0); add(new THREE.SphereGeometry(.12, 12, 8), mat(0xf4efe2), 0, .1, -.04);
+    for (let i = 0; i < 26; i++) { const a = Math.random() * 6.28, b = Math.acos(2 * Math.random() - 1), d = new THREE.Vector3(Math.sin(b) * Math.cos(a), Math.cos(b), Math.sin(b) * Math.sin(a)), sp = add(new THREE.ConeGeometry(.012, .06, 4), mm, d.x * .17, .16 + d.y * .17, d.z * .17); sp.lookAt(sp.position.clone().add(d)); sp.rotateX(Math.PI / 2); }
+    [-1, 1].forEach(s => add(new THREE.SphereGeometry(.025, 8, 6), new THREE.MeshBasicMaterial({ color: 0x111111 }), s * .07, .22, -.13)); return g; }
+  if (k === "jelly") { const glow = new THREE.MeshBasicMaterial({ color: F.col, transparent: true, opacity: .65 }); const bell = add(new THREE.SphereGeometry(.15, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), glow, 0, .2, 0); bell.scale.y = .8;
+    for (let i = 0; i < 7; i++) { const a = i / 7 * 6.28; add(new THREE.CylinderGeometry(.006, .003, .4, 4), glow, Math.cos(a) * .09, 0, Math.sin(a) * .09); } return g; }
+  if (k === "ball") { add(new THREE.SphereGeometry(.13, 16, 12), mat(0xffffff), 0, .13, 0); for (let i = 0; i < 6; i++) { const a = i * 1.05, b = i % 2 ? .8 : 2.2; add(new THREE.CircleGeometry(.04, 5), mat(0x222222, { side: THREE.DoubleSide }), Math.sin(b) * Math.cos(a) * .131, .13 + Math.cos(b) * .131, Math.sin(b) * Math.sin(a) * .131).lookAt(0, -10, 0); } return g; }
+  if (k === "umbrella") { add(new THREE.ConeGeometry(.28, .14, 8, 1, true), mat(F.col, { side: THREE.DoubleSide }), 0, .5, 0); add(new THREE.CylinderGeometry(.008, .008, .55, 5), mat(0x333333), 0, .22, 0); const h = add(new THREE.TorusGeometry(.04, .01, 4, 10, Math.PI), mat(0x333333), .04, -.05, 0); h.rotation.z = Math.PI; return g; }
+  if (k === "wheel") { const w = add(new THREE.TorusGeometry(.22, .025, 8, 24), mat(0x222222), 0, .22, 0); for (let i = 0; i < 8; i++) add(new THREE.CylinderGeometry(.003, .003, .42, 3), mat(0xc0c4ca), 0, .22, 0).rotation.z = i * Math.PI / 8; add(new THREE.CylinderGeometry(.03, .03, .05, 8), mat(0x777777), 0, .22, 0).rotation.x = Math.PI / 2; return g; }
+  if (k === "sturgeon") { const mm = mat(F.col); add(new THREE.SphereGeometry(1, 14, 10), mm, 0, 0, 0).scale.set(.08, .08, .45); add(new THREE.ConeGeometry(.04, .14, 6), mm, 0, -.01, -.52).rotation.x = -Math.PI / 2;
+    for (let i = 0; i < 9; i++) add(new THREE.ConeGeometry(.02, .04, 4), mat(0xd8d4c8), 0, .08, -.32 + i * .08); const t = add(new THREE.ConeGeometry(.1, .2, 4), mm, 0, .03, .5); t.rotation.x = Math.PI / 2; t.scale.set(.25, 1, 1); return g; }
+  if (k === "coela") { const mm = mat(F.col); add(new THREE.SphereGeometry(1, 14, 10), mm, 0, 0, 0).scale.set(.12, .15, .42);
+    for (let i = 0; i < 14; i++) add(new THREE.SphereGeometry(.015, 5, 4), mat(0xf4f1ea), (i % 2 ? .11 : -.11), -.05 + (i % 5) * .03, -.3 + i * .045);
+    [-1, 1].forEach(s => { const fin = add(new THREE.SphereGeometry(.05, 8, 6), mm, s * .13, -.06, -.1); fin.scale.set(.4, .6, 1.3); });
+    const t = add(new THREE.ConeGeometry(.12, .2, 5), mm, 0, 0, .5); t.rotation.x = Math.PI / 2; t.scale.set(.25, 1, 1); return g; }
   if (k === "cupra") { add(new THREE.CylinderGeometry(.09, .065, .14, 16, 1, true), mat(0xf4f1ea, { side: THREE.DoubleSide }), 0, .07, 0); add(new THREE.CylinderGeometry(.091, .091, .04, 16, 1, true), mat(0xd8322f, { side: THREE.DoubleSide }), 0, .1, 0); const lid = add(new THREE.CircleGeometry(.09, 16), mat(0xe8c15a, { side: THREE.DoubleSide }), .05, .16, 0); lid.rotation.set(-1.2, 0, .3); return g; }
   if (k === "bag") { const b = add(new THREE.SphereGeometry(.13, 10, 8), new THREE.MeshPhongMaterial({ color: F.col, transparent: true, opacity: .7 }), 0, .12, 0); b.scale.set(1, 1.2, .7); [-1, 1].forEach(s => { add(new THREE.TorusGeometry(.04, .01, 4, 10), b.material, s * .05, .28, 0).rotation.y = Math.PI / 2; }); return g; }
   if (k === "slipper") { add(new THREE.BoxGeometry(.1, .03, .26), mat(F.col), 0, .015, 0); add(new THREE.TorusGeometry(.045, .012, 6, 12, Math.PI), mat(0xffffff), 0, .03, -.04).rotation.y = Math.PI / 2; return g; }
@@ -295,6 +338,9 @@ function makeFishMesh(k) {
   }
   const body = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 10), m); body.scale.set(.09, .1, .3); g.add(body);
   if (k === "bluegill") body.scale.set(.08, .16, .22); if (k === "pirami") body.scale.set(.06, .07, .22);
+  if (F.body) body.scale.set(...F.body);
+  if (k === "chammaja") for (let i = 0; i < 6; i++) { const d = new THREE.Mesh(new THREE.SphereGeometry(.014, 5, 4), mat(0x3a3530)); d.position.set(.075, .01, -.18 + i * .07); g.add(d); }
+  if (k === "napjaru") { const st = new THREE.Mesh(new THREE.BoxGeometry(.1, .02, .26), new THREE.MeshBasicMaterial({ color: 0x6ad0ff })); st.position.y = .02; g.add(st); }
   const tail = new THREE.Mesh(new THREE.ConeGeometry(.09, .16, 4), m); tail.rotation.x = Math.PI / 2; tail.position.z = .34; tail.scale.set(.25, 1, 1); g.add(tail);
   const eye = new THREE.Mesh(new THREE.SphereGeometry(.018, 6, 4), new THREE.MeshBasicMaterial({ color: 0x111111 })); eye.position.set(.07, .03, -.2); g.add(eye);
   g.rotation.x = -Math.PI / 2.3; return g;
