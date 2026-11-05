@@ -585,12 +585,13 @@ window.HANGANG_CONFIG = {
   const POS_KEYS = ["x", "z", "y", "r", "bx", "bz", "br"];
   const sendGap = () => Math.min(600, 200 + Math.max(0, members.size - 5) * 27);
   let lastSend = 0, sendTimer = null, lastFull = "", needFull = true;
+  const legacy = new Set(); // people on the old page that only understands full messages (until they refresh)
   const restKey = () => { const o = {}; for (const k in mine) if (!POS_KEYS.includes(k)) o[k] = mine[k]; return JSON.stringify(o); };
   function sendState() {
     if (!subscribed || !channel || !Object.keys(mine).length) return;
     lastSend = performance.now();
     const rest = restKey();
-    if (needFull || rest !== lastFull) { lastFull = rest; needFull = false; channel.send({ type: "broadcast", event: "s", payload: { id: myId, s: mine } }); }
+    if (needFull || rest !== lastFull || [...legacy].some(id => members.has(id))) { lastFull = rest; needFull = false; channel.send({ type: "broadcast", event: "s", payload: { id: myId, s: mine, v: 2 } }); }
     else channel.send({ type: "broadcast", event: "p", payload: { id: myId, p: [mine.x, mine.z, mine.y, mine.r, mine.bx ?? null, mine.bz ?? null, mine.br ?? null] } });
   }
   function queueSend(force) {
@@ -623,6 +624,7 @@ window.HANGANG_CONFIG = {
       ch.on("presence", { event: "join" }, ({ key }) => { if (ch === channel && key !== myId) { needFull = true; queueSend(true); } });
       ch.on("broadcast", { event: "s" }, ({ payload }) => {
         if (ch !== channel || !payload || typeof payload.id !== "string" || payload.id === myId || !payload.s || typeof payload.s !== "object") return;
+        if (payload.v === 2) legacy.delete(payload.id); else legacy.add(payload.id);
         states.set(payload.id, payload.s); members.add(payload.id); schedule();
       });
       ch.on("broadcast", { event: "p" }, ({ payload }) => {
