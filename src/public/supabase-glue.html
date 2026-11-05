@@ -57,8 +57,9 @@ window.HANGANG_CONFIG = {
   /* ---------- 방 나누기: 한 방 20명, 꽉 차면 다음 방 (무료 플랜 동시 접속 200명 = 방 10개) ---------- */
   const ROOM_CAP = CFG.roomCap || 20, ROOM_MAX = 10, BASE = CFG.roomName || "hangang-dotjari";
   const chanName = n => n === 1 ? BASE : BASE + "-" + n; // 1번 방은 예전 이름 그대로라 옛 버전 사용자와도 만남
+  const PARKS = ["여의도", "반포", "뚝섬", "잠실", "망원", "이촌", "광나루", "난지", "잠원", "양화"]; // 방 이름 = 한강공원 이름
   const askedRoom = (() => { const n = parseInt(new URLSearchParams(location.search).get("room"), 10); return n >= 1 && n <= ROOM_MAX ? n : 0; })();
-  let channel = null, roomNo = 0, movedFrom = 0;
+  let channel = null, roomNo = 0, movedFrom = 0, myName = "";
 
   /* ---------- 연결 상태 표시 ---------- */
   let netPill = null;
@@ -111,7 +112,7 @@ window.HANGANG_CONFIG = {
         if (decided) return; decided = true;
         if (full) { try { sb.removeChannel(ch); } catch (e) {} resolve(false); return; }
         channel = ch; roomNo = n; everJoined = true;
-        ch.track({ at: Date.now() }).then(() => { subscribed = true; needFull = true; queueSend(true); schedule(); netNote(""); });
+        ch.track({ at: Date.now(), n: myName }).then(() => { subscribed = true; needFull = true; queueSend(true); schedule(); netNote(""); });
         resolve(true);
       };
       ch.on("presence", { event: "sync" }, () => {
@@ -141,7 +142,7 @@ window.HANGANG_CONFIG = {
       ch.subscribe((status, err) => {
         if (status === "SUBSCRIBED") {
           if (!decided) setTimeout(() => decide(Object.keys(ch.presenceState()).filter(id => id !== myId).length >= ROOM_CAP), 1500); // 빈 방이면 sync가 늦게 옴
-          else if (ch === channel) { ch.track({ at: Date.now() }).then(() => { subscribed = true; needFull = true; queueSend(true); netNote(""); }); }
+          else if (ch === channel) { ch.track({ at: Date.now(), n: myName }).then(() => { subscribed = true; needFull = true; queueSend(true); netNote(""); }); }
         } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
           const msg = String((err && err.message) || "");
           if (!decided) { if (/too_many|connections/i.test(msg)) { decided = true; resolve("busy"); } return; }
@@ -151,15 +152,32 @@ window.HANGANG_CONFIG = {
     });
   }
   const weatherListeners = [];
-  (async () => {
-    const order = askedRoom ? [askedRoom].concat([...Array(ROOM_MAX).keys()].map(i => i + 1).filter(n => n !== askedRoom)) : [...Array(ROOM_MAX).keys()].map(i => i + 1);
-    for (const n of order) {
+  // 입장 전: 모든 공원을 잠깐 들여다보고 인원과 이름만 세고 나옴 (내 자리는 차지하지 않음)
+  function peek(n) {
+    return new Promise(resolve => {
+      const ch = sb.channel(chanName(n), { config: { presence: { key: "peek-" + myId + "-" + n } } });
+      let done = false;
+      const finish = () => { if (done) return; done = true; const st = ch.presenceState(), names = [];
+        Object.values(st).forEach(m => { const nm = m && m[0] && m[0].n; if (typeof nm === "string" && nm) names.push(nm.slice(0, 10)); });
+        try { sb.removeChannel(ch); } catch (e) {} resolve({ no: n, name: PARKS[n - 1], n: Object.keys(st).length, names }); };
+      ch.on("presence", { event: "sync" }, () => setTimeout(finish, 150));
+      ch.subscribe(status => { if (status === "SUBSCRIBED") setTimeout(finish, 1500); else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") finish(); });
+      setTimeout(finish, 4000);
+    });
+  }
+  let joining = null;
+  async function join(n, name) {
+    if (channel) return true;
+    if (joining) return joining;
+    myName = String(name || "").slice(0, 10);
+    joining = (async () => {
       const ok = await joinRoom(n);
-      if (ok === true) { if (askedRoom && n !== askedRoom) movedFrom = askedRoom; return; }
-      if (ok === "busy") break;
-    }
-    netNote("지금 한강이 꽉 찼어요. 조금 뒤에 다시 들어와 주세요 🙏");
-  })();
+      joining = null;
+      if (ok === "busy") { netNote("지금 한강에 사람이 아주 많아요. 조금 뒤에 다시 들어와 주세요 🙏"); return false; }
+      return ok === true;
+    })();
+    return joining;
+  }
   addEventListener("pagehide", () => { try { if (channel) { channel.untrack(); sb.removeChannel(channel); } } catch (e) {} });
   addEventListener("online", () => { if (channel && !subscribed) netNote("📶 다시 연결하는 중…"); });
 
@@ -175,7 +193,9 @@ window.HANGANG_CONFIG = {
     peers() { return []; },
     connected() { return subscribed; },
     // 방 정보: 몇 번 방인지, 정원, 다른 방 주소
-    info() { return { no: roomNo, cap: ROOM_CAP, max: ROOM_MAX, movedFrom, link: n => location.origin + location.pathname + "?room=" + n }; },
+    info() { return { no: roomNo, name: PARKS[roomNo - 1] || "", parks: PARKS, cap: ROOM_CAP, max: ROOM_MAX, asked: askedRoom, movedFrom, link: n => location.origin + location.pathname + "?room=" + n }; },
+    lobby() { return Promise.all(PARKS.map((_, i) => peek(i + 1))); },
+    join,
     async leave() { subscribed = false; try { await channel.untrack(); } catch (e) {} try { sb.removeChannel(channel); } catch (e) {} }
   };
 

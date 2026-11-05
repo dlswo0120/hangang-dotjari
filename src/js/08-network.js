@@ -98,7 +98,8 @@ function syncPeers(peers) {
   if (!started) {
     const info = room && typeof room.info === "function" ? room.info() : null;
     $("capLine").hidden = false;
-    $("capLine").textContent = info && info.no ? `${info.no}번 방 · 지금 ${others.size}명이 강가에 있습니다 · 방마다 최대 ${info.cap}명` : others.size >= MAX_PEOPLE ? `지금 ${MAX_PEOPLE}명이 모두 와 있어서 자리가 없습니다` : `지금 ${others.size}명이 강가에 있습니다 · 최대 ${MAX_PEOPLE}명`;
+    if (info && !info.no) $("capLine").hidden = !lobbyLine; // before picking a park the lobby fills this line
+    $("capLine").textContent = info && !info.no ? lobbyLine : info && info.no ? `${info.name} 한강 · 지금 ${others.size}명이 강가에 있습니다` : others.size >= MAX_PEOPLE ? `지금 ${MAX_PEOPLE}명이 모두 와 있어서 자리가 없습니다` : `지금 ${others.size}명이 강가에 있습니다 · 최대 ${MAX_PEOPLE}명`;
   }
 }
 (async () => {

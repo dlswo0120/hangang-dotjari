@@ -10,13 +10,22 @@ $("enterBtn").addEventListener("click", () => {
   $("gate1").hidden = true; $("gate2").hidden = false;
   try { const n = localStorage.getItem("hangang-name"); if (n) $("nameInput").value = n; const g = localStorage.getItem("hangang-g"); if (g === "f" || g === "m") { me.g = g; pressG(); } } catch (e) {}
   if (!touchy) setTimeout(() => $("nameInput").focus(), 50);
+  loadParks();
 });
 $("genderChoices").addEventListener("click", e => { const b = e.target.closest(".choice"); if (!b) return; me.g = b.dataset.g; pressG(); });
-$("joinForm").addEventListener("submit", e => {
+let joiningNow = false;
+$("joinForm").addEventListener("submit", async e => {
   e.preventDefault();
+  if (joiningNow) return;
   const n = $("nameInput").value.replace(/[\u0000-\u001f\u200b-\u200f\u202a-\u202e]/g, "").trim();
   if (!n) { $("err").textContent = "이름을 한 글자 이상 적어주세요."; $("nameInput").focus(); return; }
-  if (others.size >= MAX_PEOPLE) { $("err").textContent = `지금 ${MAX_PEOPLE}명이 모두 와 있습니다. 조금 뒤에 다시 와 주세요.`; return; }
+  if (room && typeof room.join === "function") { // public build: join the park picked in the list
+    if (!parkSel) { $("err").textContent = "갈 한강공원을 골라 주세요."; return; }
+    joiningNow = true; const go = $("joinForm").querySelector(".go"), label = go.textContent; go.disabled = true; go.textContent = "들어가는 중…";
+    const ok = await room.join(parkSel, n.slice(0, 10));
+    joiningNow = false; go.disabled = false; go.textContent = label;
+    if (!ok) { $("err").textContent = "방금 그곳이 꽉 찼어요. 다른 공원을 골라 주세요."; loadParks(true); return; }
+  } else if (others.size >= MAX_PEOPLE) { $("err").textContent = `지금 ${MAX_PEOPLE}명이 모두 와 있습니다. 조금 뒤에 다시 와 주세요.`; return; }
   me.name = n.slice(0, 10);
   try { localStorage.setItem("hangang-name", me.name); localStorage.setItem("hangang-g", me.g); } catch (e) {}
   me.x = 4 + (Math.random() - 0.5) * 16; me.z = 30.5; me.r = 0; me.st = "walk"; me.level = "ground"; me.y = 0;
@@ -25,6 +34,7 @@ $("joinForm").addEventListener("submit", e => {
   $("gate2").hidden = true; $("hudLeft").hidden = false; $("hudRight").hidden = false; $("actions").hidden = false;
   if (touchy) $("joy").hidden = false; else { $("keys").hidden = false; setTimeout(() => { $("keys").hidden = true; }, 15000); }
   publish(true); refreshActions(); $("count").textContent = String(others.size + 1); storeOnJoin(); checkNews();
+  { const info = room && typeof room.info === "function" ? room.info() : null; if (info && info.name) { $("parkLabel").textContent = info.name + " 한강"; toast(`🌉 ${info.name} 한강공원에 오신 걸 환영해요`); } }
   toast(touchy ? "패드로 걸어가서 마음에 드는 잔디에 돗자리를 펴세요" : "WASD로 걸어가서 마음에 드는 잔디에 돗자리를 펴세요");
 });
 $("exitBtn").addEventListener("click", () => { $("leaveModal").hidden = false; $("stayBtn").focus(); });

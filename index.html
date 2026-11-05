@@ -155,6 +155,13 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .modal-btns .paper-go{background:#f2b46b;color:#2a1d0f}
 body.mung #hudLeft,body.mung #hudRight,body.mung #actions,body.mung #joy,body.mung #keys,body.mung #bagBtn{opacity:0!important;pointer-events:none!important;transition:opacity 1.6s}
 #hudLeft,#hudRight,#actions,#joy,#keys,#bagBtn{transition:opacity .4s}
+.parks{display:flex;flex-direction:column;gap:6px}
+.park{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:4px 10px;text-align:left;border:1px solid var(--line);background:rgba(255,255,255,.05);border-radius:14px;padding:10px 12px;color:inherit;font:inherit}
+.park[aria-pressed=true]{border-color:#f2b46b;background:rgba(242,180,107,.14)}.park:disabled{opacity:.45}
+.park b{font-size:15px}.park .bar{height:6px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden}.park .bar i{display:block;height:100%;border-radius:99px}
+.park .cnt{font-size:12px;font-variant-numeric:tabular-nums;opacity:.8}.park .who{grid-column:1/-1;font-size:11.5px;opacity:.65;word-break:keep-all}
+.park .tag{font-size:10.5px;background:#f2b46b;color:#2a1d0f;border-radius:99px;padding:2px 7px;margin-left:6px;font-weight:700}
+.park-refresh{align-self:flex-end;background:none;border:0;color:var(--ink-soft);font:inherit;font-size:12px;padding:4px}
 .room-row{display:flex;gap:8px;flex-wrap:wrap}.room-row .btn{font-size:13px;padding:9px 14px}.room-row select{background:rgba(255,255,255,.07);color:inherit;border:1px solid var(--line);border-radius:999px;padding:8px 12px;font:inherit;font-size:13px}
 .jump-btn{position:fixed;z-index:6;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));width:64px;height:64px;border-radius:50%;border:1px solid var(--line);background:rgba(244,239,230,.9);color:#1d2228;font-size:22px;font-weight:800;line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;box-shadow:0 4px 14px rgba(0,0,0,.3);touch-action:manipulation;user-select:none;-webkit-user-select:none}
 .jump-btn span{font-size:11px}.jump-btn:active{transform:scale(.92)}.jump-btn[hidden]{display:none}
@@ -250,7 +257,7 @@ body.mung #jumpBtn{opacity:0!important;pointer-events:none!important}
   <button class="pill exitbtn" id="exitBtn" aria-label="나가기"><svg viewBox="0 0 24 24"><path d="M14 4h4.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H14"/><path d="M10 8l-4 4 4 4M6 12h10"/></svg></button>
   <div class="pill place">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M2 15c2.5 0 2.5-1.6 5-1.6S9.5 15 12 15s2.5-1.6 5-1.6 2.5 1.6 5 1.6"/><path d="M2 19c2.5 0 2.5-1.6 5-1.6S9.5 19 12 19s2.5-1.6 5-1.6 2.5 1.6 5 1.6"/><path d="M4 11V8l8-4 8 4v3"/></svg>
-    <span><span class="wide">한강 <span class="dim">·</span> </span><span id="timeLabel">밤</span> <span class="dim" id="clock">00:00</span><span class="wx"> <span class="dim">·</span> <span id="weatherLabel">맑음</span></span></span>
+    <span><span class="wide"><span id="parkLabel">한강</span> <span class="dim">·</span> </span><span id="timeLabel">밤</span> <span class="dim" id="clock">00:00</span><span class="wx"> <span class="dim">·</span> <span id="weatherLabel">맑음</span></span></span>
   </div>
 </div>
 <div class="hud-right" id="hudRight" hidden>
@@ -272,9 +279,9 @@ body.mung #jumpBtn{opacity:0!important;pointer-events:none!important}
     <p id="weatherNote">날씨는 관리자가 정합니다. 시간대는 한국 시간에 맞춰 자동으로 바뀝니다.</p>
     <button class="fwtest" id="fwTest" hidden>불꽃놀이 미리보기 (나만 보기)</button>
     <div id="roomBox" hidden>
-      <h3>방</h3>
+      <h3>한강공원</h3>
       <p id="roomLine"></p>
-      <div class="room-row"><button class="btn" id="roomInvite">🔗 이 방 초대 링크 복사</button><select id="roomPick" aria-label="다른 방으로 이동"></select></div>
+      <div class="room-row"><button class="btn" id="roomInvite">🔗 초대 링크 복사</button><select id="roomPick" aria-label="다른 공원으로 이동"></select></div>
     </div>
     <h3>화질</h3>
     <div class="seg" id="qualitySeg"><button data-q="auto">자동</button><button data-q="high">높음</button><button data-q="low">낮음</button></div>
@@ -352,6 +359,10 @@ body.mung #jumpBtn{opacity:0!important;pointer-events:none!important}
         <button type="button" class="choice" data-g="f" aria-pressed="false">
           <svg viewBox="0 0 48 48"><path d="M11 20c0-9 6-13 13-13s13 4 13 13v14H11z" fill="#4a3226"/><circle cx="24" cy="21" r="11" fill="#f2c9a0"/><path d="M13 19c1-7 6-10 11-10s10 3 11 10c-4-3-8-4-11-6-3 2-7 3-11 6z" fill="#4a3226"/><rect x="15" y="31" width="18" height="13" rx="7" fill="#e9a46b"/></svg>여자</button>
       </div>
+    </div>
+    <div class="field" id="parkField" hidden><span>어느 한강으로 갈까요</span>
+      <div class="parks" id="parkList"></div>
+      <button type="button" class="park-refresh" id="parkRefresh">↻ 인원 새로고침</button>
     </div>
     <p class="note">용돈은 이 기기·브라우저에 저장돼요. 다른 기기나 시크릿 창에서는 따로 시작해요.</p>
     <p class="err" id="err"></p>
@@ -556,8 +567,9 @@ window.HANGANG_CONFIG = {
   /* ---------- 방 나누기: 한 방 20명, 꽉 차면 다음 방 (무료 플랜 동시 접속 200명 = 방 10개) ---------- */
   const ROOM_CAP = CFG.roomCap || 20, ROOM_MAX = 10, BASE = CFG.roomName || "hangang-dotjari";
   const chanName = n => n === 1 ? BASE : BASE + "-" + n; // 1번 방은 예전 이름 그대로라 옛 버전 사용자와도 만남
+  const PARKS = ["여의도", "반포", "뚝섬", "잠실", "망원", "이촌", "광나루", "난지", "잠원", "양화"]; // 방 이름 = 한강공원 이름
   const askedRoom = (() => { const n = parseInt(new URLSearchParams(location.search).get("room"), 10); return n >= 1 && n <= ROOM_MAX ? n : 0; })();
-  let channel = null, roomNo = 0, movedFrom = 0;
+  let channel = null, roomNo = 0, movedFrom = 0, myName = "";
 
   /* ---------- 연결 상태 표시 ---------- */
   let netPill = null;
@@ -610,7 +622,7 @@ window.HANGANG_CONFIG = {
         if (decided) return; decided = true;
         if (full) { try { sb.removeChannel(ch); } catch (e) {} resolve(false); return; }
         channel = ch; roomNo = n; everJoined = true;
-        ch.track({ at: Date.now() }).then(() => { subscribed = true; needFull = true; queueSend(true); schedule(); netNote(""); });
+        ch.track({ at: Date.now(), n: myName }).then(() => { subscribed = true; needFull = true; queueSend(true); schedule(); netNote(""); });
         resolve(true);
       };
       ch.on("presence", { event: "sync" }, () => {
@@ -640,7 +652,7 @@ window.HANGANG_CONFIG = {
       ch.subscribe((status, err) => {
         if (status === "SUBSCRIBED") {
           if (!decided) setTimeout(() => decide(Object.keys(ch.presenceState()).filter(id => id !== myId).length >= ROOM_CAP), 1500); // 빈 방이면 sync가 늦게 옴
-          else if (ch === channel) { ch.track({ at: Date.now() }).then(() => { subscribed = true; needFull = true; queueSend(true); netNote(""); }); }
+          else if (ch === channel) { ch.track({ at: Date.now(), n: myName }).then(() => { subscribed = true; needFull = true; queueSend(true); netNote(""); }); }
         } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
           const msg = String((err && err.message) || "");
           if (!decided) { if (/too_many|connections/i.test(msg)) { decided = true; resolve("busy"); } return; }
@@ -650,15 +662,32 @@ window.HANGANG_CONFIG = {
     });
   }
   const weatherListeners = [];
-  (async () => {
-    const order = askedRoom ? [askedRoom].concat([...Array(ROOM_MAX).keys()].map(i => i + 1).filter(n => n !== askedRoom)) : [...Array(ROOM_MAX).keys()].map(i => i + 1);
-    for (const n of order) {
+  // 입장 전: 모든 공원을 잠깐 들여다보고 인원과 이름만 세고 나옴 (내 자리는 차지하지 않음)
+  function peek(n) {
+    return new Promise(resolve => {
+      const ch = sb.channel(chanName(n), { config: { presence: { key: "peek-" + myId + "-" + n } } });
+      let done = false;
+      const finish = () => { if (done) return; done = true; const st = ch.presenceState(), names = [];
+        Object.values(st).forEach(m => { const nm = m && m[0] && m[0].n; if (typeof nm === "string" && nm) names.push(nm.slice(0, 10)); });
+        try { sb.removeChannel(ch); } catch (e) {} resolve({ no: n, name: PARKS[n - 1], n: Object.keys(st).length, names }); };
+      ch.on("presence", { event: "sync" }, () => setTimeout(finish, 150));
+      ch.subscribe(status => { if (status === "SUBSCRIBED") setTimeout(finish, 1500); else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") finish(); });
+      setTimeout(finish, 4000);
+    });
+  }
+  let joining = null;
+  async function join(n, name) {
+    if (channel) return true;
+    if (joining) return joining;
+    myName = String(name || "").slice(0, 10);
+    joining = (async () => {
       const ok = await joinRoom(n);
-      if (ok === true) { if (askedRoom && n !== askedRoom) movedFrom = askedRoom; return; }
-      if (ok === "busy") break;
-    }
-    netNote("지금 한강이 꽉 찼어요. 조금 뒤에 다시 들어와 주세요 🙏");
-  })();
+      joining = null;
+      if (ok === "busy") { netNote("지금 한강에 사람이 아주 많아요. 조금 뒤에 다시 들어와 주세요 🙏"); return false; }
+      return ok === true;
+    })();
+    return joining;
+  }
   addEventListener("pagehide", () => { try { if (channel) { channel.untrack(); sb.removeChannel(channel); } } catch (e) {} });
   addEventListener("online", () => { if (channel && !subscribed) netNote("📶 다시 연결하는 중…"); });
 
@@ -674,7 +703,9 @@ window.HANGANG_CONFIG = {
     peers() { return []; },
     connected() { return subscribed; },
     // 방 정보: 몇 번 방인지, 정원, 다른 방 주소
-    info() { return { no: roomNo, cap: ROOM_CAP, max: ROOM_MAX, movedFrom, link: n => location.origin + location.pathname + "?room=" + n }; },
+    info() { return { no: roomNo, name: PARKS[roomNo - 1] || "", parks: PARKS, cap: ROOM_CAP, max: ROOM_MAX, asked: askedRoom, movedFrom, link: n => location.origin + location.pathname + "?room=" + n }; },
+    lobby() { return Promise.all(PARKS.map((_, i) => peek(i + 1))); },
+    join,
     async leave() { subscribed = false; try { await channel.untrack(); } catch (e) {} try { sb.removeChannel(channel); } catch (e) {} }
   };
 
@@ -749,7 +780,7 @@ window.HANGANG_CONFIG = {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
-const APP_VERSION = "2026.11.05b", UPDATES = [{"v": "2026.11.05b", "date": "11월 5일", "items": ["사람이 많아져도 끊기지 않게: 한 방에 20명까지 들어가고, 꽉 차면 다음 방(최대 10개)으로 자동 입장해요", "설정 → 방에서 지금 몇 번 방인지 보고, 초대 링크를 복사하거나 다른 방으로 옮길 수 있어요", "다른 사람 움직임이 훨씬 부드러워졌어요. 사람이 많을수록 데이터를 아껴 보내요", "연결이 잠깐 끊겨도 화면이 멈추지 않고 '다시 연결하는 중' 표시 후 이어져요", "설정 → 화질: 자동(휴대폰 성능에 맞춰 조절)·높음·낮음을 고를 수 있어요"]}, {"v": "2026.11.05", "date": "11월 5일", "items": ["피크닉 테이블 의자에 앉아 치킨을 먹으면 치킨 상자가 바닥이 아니라 테이블 위에 놓여요"]}, {"v": "2026.11.04d", "date": "11월 4일", "items": ["점프가 생겼어요! PC는 Space, 모바일은 오른쪽 아래 '⤴ 점프' 버튼을 눌러요", "대교 난간 옆에서 점프해도 떨어지지 않아요 (뛰어내리고 싶으면 난간에 기대서 다이빙!)"]}, {"v": "2026.11.04c", "date": "11월 4일", "items": ["모바일 사진 화면을 세로 화면에 맞게 다시 만들었어요. 큰 '닫기'·'📥 사진 저장' 버튼이 항상 보이고, 사진 바깥을 눌러도 닫혀요", "휴대폰에서 '사진 저장'을 누르고 '이미지 저장'을 고르면 사진 앱에 바로 들어가요", "치킨 나눠 먹기: 치킨을 먹는 중에 근처 사람에게 한 조각씩 나눠 줄 수 있어요 (최대 3명, 한 번 줄 때마다 내 치킨이 20초 줄어요)", "나눠 받은 치킨을 세 입 먹으면 \"너무 맛있어~!\" 하고 얼굴을 파묻어요. 양념치킨이면 볼에 양념이 묻어요", "편의점과 치킨 배달에 양념치킨이 생겼어요", "동물 레이스: 동물마다 빠르기·가속·코너링·지구력이 달라요. 적토마는 박자를 5번 맞추면 🔥불꽃 질주, 유니콘은 바퀴마다 🌈무지개 질주를 해요"]}, {"v": "2026.11.04b", "date": "11월 4일", "items": ["두 번째 대교 동쪽에 '한강 동물 레이스' 서킷이 생겼어요. 헤어핀·S자·시케인이 있는 코스를 3바퀴 돌아요 (2~4명, 판돈 500~2,000원)", "출발하면 동물 11종 중 하나가 랜덤으로 공짜 배정돼요. 얼룩말·적토마는 가끔, 유니콘은 아주 드물게 나와요. 빠르기는 모두 같아요", "Space·W(모바일은 🥕 버튼)를 박자 맞춰 누르면 달려요. 너무 급하게 누르면 지쳐요. 코너 안쪽이 더 빨라요", "돈이 1,000원 아래로 떨어지면 감정 표현에 '용돈 구걸'이 생겨요. 근처 사람이 500~2,000원을 깡통에 넣어 줄 수 있어요 (주기 하루 3,000원, 받기 하루 5,000원까지)"]}, {"v": "2026.11.04", "date": "11월 4일", "items": ["새 춤 3가지: 공중 미끄럼 걸음, 엄지 흔들기 응원, 손 탑 쌓기 (말하기 → 춤추기)", "엄지 흔들기 응원과 손 탑 쌓기는 앉아서도 출 수 있어요", "달리기 경주 출발 카운트를 3·2·1로 맞췄어요"]}, {"v": "2026.11.03g", "date": "11월 3일", "items": ["치킨이 훨씬 커졌어요. 앉아서 먹으면 앞에 치킨 상자를 놓고 닭다리를 들고 먹어요", "치킨은 2분 동안 천천히 먹어요. 먹는 중에도 짠이나 감정 표현을 할 수 있어요", "김은 라면과 치킨에서만 모락모락 나요"]}, {"v": "2026.11.03f", "date": "11월 3일", "items": ["낚시 대결을 최대 4명까지 함께할 수 있어요. 낚시 창에서 실시간 순위를 볼 수 있어요"]}, {"v": "2026.11.03e", "date": "11월 3일", "items": ["아주 드물게 유리병 편지·지갑·금반지·보물상자·아기 고래가 낚여요. 누가 낚으면 모두에게 알려 줘요", "지갑은 주인에게 돌려주면 사례금을 받아요. 돈을 주는 보물은 하루 한 번씩만 보상이 있어요", "낚싯대를 빌린 채로 달리기·자전거·먹기 같은 다른 활동도 할 수 있어요. 안 쓸 때는 등에 메고 다녀요"]}, {"v": "2026.11.03d", "date": "11월 3일", "items": ["낚싯대를 휘둘러 던질 때마다 찌가 날아가는 거리·방향·높이가 조금씩 달라요", "찌가 떨어진 자리에 물결이 퍼지고, 낚은 물고기는 낚싯줄 끝에 매달려 올라와요"]}, {"v": "2026.11.03c", "date": "11월 3일", "items": ["낚시 손맛이 바뀌었어요: 입질이 오면 바늘이 초록 칸에 왔을 때 눌러서 2번 맞추면 낚여요", "대교 난간에 기대어 강바람을 쐬고, 다이빙도 할 수 있어요", "낚시 데크에서 1:1 낚시 대결(3분 점수전, 이긴 사람 80%)을 열 수 있어요", "오리배 경주가 생겼어요: 2~3팀이 빨간 깃발 부표를 돌아와요. 둘이 A·D로 같이 페달을 밟을수록 빨라요"]}, {"v": "2026.11.03b", "date": "11월 3일", "items": ["공원 서쪽 끝에 '한강 달리기 대회' 트랙이 생겼어요. 2~4명이 판돈(500~2,000원)을 걸고 달려요", "A(왼발)·D(오른발)를 번갈아 눌러 달려요. 같은 발을 두 번 누르면 휘청! 휴대폰은 화면 버튼으로 달려요", "1등이 가장 많이 가져가고, 꼴찌도 조금은 돌려받아요"]}];
+const APP_VERSION = "2026.11.05c", UPDATES = [{"v": "2026.11.05c", "date": "11월 5일", "items": ["입장할 때 갈 한강공원을 고를 수 있어요: 여의도·반포·뚝섬·잠실·망원 등 10곳, 공원마다 20명까지", "공원마다 지금 몇 명 있는지, 누가 있는지 보고 친구가 있는 곳으로 갈 수 있어요. 적당히 붐비는 곳을 '추천'해 드려요", "설정 → 한강공원에서 초대 링크를 복사하거나 다른 공원으로 옮길 수 있어요"]}, {"v": "2026.11.05b", "date": "11월 5일", "items": ["사람이 많아져도 끊기지 않게: 한 방에 20명까지 들어가고, 꽉 차면 다음 방(최대 10개)으로 자동 입장해요", "설정 → 방에서 지금 몇 번 방인지 보고, 초대 링크를 복사하거나 다른 방으로 옮길 수 있어요", "다른 사람 움직임이 훨씬 부드러워졌어요. 사람이 많을수록 데이터를 아껴 보내요", "연결이 잠깐 끊겨도 화면이 멈추지 않고 '다시 연결하는 중' 표시 후 이어져요", "설정 → 화질: 자동(휴대폰 성능에 맞춰 조절)·높음·낮음을 고를 수 있어요"]}, {"v": "2026.11.05", "date": "11월 5일", "items": ["피크닉 테이블 의자에 앉아 치킨을 먹으면 치킨 상자가 바닥이 아니라 테이블 위에 놓여요"]}, {"v": "2026.11.04d", "date": "11월 4일", "items": ["점프가 생겼어요! PC는 Space, 모바일은 오른쪽 아래 '⤴ 점프' 버튼을 눌러요", "대교 난간 옆에서 점프해도 떨어지지 않아요 (뛰어내리고 싶으면 난간에 기대서 다이빙!)"]}, {"v": "2026.11.04c", "date": "11월 4일", "items": ["모바일 사진 화면을 세로 화면에 맞게 다시 만들었어요. 큰 '닫기'·'📥 사진 저장' 버튼이 항상 보이고, 사진 바깥을 눌러도 닫혀요", "휴대폰에서 '사진 저장'을 누르고 '이미지 저장'을 고르면 사진 앱에 바로 들어가요", "치킨 나눠 먹기: 치킨을 먹는 중에 근처 사람에게 한 조각씩 나눠 줄 수 있어요 (최대 3명, 한 번 줄 때마다 내 치킨이 20초 줄어요)", "나눠 받은 치킨을 세 입 먹으면 \"너무 맛있어~!\" 하고 얼굴을 파묻어요. 양념치킨이면 볼에 양념이 묻어요", "편의점과 치킨 배달에 양념치킨이 생겼어요", "동물 레이스: 동물마다 빠르기·가속·코너링·지구력이 달라요. 적토마는 박자를 5번 맞추면 🔥불꽃 질주, 유니콘은 바퀴마다 🌈무지개 질주를 해요"]}, {"v": "2026.11.04b", "date": "11월 4일", "items": ["두 번째 대교 동쪽에 '한강 동물 레이스' 서킷이 생겼어요. 헤어핀·S자·시케인이 있는 코스를 3바퀴 돌아요 (2~4명, 판돈 500~2,000원)", "출발하면 동물 11종 중 하나가 랜덤으로 공짜 배정돼요. 얼룩말·적토마는 가끔, 유니콘은 아주 드물게 나와요. 빠르기는 모두 같아요", "Space·W(모바일은 🥕 버튼)를 박자 맞춰 누르면 달려요. 너무 급하게 누르면 지쳐요. 코너 안쪽이 더 빨라요", "돈이 1,000원 아래로 떨어지면 감정 표현에 '용돈 구걸'이 생겨요. 근처 사람이 500~2,000원을 깡통에 넣어 줄 수 있어요 (주기 하루 3,000원, 받기 하루 5,000원까지)"]}, {"v": "2026.11.04", "date": "11월 4일", "items": ["새 춤 3가지: 공중 미끄럼 걸음, 엄지 흔들기 응원, 손 탑 쌓기 (말하기 → 춤추기)", "엄지 흔들기 응원과 손 탑 쌓기는 앉아서도 출 수 있어요", "달리기 경주 출발 카운트를 3·2·1로 맞췄어요"]}, {"v": "2026.11.03g", "date": "11월 3일", "items": ["치킨이 훨씬 커졌어요. 앉아서 먹으면 앞에 치킨 상자를 놓고 닭다리를 들고 먹어요", "치킨은 2분 동안 천천히 먹어요. 먹는 중에도 짠이나 감정 표현을 할 수 있어요", "김은 라면과 치킨에서만 모락모락 나요"]}, {"v": "2026.11.03f", "date": "11월 3일", "items": ["낚시 대결을 최대 4명까지 함께할 수 있어요. 낚시 창에서 실시간 순위를 볼 수 있어요"]}, {"v": "2026.11.03e", "date": "11월 3일", "items": ["아주 드물게 유리병 편지·지갑·금반지·보물상자·아기 고래가 낚여요. 누가 낚으면 모두에게 알려 줘요", "지갑은 주인에게 돌려주면 사례금을 받아요. 돈을 주는 보물은 하루 한 번씩만 보상이 있어요", "낚싯대를 빌린 채로 달리기·자전거·먹기 같은 다른 활동도 할 수 있어요. 안 쓸 때는 등에 메고 다녀요"]}, {"v": "2026.11.03d", "date": "11월 3일", "items": ["낚싯대를 휘둘러 던질 때마다 찌가 날아가는 거리·방향·높이가 조금씩 달라요", "찌가 떨어진 자리에 물결이 퍼지고, 낚은 물고기는 낚싯줄 끝에 매달려 올라와요"]}, {"v": "2026.11.03c", "date": "11월 3일", "items": ["낚시 손맛이 바뀌었어요: 입질이 오면 바늘이 초록 칸에 왔을 때 눌러서 2번 맞추면 낚여요", "대교 난간에 기대어 강바람을 쐬고, 다이빙도 할 수 있어요", "낚시 데크에서 1:1 낚시 대결(3분 점수전, 이긴 사람 80%)을 열 수 있어요", "오리배 경주가 생겼어요: 2~3팀이 빨간 깃발 부표를 돌아와요. 둘이 A·D로 같이 페달을 밟을수록 빨라요"]}];
 "use strict";
 const $ = id => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -2426,7 +2457,8 @@ function syncPeers(peers) {
   if (!started) {
     const info = room && typeof room.info === "function" ? room.info() : null;
     $("capLine").hidden = false;
-    $("capLine").textContent = info && info.no ? `${info.no}번 방 · 지금 ${others.size}명이 강가에 있습니다 · 방마다 최대 ${info.cap}명` : others.size >= MAX_PEOPLE ? `지금 ${MAX_PEOPLE}명이 모두 와 있어서 자리가 없습니다` : `지금 ${others.size}명이 강가에 있습니다 · 최대 ${MAX_PEOPLE}명`;
+    if (info && !info.no) $("capLine").hidden = !lobbyLine; // before picking a park the lobby fills this line
+    $("capLine").textContent = info && !info.no ? lobbyLine : info && info.no ? `${info.name} 한강 · 지금 ${others.size}명이 강가에 있습니다` : others.size >= MAX_PEOPLE ? `지금 ${MAX_PEOPLE}명이 모두 와 있어서 자리가 없습니다` : `지금 ${others.size}명이 강가에 있습니다 · 최대 ${MAX_PEOPLE}명`;
   }
 }
 (async () => {
@@ -2923,13 +2955,22 @@ $("enterBtn").addEventListener("click", () => {
   $("gate1").hidden = true; $("gate2").hidden = false;
   try { const n = localStorage.getItem("hangang-name"); if (n) $("nameInput").value = n; const g = localStorage.getItem("hangang-g"); if (g === "f" || g === "m") { me.g = g; pressG(); } } catch (e) {}
   if (!touchy) setTimeout(() => $("nameInput").focus(), 50);
+  loadParks();
 });
 $("genderChoices").addEventListener("click", e => { const b = e.target.closest(".choice"); if (!b) return; me.g = b.dataset.g; pressG(); });
-$("joinForm").addEventListener("submit", e => {
+let joiningNow = false;
+$("joinForm").addEventListener("submit", async e => {
   e.preventDefault();
+  if (joiningNow) return;
   const n = $("nameInput").value.replace(/[\u0000-\u001f\u200b-\u200f\u202a-\u202e]/g, "").trim();
   if (!n) { $("err").textContent = "이름을 한 글자 이상 적어주세요."; $("nameInput").focus(); return; }
-  if (others.size >= MAX_PEOPLE) { $("err").textContent = `지금 ${MAX_PEOPLE}명이 모두 와 있습니다. 조금 뒤에 다시 와 주세요.`; return; }
+  if (room && typeof room.join === "function") { // public build: join the park picked in the list
+    if (!parkSel) { $("err").textContent = "갈 한강공원을 골라 주세요."; return; }
+    joiningNow = true; const go = $("joinForm").querySelector(".go"), label = go.textContent; go.disabled = true; go.textContent = "들어가는 중…";
+    const ok = await room.join(parkSel, n.slice(0, 10));
+    joiningNow = false; go.disabled = false; go.textContent = label;
+    if (!ok) { $("err").textContent = "방금 그곳이 꽉 찼어요. 다른 공원을 골라 주세요."; loadParks(true); return; }
+  } else if (others.size >= MAX_PEOPLE) { $("err").textContent = `지금 ${MAX_PEOPLE}명이 모두 와 있습니다. 조금 뒤에 다시 와 주세요.`; return; }
   me.name = n.slice(0, 10);
   try { localStorage.setItem("hangang-name", me.name); localStorage.setItem("hangang-g", me.g); } catch (e) {}
   me.x = 4 + (Math.random() - 0.5) * 16; me.z = 30.5; me.r = 0; me.st = "walk"; me.level = "ground"; me.y = 0;
@@ -2938,6 +2979,7 @@ $("joinForm").addEventListener("submit", e => {
   $("gate2").hidden = true; $("hudLeft").hidden = false; $("hudRight").hidden = false; $("actions").hidden = false;
   if (touchy) $("joy").hidden = false; else { $("keys").hidden = false; setTimeout(() => { $("keys").hidden = true; }, 15000); }
   publish(true); refreshActions(); $("count").textContent = String(others.size + 1); storeOnJoin(); checkNews();
+  { const info = room && typeof room.info === "function" ? room.info() : null; if (info && info.name) { $("parkLabel").textContent = info.name + " 한강"; toast(`🌉 ${info.name} 한강공원에 오신 걸 환영해요`); } }
   toast(touchy ? "패드로 걸어가서 마음에 드는 잔디에 돗자리를 펴세요" : "WASD로 걸어가서 마음에 드는 잔디에 돗자리를 펴세요");
 });
 $("exitBtn").addEventListener("click", () => { $("leaveModal").hidden = false; $("stayBtn").focus(); });
@@ -6137,32 +6179,79 @@ function updateJump() {
   const btn = $("jumpBtn"), show = touchy && started && me.st === "walk" && !boarded && !inRaceNow() && !circLive();
   if (btn.hidden === show) btn.hidden = !show;
 }
-/* ================= 방 정보 · 화질 자동 조절 ================= */
-/* rooms (public build only: the Supabase glue gives room.info) */
-let roomToldMove = false;
+/* ================= 공원(방) 고르기 · 화질 자동 조절 ================= */
+/* parks (public build only: the Supabase glue gives room.info / lobby / join) */
+let parkSel = 0, parkData = null, parkAt = 0, lobbyLine = "";
+const hasLobby = () => room && typeof room.lobby === "function";
+function parkStatus(n, cap) { return n >= cap ? ["꽉 찼어요", "#8a8f98"] : n >= cap * .7 ? ["붐벼요", "#f29a4b"] : n > 0 ? ["여유", "#5cc58a"] : ["조용해요", "#7fa7c9"]; }
+function pickRecommended(list, cap, asked) {
+  if (asked) { const a = list.find(p => p.no === asked); if (a && a.n < cap) return a.no; }
+  const open = list.filter(p => p.n > 0 && p.n < cap - 2); // some company, still room to spare
+  if (open.length) return open.sort((a, b) => b.n - a.n)[0].no;
+  const any = list.filter(p => p.n < cap).sort((a, b) => b.n - a.n)[0];
+  return any ? any.no : 0;
+}
+async function loadParks(force) {
+  if (!hasLobby()) { $("parkField").hidden = true; return; }
+  $("parkField").hidden = false;
+  if (!parkData || force || Date.now() - parkAt > 10000) {
+    if (!parkData) $("parkList").textContent = "공원마다 몇 명 있는지 보는 중…";
+    parkData = await room.lobby(); parkAt = Date.now();
+  }
+  const info = room.info(), cap = info.cap, list = parkData;
+  const rec = pickRecommended(list, cap, info.asked);
+  if (!parkSel || (list.find(p => p.no === parkSel) || { n: cap }).n >= cap) parkSel = rec;
+  // parks with people, plus one quiet one (so nobody spreads out into ten empty rooms)
+  const shown = list.filter(p => p.n > 0); const quiet = list.find(p => p.n === 0); if (quiet) shown.push(quiet);
+  if (info.asked && !shown.some(p => p.no === info.asked)) shown.push(list[info.asked - 1]);
+  shown.sort((a, b) => a.no - b.no);
+  const box = $("parkList"); box.textContent = "";
+  shown.forEach(p => {
+    const [label, col] = parkStatus(p.n, cap), b = document.createElement("button");
+    b.type = "button"; b.className = "park"; b.dataset.no = p.no; b.disabled = p.n >= cap; b.setAttribute("aria-pressed", String(p.no === parkSel));
+    const nm = document.createElement("b"); nm.textContent = p.name; if (p.no === rec) { const t = document.createElement("span"); t.className = "tag"; t.textContent = "추천"; nm.appendChild(t); }
+    const bar = document.createElement("span"); bar.className = "bar"; const fill = document.createElement("i"); fill.style.width = Math.max(3, p.n / cap * 100) + "%"; fill.style.background = col; bar.appendChild(fill);
+    const cnt = document.createElement("span"); cnt.className = "cnt"; cnt.textContent = `${p.n}/${cap} · ${label}`;
+    b.append(nm, bar, cnt);
+    if (p.names.length) { const who = document.createElement("span"); who.className = "who"; who.textContent = p.names.slice(0, 3).join(", ") + (p.names.length > 3 ? ` 외 ${p.names.length - 3}명` : ""); b.appendChild(who); }
+    box.appendChild(b);
+  });
+  const total = list.reduce((s, p) => s + p.n, 0);
+  lobbyLine = total ? `지금 한강 전체에 ${total}명 · ` + list.filter(p => p.n).map(p => `${p.name} ${p.n}`).join(", ") : "지금은 한강이 조용해요. 첫 손님이 되어 보세요";
+  if (!started) { $("capLine").hidden = false; $("capLine").textContent = lobbyLine; }
+}
+$("parkList").addEventListener("click", e => {
+  const b = e.target.closest(".park"); if (!b || b.disabled) return; parkSel = +b.dataset.no;
+  [...$("parkList").children].forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+});
+$("parkRefresh").addEventListener("click", () => loadParks(true));
+setInterval(() => { if (!started && !$("gate2").hidden) loadParks(true); }, 15000);
+// the front page shows how many people are out, without taking a spot anywhere
+setTimeout(() => { if (hasLobby() && !started) loadParks(); }, 600);
+
+/* in-game: which park, invite link, moving to another park */
 function updateRoomBox() {
   const info = room && typeof room.info === "function" ? room.info() : null;
   if (!info || !info.no) { $("roomBox").hidden = true; return; }
   $("roomBox").hidden = false;
   const n = others.size + 1;
-  $("roomLine").textContent = `지금 ${info.no}번 방이에요 · ${n}/${info.cap}명. 친구와 같은 방에서 만나려면 초대 링크를 보내 주세요.`;
+  $("roomLine").textContent = `지금 ${info.name} 한강에 있어요 · ${n}/${info.cap}명. 친구와 같은 곳에서 만나려면 초대 링크를 보내 주세요.`;
   $("countOf").textContent = "/" + info.cap;
   const pick = $("roomPick");
   if (pick.options.length !== info.max + 1) {
-    pick.textContent = ""; const head = document.createElement("option"); head.value = ""; head.textContent = "다른 방으로 이동"; pick.appendChild(head);
-    for (let i = 1; i <= info.max; i++) { const o = document.createElement("option"); o.value = String(i); o.textContent = `${i}번 방${i === info.no ? " (지금)" : ""}`; pick.appendChild(o); }
+    pick.textContent = ""; const head = document.createElement("option"); head.value = ""; head.textContent = "다른 공원으로 이동"; pick.appendChild(head);
+    info.parks.forEach((nm, i) => { const o = document.createElement("option"); o.value = String(i + 1); o.textContent = nm + (i + 1 === info.no ? " (지금)" : ""); pick.appendChild(o); });
   }
-  if (started && info.movedFrom && !roomToldMove) { roomToldMove = true; toast(`${info.movedFrom}번 방이 꽉 차서 ${info.no}번 방으로 왔어요`); }
 }
 $("roomPick").addEventListener("change", e => {
   const n = +e.target.value, info = room && room.info ? room.info() : null; e.target.value = "";
   if (!info || !n || n === info.no) return;
-  location.href = info.link(n); // a fresh page joins that room (it falls back to another one if it is full)
+  location.href = info.link(n); // a fresh page with that park picked in the list
 });
 $("roomInvite").addEventListener("click", async () => {
   const info = room && room.info ? room.info() : null; if (!info) return;
   const url = info.link(info.no);
-  try { await navigator.clipboard.writeText(url); toast("초대 링크를 복사했어요. 친구에게 보내 주세요!"); }
+  try { await navigator.clipboard.writeText(url); toast(`${info.name} 한강 초대 링크를 복사했어요. 친구에게 보내 주세요!`); }
   catch (e) { prompt("이 주소를 복사해서 보내 주세요", url); }
 });
 setInterval(updateRoomBox, 2000);
