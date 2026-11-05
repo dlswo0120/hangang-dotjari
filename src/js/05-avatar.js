@@ -179,7 +179,8 @@ function updateAvatar(av, dt, t, o = {}) {
   if (boxEat && (!u.chBox || u.chBox.userData.sauce !== sauce)) { if (u.chBox) av.remove(u.chBox); u.chBox = makeChickenBox(sauce); u.chBox.userData.sauce = sauce; av.add(u.chBox); }
   if (u.chBox) {
     u.chBox.visible = boxEat;
-    if (boxEat) { u.chBox.position.set(0, .02, -.75); const left = 1 - Math.min(1, o.eatT / eatTime(realKind)); u.chBox.userData.pieces.forEach((p, i) => { p.visible = i < Math.ceil(left * 10); }); }
+    if (boxEat) { // on a stool the picnic table is in front (top at .54), anywhere else the box sits on the ground
+      const atTable = u.pose === "stool"; u.chBox.position.set(0, atTable ? .545 : .02, atTable ? -.52 : -.75); u.chBox.scale.setScalar(atTable ? 1.05 : 1.5); const left = 1 - Math.min(1, o.eatT / eatTime(realKind)); u.chBox.userData.pieces.forEach((p, i) => { p.visible = i < Math.ceil(left * 10); }); }
   }
   if (holding && (!u.bowl || u.heldKind !== holdKind)) {
     if (u.bowl) u.torso.remove(u.bowl);
