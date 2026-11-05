@@ -233,6 +233,10 @@ body.mung #jumpBtn{opacity:0!important;pointer-events:none!important}
 .race-btns button{pointer-events:auto;width:38vw;max-width:170px;height:96px;border-radius:24px;border:0;font-size:20px;font-weight:800;background:rgba(193,84,63,.92);color:#fff;touch-action:manipulation;user-select:none;-webkit-user-select:none}
 .race-btns button:active{transform:scale(.95)}
 .race-btns.whip{justify-content:flex-end}.race-btns.whip button{background:rgba(42,157,143,.94)}
+.bite-alert{text-align:center;font-size:20px;font-weight:900;color:#ff6b5b;letter-spacing:.04em;animation:alertShake .35s ease-in-out infinite alternate}
+.bite-alert.now{font-size:44px;color:#ffe08a;text-shadow:0 0 18px rgba(255,200,80,.7);animation:alertPop .5s ease-out infinite alternate}
+@keyframes alertShake{from{transform:translateX(-3px) rotate(-1deg)}to{transform:translateX(3px) rotate(1deg)}}
+@keyframes alertPop{from{transform:scale(.9)}to{transform:scale(1.15)}}
 .reel{position:relative;height:26px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden}
 .reel .zone{position:absolute;top:0;bottom:0;background:#4caf50;opacity:.85;border-radius:6px}
 .reel .needle{position:absolute;top:-2px;bottom:-2px;width:5px;margin-left:-2px;background:#fff;box-shadow:0 0 6px rgba(0,0,0,.5)}
@@ -386,6 +390,7 @@ body.mung #jumpBtn{opacity:0!important;pointer-events:none!important}
     <p id="fishMsg"></p>
     <div class="fish-power" id="fishPower"><div id="fishPowerBar"></div></div>
     <div class="fish-card" id="fishCard" hidden><i id="fishIcon"></i><div><b id="fishName"></b><span id="fishRare"></span></div></div>
+    <div class="bite-alert" id="biteAlert" hidden>…!</div>
     <div class="reel" id="reel" hidden><div class="zone" id="reelZone"></div><div class="needle" id="reelNeedle"></div></div>
     <button class="fish-btn" id="fishBtn">꾹 눌러 던지기</button>
     <button class="news-ok" id="fishRelease" hidden>방생하기</button>
@@ -780,7 +785,7 @@ window.HANGANG_CONFIG = {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
-const APP_VERSION = "2026.11.05c", UPDATES = [{"v": "2026.11.05c", "date": "11월 5일", "items": ["입장할 때 갈 한강공원을 고를 수 있어요: 여의도·반포·뚝섬·잠실·망원 등 10곳, 공원마다 20명까지", "공원마다 지금 몇 명 있는지, 누가 있는지 보고 친구가 있는 곳으로 갈 수 있어요. 적당히 붐비는 곳을 '추천'해 드려요", "설정 → 한강공원에서 초대 링크를 복사하거나 다른 공원으로 옮길 수 있어요"]}, {"v": "2026.11.05b", "date": "11월 5일", "items": ["사람이 많아져도 끊기지 않게: 한 방에 20명까지 들어가고, 꽉 차면 다음 방(최대 10개)으로 자동 입장해요", "설정 → 방에서 지금 몇 번 방인지 보고, 초대 링크를 복사하거나 다른 방으로 옮길 수 있어요", "다른 사람 움직임이 훨씬 부드러워졌어요. 사람이 많을수록 데이터를 아껴 보내요", "연결이 잠깐 끊겨도 화면이 멈추지 않고 '다시 연결하는 중' 표시 후 이어져요", "설정 → 화질: 자동(휴대폰 성능에 맞춰 조절)·높음·낮음을 고를 수 있어요"]}, {"v": "2026.11.05", "date": "11월 5일", "items": ["피크닉 테이블 의자에 앉아 치킨을 먹으면 치킨 상자가 바닥이 아니라 테이블 위에 놓여요"]}, {"v": "2026.11.04d", "date": "11월 4일", "items": ["점프가 생겼어요! PC는 Space, 모바일은 오른쪽 아래 '⤴ 점프' 버튼을 눌러요", "대교 난간 옆에서 점프해도 떨어지지 않아요 (뛰어내리고 싶으면 난간에 기대서 다이빙!)"]}, {"v": "2026.11.04c", "date": "11월 4일", "items": ["모바일 사진 화면을 세로 화면에 맞게 다시 만들었어요. 큰 '닫기'·'📥 사진 저장' 버튼이 항상 보이고, 사진 바깥을 눌러도 닫혀요", "휴대폰에서 '사진 저장'을 누르고 '이미지 저장'을 고르면 사진 앱에 바로 들어가요", "치킨 나눠 먹기: 치킨을 먹는 중에 근처 사람에게 한 조각씩 나눠 줄 수 있어요 (최대 3명, 한 번 줄 때마다 내 치킨이 20초 줄어요)", "나눠 받은 치킨을 세 입 먹으면 \"너무 맛있어~!\" 하고 얼굴을 파묻어요. 양념치킨이면 볼에 양념이 묻어요", "편의점과 치킨 배달에 양념치킨이 생겼어요", "동물 레이스: 동물마다 빠르기·가속·코너링·지구력이 달라요. 적토마는 박자를 5번 맞추면 🔥불꽃 질주, 유니콘은 바퀴마다 🌈무지개 질주를 해요"]}, {"v": "2026.11.04b", "date": "11월 4일", "items": ["두 번째 대교 동쪽에 '한강 동물 레이스' 서킷이 생겼어요. 헤어핀·S자·시케인이 있는 코스를 3바퀴 돌아요 (2~4명, 판돈 500~2,000원)", "출발하면 동물 11종 중 하나가 랜덤으로 공짜 배정돼요. 얼룩말·적토마는 가끔, 유니콘은 아주 드물게 나와요. 빠르기는 모두 같아요", "Space·W(모바일은 🥕 버튼)를 박자 맞춰 누르면 달려요. 너무 급하게 누르면 지쳐요. 코너 안쪽이 더 빨라요", "돈이 1,000원 아래로 떨어지면 감정 표현에 '용돈 구걸'이 생겨요. 근처 사람이 500~2,000원을 깡통에 넣어 줄 수 있어요 (주기 하루 3,000원, 받기 하루 5,000원까지)"]}, {"v": "2026.11.04", "date": "11월 4일", "items": ["새 춤 3가지: 공중 미끄럼 걸음, 엄지 흔들기 응원, 손 탑 쌓기 (말하기 → 춤추기)", "엄지 흔들기 응원과 손 탑 쌓기는 앉아서도 출 수 있어요", "달리기 경주 출발 카운트를 3·2·1로 맞췄어요"]}, {"v": "2026.11.03g", "date": "11월 3일", "items": ["치킨이 훨씬 커졌어요. 앉아서 먹으면 앞에 치킨 상자를 놓고 닭다리를 들고 먹어요", "치킨은 2분 동안 천천히 먹어요. 먹는 중에도 짠이나 감정 표현을 할 수 있어요", "김은 라면과 치킨에서만 모락모락 나요"]}, {"v": "2026.11.03f", "date": "11월 3일", "items": ["낚시 대결을 최대 4명까지 함께할 수 있어요. 낚시 창에서 실시간 순위를 볼 수 있어요"]}, {"v": "2026.11.03e", "date": "11월 3일", "items": ["아주 드물게 유리병 편지·지갑·금반지·보물상자·아기 고래가 낚여요. 누가 낚으면 모두에게 알려 줘요", "지갑은 주인에게 돌려주면 사례금을 받아요. 돈을 주는 보물은 하루 한 번씩만 보상이 있어요", "낚싯대를 빌린 채로 달리기·자전거·먹기 같은 다른 활동도 할 수 있어요. 안 쓸 때는 등에 메고 다녀요"]}, {"v": "2026.11.03d", "date": "11월 3일", "items": ["낚싯대를 휘둘러 던질 때마다 찌가 날아가는 거리·방향·높이가 조금씩 달라요", "찌가 떨어진 자리에 물결이 퍼지고, 낚은 물고기는 낚싯줄 끝에 매달려 올라와요"]}, {"v": "2026.11.03c", "date": "11월 3일", "items": ["낚시 손맛이 바뀌었어요: 입질이 오면 바늘이 초록 칸에 왔을 때 눌러서 2번 맞추면 낚여요", "대교 난간에 기대어 강바람을 쐬고, 다이빙도 할 수 있어요", "낚시 데크에서 1:1 낚시 대결(3분 점수전, 이긴 사람 80%)을 열 수 있어요", "오리배 경주가 생겼어요: 2~3팀이 빨간 깃발 부표를 돌아와요. 둘이 A·D로 같이 페달을 밟을수록 빨라요"]}];
+const APP_VERSION = "2026.11.05d", UPDATES = [{"v": "2026.11.05d", "date": "11월 5일", "items": ["낚시에 새 친구들이 왔어요: 피라미, 블루길·배스(외래종은 수거!), 쭈꾸미, 🐙문어", "강 청소도 늘었어요: 컵라면 용기, 비닐봉지, 슬리퍼 한 짝", "깊은 곳에서 심해어가 올라와요: 🏮초롱아귀, 🎏산갈치, 🫠블롭피쉬. 멀리 던질수록, 밤일수록 잘 나와요", "문어·황금 잉어·심해어·보물이 물면 '…!'가 뜨고, 초록 칸이 좁아지고 움직여요. 3번 맞춰야 잡혀요", "잡은 것마다 짧은 설명이 붙고, 희귀한 걸 낚으면 모두에게 알려져요"]}, {"v": "2026.11.05c", "date": "11월 5일", "items": ["입장할 때 갈 한강공원을 고를 수 있어요: 여의도·반포·뚝섬·잠실·망원 등 10곳, 공원마다 20명까지", "공원마다 지금 몇 명 있는지, 누가 있는지 보고 친구가 있는 곳으로 갈 수 있어요. 적당히 붐비는 곳을 '추천'해 드려요", "설정 → 한강공원에서 초대 링크를 복사하거나 다른 공원으로 옮길 수 있어요"]}, {"v": "2026.11.05b", "date": "11월 5일", "items": ["사람이 많아져도 끊기지 않게: 한 방에 20명까지 들어가고, 꽉 차면 다음 방(최대 10개)으로 자동 입장해요", "설정 → 방에서 지금 몇 번 방인지 보고, 초대 링크를 복사하거나 다른 방으로 옮길 수 있어요", "다른 사람 움직임이 훨씬 부드러워졌어요. 사람이 많을수록 데이터를 아껴 보내요", "연결이 잠깐 끊겨도 화면이 멈추지 않고 '다시 연결하는 중' 표시 후 이어져요", "설정 → 화질: 자동(휴대폰 성능에 맞춰 조절)·높음·낮음을 고를 수 있어요"]}, {"v": "2026.11.05", "date": "11월 5일", "items": ["피크닉 테이블 의자에 앉아 치킨을 먹으면 치킨 상자가 바닥이 아니라 테이블 위에 놓여요"]}, {"v": "2026.11.04d", "date": "11월 4일", "items": ["점프가 생겼어요! PC는 Space, 모바일은 오른쪽 아래 '⤴ 점프' 버튼을 눌러요", "대교 난간 옆에서 점프해도 떨어지지 않아요 (뛰어내리고 싶으면 난간에 기대서 다이빙!)"]}, {"v": "2026.11.04c", "date": "11월 4일", "items": ["모바일 사진 화면을 세로 화면에 맞게 다시 만들었어요. 큰 '닫기'·'📥 사진 저장' 버튼이 항상 보이고, 사진 바깥을 눌러도 닫혀요", "휴대폰에서 '사진 저장'을 누르고 '이미지 저장'을 고르면 사진 앱에 바로 들어가요", "치킨 나눠 먹기: 치킨을 먹는 중에 근처 사람에게 한 조각씩 나눠 줄 수 있어요 (최대 3명, 한 번 줄 때마다 내 치킨이 20초 줄어요)", "나눠 받은 치킨을 세 입 먹으면 \"너무 맛있어~!\" 하고 얼굴을 파묻어요. 양념치킨이면 볼에 양념이 묻어요", "편의점과 치킨 배달에 양념치킨이 생겼어요", "동물 레이스: 동물마다 빠르기·가속·코너링·지구력이 달라요. 적토마는 박자를 5번 맞추면 🔥불꽃 질주, 유니콘은 바퀴마다 🌈무지개 질주를 해요"]}, {"v": "2026.11.04b", "date": "11월 4일", "items": ["두 번째 대교 동쪽에 '한강 동물 레이스' 서킷이 생겼어요. 헤어핀·S자·시케인이 있는 코스를 3바퀴 돌아요 (2~4명, 판돈 500~2,000원)", "출발하면 동물 11종 중 하나가 랜덤으로 공짜 배정돼요. 얼룩말·적토마는 가끔, 유니콘은 아주 드물게 나와요. 빠르기는 모두 같아요", "Space·W(모바일은 🥕 버튼)를 박자 맞춰 누르면 달려요. 너무 급하게 누르면 지쳐요. 코너 안쪽이 더 빨라요", "돈이 1,000원 아래로 떨어지면 감정 표현에 '용돈 구걸'이 생겨요. 근처 사람이 500~2,000원을 깡통에 넣어 줄 수 있어요 (주기 하루 3,000원, 받기 하루 5,000원까지)"]}, {"v": "2026.11.04", "date": "11월 4일", "items": ["새 춤 3가지: 공중 미끄럼 걸음, 엄지 흔들기 응원, 손 탑 쌓기 (말하기 → 춤추기)", "엄지 흔들기 응원과 손 탑 쌓기는 앉아서도 출 수 있어요", "달리기 경주 출발 카운트를 3·2·1로 맞췄어요"]}, {"v": "2026.11.03g", "date": "11월 3일", "items": ["치킨이 훨씬 커졌어요. 앉아서 먹으면 앞에 치킨 상자를 놓고 닭다리를 들고 먹어요", "치킨은 2분 동안 천천히 먹어요. 먹는 중에도 짠이나 감정 표현을 할 수 있어요", "김은 라면과 치킨에서만 모락모락 나요"]}, {"v": "2026.11.03f", "date": "11월 3일", "items": ["낚시 대결을 최대 4명까지 함께할 수 있어요. 낚시 창에서 실시간 순위를 볼 수 있어요"]}, {"v": "2026.11.03e", "date": "11월 3일", "items": ["아주 드물게 유리병 편지·지갑·금반지·보물상자·아기 고래가 낚여요. 누가 낚으면 모두에게 알려 줘요", "지갑은 주인에게 돌려주면 사례금을 받아요. 돈을 주는 보물은 하루 한 번씩만 보상이 있어요", "낚싯대를 빌린 채로 달리기·자전거·먹기 같은 다른 활동도 할 수 있어요. 안 쓸 때는 등에 메고 다녀요"]}, {"v": "2026.11.03d", "date": "11월 3일", "items": ["낚싯대를 휘둘러 던질 때마다 찌가 날아가는 거리·방향·높이가 조금씩 달라요", "찌가 떨어진 자리에 물결이 퍼지고, 낚은 물고기는 낚싯줄 끝에 매달려 올라와요"]}];
 "use strict";
 const $ = id => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -2394,7 +2399,7 @@ function cleanPresence(p) {
   if (p.rc && typeof p.rc === "object" && typeof p.rc.id === "number" && RACE_BETS.includes(p.rc.bet)) o.rc = { id: p.rc.id, bet: p.rc.bet, st: p.rc.st === "go" ? "go" : "open", go: num(p.rc.go, 0, 1e15, 0) };
   if (p.rj && typeof p.rj === "object" && typeof p.rj.h === "string" && typeof p.rj.id === "number") o.rj = { h: p.rj.h.slice(0, 80), id: p.rj.id, at: num(p.rj.at, 0, 1e15, 0) };
   if (p.rp && typeof p.rp === "object" && typeof p.rp.id === "number") o.rp = { id: p.rp.id, d: num(p.rp.d, 0, 100, 0), f: num(p.rp.f, 0, 600000, 0) };
-  if (p.fs && typeof p.fs === "object" && ["idle", "cast", "bite", "catch"].includes(p.fs.s) && typeof p.fs.at === "number") o.fs = { s: p.fs.s, at: p.fs.at, bx: num(p.fs.bx, WORLD.x0, WORLD.x1, 0), bz: num(p.fs.bz, -40, 1, -4), k: FISH_BY[p.fs.k] ? p.fs.k : null, cm: num(p.fs.cm, 0, 200, 0), ah: num(p.fs.ah, .5, 4, 1.5), ft: num(p.fs.ft, .3, 2, .6) };
+  if (p.fs && typeof p.fs === "object" && ["idle", "cast", "bite", "catch"].includes(p.fs.s) && typeof p.fs.at === "number") o.fs = { s: p.fs.s, at: p.fs.at, bx: num(p.fs.bx, WORLD.x0, WORLD.x1, 0), bz: num(p.fs.bz, -40, 1, -4), k: FISH_BY[p.fs.k] ? p.fs.k : null, cm: num(p.fs.cm, 0, 600, 0), ah: num(p.fs.ah, .5, 4, 1.5), ft: num(p.fs.ft, .3, 2, .6), x: p.fs.x === 1 ? 1 : 0 };
   o.rd = Number.isInteger(p.rd) ? clamp(p.rd, 0, 3) : 0;
   if (p.bq && typeof p.bq === "object" && typeof p.bq.at === "number") o.bq = { at: p.bq.at, q: p.bq.q === 2 ? 2 : p.bq.q === 0 ? 0 : 1 };
   o.lt = num(p.lt, 0, 1e15, 0); o.tw = num(p.tw, 0, 1e15, 0);
@@ -4726,19 +4731,32 @@ const FISH = [
   { k: "megi", name: "메기", rare: 1, w: 8, cm: [30, 75], col: 0x55504a, pay: 600 },
   { k: "junchi", name: "강준치", rare: 1, w: 8, cm: [40, 85], col: 0xc8d0d8, pay: 600 },
   { k: "sogari", name: "쏘가리", rare: 1, w: 8, cm: [20, 42], col: 0xb89040, pay: 600 },
-  { k: "gold", name: "황금 잉어", rare: 2, w: 2, cm: [55, 95], col: 0xffcf3a, pay: 3000 },
+  { k: "pirami", name: "피라미", rare: 0, w: 14, cm: [8, 16], col: 0xb8c4cc, pay: 150, desc: "작지만 반짝반짝 빛나요" },
+  { k: "bluegill", name: "블루길", rare: 0, w: 10, cm: [12, 24], col: 0x4f7a8a, pay: 300, alien: true, desc: "외래종이라 강에 돌려보내지 않고 수거해요" },
+  { k: "bass", name: "배스", rare: 0, w: 9, cm: [25, 55], col: 0x5f7a3a, pay: 300, alien: true, desc: "외래종이라 강에 돌려보내지 않고 수거해요" },
+  { k: "jjukku", name: "쭈꾸미", rare: 1, w: 4, cm: [12, 24], col: 0x9a6a7a, pay: 600, shape: "up", desc: "민물에 웬 쭈꾸미…? 누가 놓쳤나 봐요" },
+  { k: "gold", name: "황금 잉어", rare: 2, w: 2, cm: [55, 95], col: 0xffcf3a, pay: 3000, icon: "✨", ann: true },
+  { k: "octo", name: "문어", rare: 2, w: 1.4, cm: [40, 90], col: 0xd2553a, pay: 2000, icon: "🐙", ann: true, shape: "up", desc: "여덟 다리로 낚싯줄을 꽉 붙잡고 버텼어요!" },
   { k: "boot", name: "장화", rare: 3, w: 7, cm: [0, 0], col: 0x3a4a3a, pay: 100 },
   { k: "can", name: "깡통", rare: 3, w: 7, cm: [0, 0], col: 0xb0b6bc, pay: 100 },
+  { k: "cupra", name: "컵라면 용기", rare: 3, w: 5, cm: [0, 0], col: 0xf4f1ea, pay: 100, desc: "누가 라면 먹고 버렸어요… 분리수거!" },
+  { k: "bag", name: "비닐봉지", rare: 3, w: 4, cm: [0, 0], col: 0xdfe8ef, pay: 100, desc: "물고기 같았는데 비닐봉지였어요" },
+  { k: "slipper", name: "슬리퍼 한 짝", rare: 3, w: 3, cm: [0, 0], col: 0x3f7fd0, pay: 100, desc: "나머지 한 짝은 어디 갔을까요" },
+  // deep sea: rare, more likely on a long cast and at night
+  { k: "angler", name: "초롱아귀", rare: 5, w: .8, cm: [20, 45], col: 0x3a3f4a, pay: 1500, icon: "🏮", ann: true, deep: true, desc: "심해에서 초롱을 켜고 올라왔어요" },
+  { k: "oar", name: "산갈치", rare: 5, w: .5, cm: [180, 420], col: 0xd8dde4, pay: 1500, icon: "🎏", ann: true, deep: true, desc: "길고 은빛인 전설의 심해어예요" },
+  { k: "blob", name: "블롭피쉬", rare: 5, w: .6, cm: [20, 35], col: 0xf0b0b8, pay: 1500, icon: "🫠", ann: true, deep: true, shape: "up", desc: "올라오자마자 시무룩해졌어요" },
   // treasures: very rare, announced to everyone, money ones pay once a day each
-  { k: "letter", name: "유리병 편지", rare: 4, w: 1, cm: [0, 0], col: 0x9fe0d0, pay: 0, pts: 50, speed: 1.1, icon: "🍾" },
-  { k: "wallet", name: "지갑", rare: 4, w: .6, cm: [0, 0], col: 0x6b4a33, pay: 1000, pts: 100, speed: 1.2, icon: "👛" },
-  { k: "ring", name: "금반지", rare: 4, w: .3, cm: [0, 0], col: 0xffcf3a, pay: 2000, pts: 200, speed: 1.5, icon: "💍" },
-  { k: "chest", name: "보물상자", rare: 4, w: .3, cm: [0, 0], col: 0x8a5a2b, pay: 0, pts: 300, speed: 1.7, icon: "🧰" },
-  { k: "whale", name: "아기 고래", rare: 4, w: .05, cm: [480, 560], col: 0x3d5a80, pay: 5000, pts: 1000, speed: 2.1, icon: "🐋" }
+  { k: "letter", name: "유리병 편지", rare: 4, w: 1, ann: true, cm: [0, 0], col: 0x9fe0d0, pay: 0, pts: 50, speed: 1.1, icon: "🍾" },
+  { ann: true, k: "wallet", name: "지갑", rare: 4, w: .6, cm: [0, 0], col: 0x6b4a33, pay: 1000, pts: 100, speed: 1.2, icon: "👛" },
+  { ann: true, k: "ring", name: "금반지", rare: 4, w: .3, cm: [0, 0], col: 0xffcf3a, pay: 2000, pts: 200, speed: 1.5, icon: "💍" },
+  { ann: true, k: "chest", name: "보물상자", rare: 4, w: .3, cm: [0, 0], col: 0x8a5a2b, pay: 0, pts: 300, speed: 1.7, icon: "🧰" },
+  { ann: true, k: "whale", name: "아기 고래", rare: 4, w: .05, cm: [480, 560], col: 0x3d5a80, pay: 5000, pts: 1000, speed: 2.1, icon: "🐋" }
 ];
 const LETTERS = ["오늘도 고생 많았어요. 한강 바람이 당신 편이에요", "천천히 가도 괜찮아요. 다들 각자의 속도가 있거든요", "누군가 이 편지를 읽고 웃었으면 좋겠어요", "내일은 오늘보다 조금 더 맑을 거예요", "지금 그 자리에 있어 줘서 고마워요"];
 const FISH_BY = Object.fromEntries(FISH.map(f => [f.k, f]));
-const RARE_LABEL = ["흔해요", "가끔 잡혀요", "아주 드물어요", "강 청소", "보물·전설"];
+const RARE_LABEL = ["흔해요", "가끔 잡혀요", "아주 드물어요", "강 청소", "보물·전설", "심해어"];
+const TENSE = F => F.rare === 2 || F.rare === 4 || F.rare === 5; // the ones that fight back
 const onFishDeck = (x, z) => Math.abs(x - FISH_DECK.x) < FISH_DECK.half && z > FISH_DECK.z0 && z < BOUND.landZ0 + .1;
 
 /* the deck and the rod rental box */
@@ -4811,16 +4829,16 @@ function drawFish() {
   if (st === "ready") { msg.textContent = "버튼을 꾹 눌렀다가 떼면 찌를 던져요"; btn.textContent = "꾹 눌러 던지기"; }
   else if (st === "charge") { msg.textContent = "적당할 때 손을 떼세요!"; btn.textContent = "던질 힘 모으는 중…"; }
   else if (st === "wait") { msg.textContent = "찌를 보고 있어요… 입질이 오면 바로 눌러요"; btn.textContent = "기다리는 중 (누르면 걷어 올려요)"; }
-  else if (st === "bite") { const R = fishing.reel; msg.textContent = `걸렸다! 바늘이 초록 칸에 왔을 때 눌러요 (${R.hits}/2 · 헛손질 ${R.miss}/3)`; btn.textContent = "지금 눌러 감기!"; }
+  else if (st === "bite") { const R = fishing.reel; msg.textContent = R.tense && R.alert && Date.now() < R.alert ? "찌가 쑥 빨려 들어가요… 뭔가 커요!" : `걸렸다! 바늘이 초록 칸에 왔을 때 눌러요 (${R.hits}/${R.need} · 헛손질 ${R.miss}/3)`; btn.textContent = "지금 눌러 감기!"; }
   else if (st === "caught" && fishing.catch) {
     const F = FISH_BY[fishing.catch.k], earned = fishEarnedToday(), pay = Math.min(F.pay, Math.max(0, FISH_DAY_CAP - earned));
-    msg.textContent = F.rare === 4 ? `${F.icon} 이게 뭐지…?!` : F.rare === 3 ? "물고기가 아니라…" : F.rare === 2 ? "✨ 대박! 황금 잉어예요!" : "잡았어요!";
+    msg.textContent = F.rare === 4 ? `${F.icon} 이게 뭐지…?!` : F.rare === 5 ? `${F.icon} 심해에서 뭔가 올라왔어요…!` : F.rare === 3 ? "물고기가 아니라…" : F.rare === 2 ? `${F.icon} 대박! ${F.name}예요!` : "잡았어요!";
     $("fishName").textContent = F.rare === 4 ? `${F.icon} ${F.name}` + (F.k === "whale" ? ` ${fishing.catch.cm}cm` : "") : F.name + (F.rare === 3 ? "" : ` ${fishing.catch.cm}cm`);
-    $("fishRare").textContent = RARE_LABEL[F.rare] + (fishing.catch.isNew ? " · 도감에 새로 기록!" : "");
+    $("fishRare").textContent = RARE_LABEL[F.rare] + (fishing.catch.isNew ? " · 도감에 새로 기록!" : "") + (F.desc ? ` · ${F.desc}` : "");
     if (F.k === "letter") $("fishRare").textContent = `“${fishing.catch.note || LETTERS[0]}”`;
     $("fishIcon").style.background = "#" + F.col.toString(16).padStart(6, "0");
     if (F.rare === 4) $("fishRelease").textContent = fishing.catch.duel ? `대결 점수 +${fishing.catch.pts}점` : ({ letter: "쪽지 간직하기", wallet: "주인에게 돌려주기", ring: "주머니에 넣기", chest: "상자 열기", whale: "고래에게 손 흔들기" })[F.k];
-    else $("fishRelease").textContent = (F.rare === 3 ? "쓰레기 버리기" : "방생하기") + (fishing.catch.duel ? ` (대결 점수 +${fishing.catch.pts}점)` : pay > 0 ? ` (+${won(pay)})` : " (오늘 보상은 다 받았어요)");
+    else $("fishRelease").textContent = (F.rare === 3 ? "쓰레기 버리기" : F.alien ? "외래종 수거하기" : F.rare === 5 ? "심해로 돌려보내기" : "방생하기") + (fishing.catch.duel ? ` (대결 점수 +${fishing.catch.pts}점)` : pay > 0 ? ` (+${won(pay)})` : " (오늘 보상은 다 받았어요)");
   }
 }
 function fishLoop() {
@@ -4831,11 +4849,26 @@ function fishLoop() {
     const now = Date.now(), pn = performance.now(), dt = Math.min(.25, (pn - last) / 1000); last = pn;
     { const dl = $("fishDuel"), d = myDuel(); if (d && d.fd.st === "go") { const left = d.fd.go + FD_TIME - now; dl.hidden = false; dl.textContent = left > FD_TIME ? "대결 준비…" : left > 0 ? `🎣 대결 ${fmt(left / 1000)} · ${fdBoardText(d)}` : "대결 끝!"; } else dl.hidden = true; }
     if (fishing.st === "charge") { fishing.power += fishing.pDir * dt * 1.1; if (fishing.power >= 1) { fishing.power = 1; fishing.pDir = -1; } if (fishing.power <= 0) { fishing.power = 0; fishing.pDir = 1; } $("fishPowerBar").style.width = Math.round(fishing.power * 100) + "%"; }
-    if (fishing.st === "wait" && now >= fishing.biteAt) { const F = rollFish(); fishing.st = "bite"; fishing.reel = { F, hits: 0, miss: 0, pos: 0, dir: 1, speed: F.speed || [1, 1.35, 1.8, .75][F.rare], zone: .2 + Math.random() * .55, end: now + 7000 }; placeReel(); setFs("bite", { bx: me.fs.bx, bz: me.fs.bz }); if (audio.ready) { audio.tone(audio.sfx, "sine", 520, 260, .18, .3); if (navigator.vibrate) try { navigator.vibrate(120); } catch (e) {} } drawFish(); }
+    if (fishing.st === "wait" && now >= fishing.biteAt) {
+      const F = rollFish(), tense = TENSE(F);
+      fishing.st = "bite";
+      fishing.reel = { F, tense, hits: 0, miss: 0, pos: 0, dir: 1, speed: (F.speed || [1, 1.35, 1.8, .75, 1.7, 2][F.rare]) * (tense ? 1.1 : 1), w: tense ? .14 : REEL_W, need: tense ? 3 : 2, zone: .2 + Math.random() * .55, alert: tense ? now + 1100 : 0, end: now + (tense ? 10000 : 7000), ph: Math.random() * 6 };
+      placeReel(); setFs("bite", { bx: me.fs.bx, bz: me.fs.bz, x: tense ? 1 : 0 });
+      if (tense) showBubble(() => myAvatar, "…!", 1.4, "me");
+      if (audio.ready) { if (tense) { audio.tone(audio.sfx, "square", 180, 140, .3, .12); setTimeout(() => audio.ready && audio.tone(audio.sfx, "sine", 880, 440, .25, .25), 350); } else audio.tone(audio.sfx, "sine", 520, 260, .18, .3); if (navigator.vibrate) try { navigator.vibrate(tense ? [80, 60, 80, 60, 200] : 120); } catch (e) {} }
+      drawFish();
+    }
     if (fishing.st === "bite") {
-      const R = fishing.reel; R.pos += R.dir * R.speed * dt; if (R.pos >= 1) { R.pos = 1; R.dir = -1; } if (R.pos <= 0) { R.pos = 0; R.dir = 1; }
+      const R = fishing.reel, alerting = R.alert && now < R.alert;
+      $("biteAlert").hidden = !R.tense; $("biteAlert").textContent = alerting ? "…!" : "‼ 엄청난 힘이다!";
+      $("biteAlert").classList.toggle("now", !!alerting);
+      if (R.alert && !alerting && !R.told) { R.told = true; drawFish(); } // switch the hint from "…!" to the reel instructions
+      if (!alerting) {
+        R.pos += R.dir * R.speed * dt; if (R.pos >= 1) { R.pos = 1; R.dir = -1; } if (R.pos <= 0) { R.pos = 0; R.dir = 1; }
+        if (R.tense) { R.ph += dt; R.zone = clamp(R.zone + Math.sin(R.ph * 1.9) * dt * .16, .02, .98 - R.w); placeReel(); } // the fish pulls the target around
+      }
       $("reelNeedle").style.left = (R.pos * 100) + "%";
-      if (now > R.end) { fishing.st = "ready"; toast("힘이 빠져서 놓쳤어요… 다시 던져 보세요"); setFs("idle"); drawFish(); }
+      if (now > R.end) { fishing.st = "ready"; $("biteAlert").hidden = true; toast(R.tense ? "버티다 버티다 놓쳤어요… 엄청 큰 녀석이었는데!" : "힘이 빠져서 놓쳤어요… 다시 던져 보세요"); setFs("idle"); drawFish(); }
     }
     if ((fishing.st === "wait" || fishing.st === "bite") && (me.moving || me.st !== "walk" || !onFishDeck(me.x, me.z))) { fishing.st = "ready"; setFs("idle"); closeFish(); toast("움직여서 낚싯줄을 걷었어요"); return; }
     fishing.raf = requestAnimationFrame(tick);
@@ -4849,17 +4882,18 @@ $("fishBtn").addEventListener("pointerdown", e => {
   else if (fishing.st === "bite") reelTap();
 });
 const REEL_W = .2;
-function placeReel() { const z = $("reelZone"); z.style.left = (fishing.reel.zone * 100) + "%"; z.style.width = (REEL_W * 100) + "%"; }
+function placeReel() { const z = $("reelZone"), R = fishing.reel; z.style.left = (R.zone * 100) + "%"; z.style.width = ((R.w || REEL_W) * 100) + "%"; }
 function reelTap() {
-  const R = fishing.reel, inZone = R.pos >= R.zone && R.pos <= R.zone + REEL_W, box = $("reel");
+  const R = fishing.reel; if (R.alert && Date.now() < R.alert) return; // wait for it…
+  const inZone = R.pos >= R.zone && R.pos <= R.zone + (R.w || REEL_W), box = $("reel");
   box.classList.remove("hit", "miss"); void box.offsetWidth;
   if (inZone) {
     R.hits++; box.classList.add("hit"); if (audio.ready) audio.tone(audio.sfx, "sine", 700 + R.hits * 200, 900 + R.hits * 200, .12, .12);
-    if (R.hits >= 2) { strike(R.F); return; }
-    R.zone = .05 + Math.random() * .7; R.speed *= 1.15; placeReel();
+    if (R.hits >= R.need) { $("biteAlert").hidden = true; strike(R.F); return; }
+    R.zone = .05 + Math.random() * (.9 - R.w); R.speed *= 1.15; placeReel();
   } else {
     R.miss++; box.classList.add("miss"); if (audio.ready) audio.tone(audio.sfx, "square", 220, 160, .1, .05);
-    if (R.miss >= 3) { fishing.st = "ready"; toast(`${R.F.rare === 3 ? "뭔가" : "물고기"}가 줄을 끊고 도망갔어요…`); setFs("idle"); drawFish(); return; }
+    if (R.miss >= 3) { fishing.st = "ready"; $("biteAlert").hidden = true; toast(R.tense ? "엄청난 녀석이 줄을 끊고 사라졌어요… 다음엔 꼭!" : `${R.F.rare === 3 ? "뭔가" : "물고기"}가 줄을 끊고 도망갔어요…`); setFs("idle"); drawFish(); return; }
   }
   drawFish();
 }
@@ -4876,8 +4910,10 @@ const castRelease = () => {
 };
 ["pointerup", "pointerleave", "pointercancel"].forEach(ev => $("fishBtn").addEventListener(ev, castRelease));
 function rollFish() {
-  const total = FISH.reduce((s, f) => s + f.w, 0); let r = Math.random() * total;
-  for (const f of FISH) { r -= f.w; if (r <= 0) return f; } return FISH[0];
+  const h = kst().getHours(), night = h >= 20 || h < 5, far = fishing.power > .7;
+  const wt = f => f.w * (f.deep ? (far ? 2.2 : 1) * (night ? 1.6 : 1) : 1);
+  const total = FISH.reduce((s, f) => s + wt(f), 0); let r = Math.random() * total;
+  for (const f of FISH) { r -= wt(f); if (r <= 0) return f; } return FISH[0];
 }
 function strike(pre) {
   const F = pre || rollFish(), cm = F.cm[1] ? Math.round(F.cm[0] + Math.pow(Math.random(), 1.6) * (F.cm[1] - F.cm[0])) : 0;
@@ -4886,11 +4922,11 @@ function strike(pre) {
   const duel = inFishDuel(), pts = duelCatch(F, cm);
   fishing.catch = { k: F.k, cm, isNew, duel, pts }; fishing.st = "caught";
   if (F.k === "letter") { const pool = recentPapers.length ? recentPapers.concat(LETTERS) : LETTERS; fishing.catch.note = pool[Math.floor(Math.random() * pool.length)]; }
-  if (F.rare === 4) announceRare(me.name, F, cm);
+  if (F.ann) announceRare(me.name, F, cm);
   setFs("catch", { k: F.k, cm, bx: me.fs && me.fs.bx != null ? me.fs.bx : +me.x.toFixed(2), bz: me.fs && me.fs.bz != null ? me.fs.bz : +(me.z - 7).toFixed(2) });
-  showBubble(() => myAvatar, F.rare === 4 ? `${F.icon} ${F.name}!` : F.rare === 3 ? `${F.name}…?` : `${F.name} ${cm}cm!`, 3, "me");
+  showBubble(() => myAvatar, F.rare === 4 ? `${F.icon} ${F.name}!` : F.rare === 3 ? `${F.name}…?` : `${F.icon ? F.icon + " " : ""}${F.name} ${cm}cm!`, 3, "me");
   const sheet = $("fishModal"); sheet.classList.add("peek"); setTimeout(() => sheet.classList.remove("peek"), F.k === "whale" ? 6500 : 2300);
-  if (audio.ready) (F.rare === 2 ? audio.ding() : audio.pop());
+  if (audio.ready) (F.rare === 2 || F.rare === 5 ? audio.ding() : audio.pop());
   drawFish();
 }
 function rareReward(k) {
@@ -4915,7 +4951,7 @@ $("fishRelease").addEventListener("click", () => {
   }
   const pay = fishing.catch.duel ? 0 : Math.min(F.pay, Math.max(0, FISH_DAY_CAP - fishEarnedToday()));
   if (pay > 0) { if (wallet.fishDay !== todayKey()) { wallet.fishDay = todayKey(); wallet.fishEarn = 0; } wallet.fishEarn += pay; wallet.money += pay; saveWallet(); }
-  toast(F.rare === 3 ? `강이 조금 더 깨끗해졌어요${pay ? " · +" + won(pay) : ""}` : `${F.name}를 강으로 돌려보냈어요${pay ? " · +" + won(pay) : ""}`);
+  toast(F.rare === 3 ? `강이 조금 더 깨끗해졌어요${pay ? " · +" + won(pay) : ""}` : F.alien ? `${F.name}를 수거했어요. 한강 생태계가 고마워해요${pay ? " · +" + won(pay) : ""}` : F.rare === 5 ? `${F.name}가 깊은 곳으로 돌아갔어요${pay ? " · +" + won(pay) : ""}` : `${F.name}를 강으로 돌려보냈어요${pay ? " · +" + won(pay) : ""}`);
   if (audio.ready) audio.paddle();
   fishing.catch = null; fishing.st = "ready"; fishing.power = 0; setFs("idle"); drawFish();
 });
@@ -4924,7 +4960,8 @@ $("fishDexBtn").addEventListener("click", () => {
   FISH.forEach(F => {
     const d = dex[F.k], cell = document.createElement("div"); cell.className = "dex" + (d ? "" : " unknown");
     const dot = document.createElement("i"); dot.style.background = d ? "#" + F.col.toString(16).padStart(6, "0") : "#555";
-    const t = document.createElement("span"); t.textContent = d ? `${F.name}${F.cm[1] ? " · 최고 " + d.best + "cm" : ""} · ${d.n}번` : "??? · " + RARE_LABEL[F.rare];
+    const t = document.createElement("span"); t.textContent = d ? `${F.icon && F.rare !== 4 ? F.icon + " " : ""}${F.name}${F.cm[1] ? " · 최고 " + d.best + "cm" : ""} · ${d.n}번` : "??? · " + RARE_LABEL[F.rare];
+    if (d && F.desc) t.title = F.desc;
     cell.append(dot, t); box.appendChild(cell);
   });
 });
@@ -4941,12 +4978,47 @@ function makeFishMesh(k) {
     else if (k === "chest") { const b = new THREE.Mesh(new THREE.BoxGeometry(.36, .22, .24), m); b.position.y = .11; g.add(b); const lid = new THREE.Mesh(new THREE.CylinderGeometry(.12, .12, .36, 12, 1, false, 0, Math.PI), m); lid.rotation.z = Math.PI / 2; lid.position.y = .22; g.add(lid); const band = new THREE.Mesh(new THREE.BoxGeometry(.06, .36, .25), gold); band.position.y = .17; g.add(band); }
     return g;
   }
+  const add = (geo, mm, x, y, z) => { const o = new THREE.Mesh(geo, mm); o.position.set(x, y, z); g.add(o); return o; };
+  if (k === "jjukku" || k === "octo") { // a round head with eight curly arms hanging below
+    const big = k === "octo", hr = big ? .17 : .09, mm = mat(F.col);
+    add(new THREE.SphereGeometry(hr, 14, 10), mm, 0, hr * 1.1, 0).scale.set(1, 1.25, 1);
+    for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2, arm = add(new THREE.CylinderGeometry(hr * .16, hr * .08, hr * 2.4, 6), mm, Math.cos(a) * hr * .55, -hr * .9, Math.sin(a) * hr * .55); arm.rotation.set(Math.sin(a) * .5, 0, -Math.cos(a) * .5); }
+    [-1, 1].forEach(s => add(new THREE.SphereGeometry(hr * .2, 8, 6), new THREE.MeshBasicMaterial({ color: 0x111111 }), s * hr * .4, hr * .7, -hr * .85));
+    return g;
+  }
+  if (k === "blob") { // the saddest face in the sea
+    const pink = mat(F.col); add(new THREE.SphereGeometry(.16, 16, 12), pink, 0, .14, 0).scale.set(1.15, .9, 1);
+    add(new THREE.SphereGeometry(.07, 10, 8), pink, 0, .1, -.15).scale.set(1.3, .8, 1); // droopy nose
+    [-1, 1].forEach(s => add(new THREE.SphereGeometry(.018, 6, 4), new THREE.MeshBasicMaterial({ color: 0x222222 }), s * .07, .2, -.14));
+    add(new THREE.TorusGeometry(.05, .008, 6, 12, Math.PI), mat(0x8a3d4a), 0, .03, -.13);
+    return g;
+  }
+  if (k === "angler") { // dark round fish, a toothy grin and a glowing lantern
+    const dk = mat(F.col); add(new THREE.SphereGeometry(1, 14, 10), dk, 0, 0, 0).scale.set(.16, .14, .2);
+    add(new THREE.SphereGeometry(1, 12, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), mat(0x1a1c22), 0, -.01, -.15).scale.set(.12, .08, .08);
+    for (let i = 0; i < 5; i++) add(new THREE.ConeGeometry(.012, .04, 4), mat(0xf4f1ea), -.08 + i * .04, .0, -.2).rotation.x = Math.PI;
+    add(new THREE.CylinderGeometry(.008, .008, .2, 4), dk, 0, .2, -.12).rotation.x = -.6;
+    add(new THREE.SphereGeometry(.04, 10, 8), new THREE.MeshBasicMaterial({ color: 0xfff1a0 }), 0, .27, -.22);
+    const tail = add(new THREE.ConeGeometry(.08, .14, 4), dk, 0, 0, .25); tail.rotation.x = Math.PI / 2; tail.scale.set(.3, 1, 1);
+    return g;
+  }
+  if (k === "oar") { // a long silver ribbon with a red crest
+    add(new THREE.BoxGeometry(.035, .16, 1.4), new THREE.MeshPhongMaterial({ color: F.col, shininess: 90, specular: 0xffffff }), 0, 0, .3);
+    for (let i = 0; i < 12; i++) add(new THREE.BoxGeometry(.02, .05, .1), mat(0xe0433a), 0, .1, -.3 + i * .12);
+    add(new THREE.BoxGeometry(.02, .22, .04), mat(0xe0433a), 0, .2, -.36);
+    add(new THREE.SphereGeometry(.018, 6, 4), new THREE.MeshBasicMaterial({ color: 0x111111 }), .025, .02, -.36);
+    return g;
+  }
+  if (k === "cupra") { add(new THREE.CylinderGeometry(.09, .065, .14, 16, 1, true), mat(0xf4f1ea, { side: THREE.DoubleSide }), 0, .07, 0); add(new THREE.CylinderGeometry(.091, .091, .04, 16, 1, true), mat(0xd8322f, { side: THREE.DoubleSide }), 0, .1, 0); const lid = add(new THREE.CircleGeometry(.09, 16), mat(0xe8c15a, { side: THREE.DoubleSide }), .05, .16, 0); lid.rotation.set(-1.2, 0, .3); return g; }
+  if (k === "bag") { const b = add(new THREE.SphereGeometry(.13, 10, 8), new THREE.MeshPhongMaterial({ color: F.col, transparent: true, opacity: .7 }), 0, .12, 0); b.scale.set(1, 1.2, .7); [-1, 1].forEach(s => { add(new THREE.TorusGeometry(.04, .01, 4, 10), b.material, s * .05, .28, 0).rotation.y = Math.PI / 2; }); return g; }
+  if (k === "slipper") { add(new THREE.BoxGeometry(.1, .03, .26), mat(F.col), 0, .015, 0); add(new THREE.TorusGeometry(.045, .012, 6, 12, Math.PI), mat(0xffffff), 0, .03, -.04).rotation.y = Math.PI / 2; return g; }
   if (F.rare === 3) {
     if (k === "boot") { const a = new THREE.Mesh(new THREE.BoxGeometry(.14, .3, .14), m); a.position.y = .15; g.add(a); const b = new THREE.Mesh(new THREE.BoxGeometry(.14, .1, .26), m); b.position.set(0, .05, -.06); g.add(b); }
     else { const c = new THREE.Mesh(new THREE.CylinderGeometry(.07, .07, .2, 12), m); c.position.y = .1; g.add(c); }
     return g;
   }
   const body = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 10), m); body.scale.set(.09, .1, .3); g.add(body);
+  if (k === "bluegill") body.scale.set(.08, .16, .22); if (k === "pirami") body.scale.set(.06, .07, .22);
   const tail = new THREE.Mesh(new THREE.ConeGeometry(.09, .16, 4), m); tail.rotation.x = Math.PI / 2; tail.position.z = .34; tail.scale.set(.25, 1, 1); g.add(tail);
   const eye = new THREE.Mesh(new THREE.SphereGeometry(.018, 6, 4), new THREE.MeshBasicMaterial({ color: 0x111111 })); eye.position.set(.07, .03, -.2); g.add(eye);
   g.rotation.x = -Math.PI / 2.3; return g;
@@ -4989,7 +5061,7 @@ function showRod(av, has, fs) {
   u.line.visible = inWater || catching; u.bobber.visible = inWater;
   u.rodTip.getWorldPosition(tipW);
   if (inWater) {
-    const ft = fs.ft || .6, fly = clamp((t - .25) / ft, 0, 1), dip = s === "bite" ? .12 + Math.sin(T * 30) * .03 : 0;
+    const ft = fs.ft || .6, fly = clamp((t - .25) / ft, 0, 1), dip = s === "bite" ? (fs.x ? .3 + Math.sin(T * 22) * .12 : .12 + Math.sin(T * 30) * .03) : 0;
     const by = -.58 + Math.sin(T * 2.2 + av.id) * .02 - dip, landed = s !== "cast" || fly >= 1;
     let bx = fs.bx, bz = fs.bz, byy = by;
     if (!landed) { bx = tipW.x + (fs.bx - tipW.x) * fly; bz = tipW.z + (fs.bz - tipW.z) * fly; byy = tipW.y + (by - tipW.y) * fly + Math.sin(fly * Math.PI) * (fs.ah || 1.5); }
@@ -5007,11 +5079,11 @@ function showRod(av, has, fs) {
   if (u.fishW) {
     u.fishW.visible = catching;
     if (catching) {
-      const F = FISH_BY[fs.k], sc = F && F.rare === 3 ? 1 : clamp((fs.cm || 30) / 45, .6, 1.8), up = ease(Math.min(1, t / .9));
+      const F = FISH_BY[fs.k], sc = F && (F.rare === 3 || F.k === "oar") ? 1 : clamp((fs.cm || 30) / 45, .6, 1.8), up = ease(Math.min(1, t / .9));
       const hx = tipW.x, hy = tipW.y - .55 - .3 * sc, hz = tipW.z, sx = fs.bx || hx, sz = fs.bz || hz;
       const fx = sx + (hx - sx) * up, fy = -.6 + (hy + .6) * up + Math.sin(up * Math.PI) * 1.2, fz = sz + (hz - sz) * up;
       u.fishW.position.set(fx, fy, fz); u.fishW.scale.setScalar(sc);
-      if (F && F.rare !== 3) u.fishW.rotation.set(Math.PI / 2, T * .8, Math.sin(T * 11) * .35); else u.fishW.rotation.set(0, T * .8, Math.sin(T * 5) * .2);
+      if (F && F.rare !== 3 && F.shape !== "up") u.fishW.rotation.set(Math.PI / 2, T * .8, Math.sin(T * 11) * .35); else u.fishW.rotation.set(0, T * .8, Math.sin(T * 5) * .2);
       drawLine(u, fx, fy + .2 * sc, fz, 0);
       if (t < .9 && Math.random() < .5) sparksS.emit(fx, fy, fz, rnd(-1, 1), rnd(0, 2), rnd(-1, 1), WHITE, .4, 6);
     }
@@ -5023,9 +5095,11 @@ function updateFishing() {
   if (myAvatar) showRod(myAvatar, !!me.rod, me.fs);
   for (const [peer, o] of others) {
     showRod(o.obj, !!o.p.fr, o.p.fs);
-    const fs = o.p.fs; if (fs && fs.s === "catch" && seenCatch.get(peer) !== fs.at) {
+    const fs = o.p.fs;
+    if (fs && fs.s === "bite" && fs.x && seenCatch.get(peer + "b") !== fs.at) { seenCatch.set(peer + "b", fs.at); const id = peer; showBubble(() => (others.get(id) || {}).obj, "…!", 1.6, id); }
+    if (fs && fs.s === "catch" && seenCatch.get(peer) !== fs.at) {
       seenCatch.set(peer, fs.at); const F = FISH_BY[fs.k];
-      if (F && Date.now() - fs.at < 4000) { const id = peer; showBubble(() => (others.get(id) || {}).obj, F.rare === 4 ? `${F.icon} ${F.name}!` : F.rare === 3 ? `${F.name}…?` : `${F.name} ${fs.cm}cm!`, 3, id); if (F.rare === 4) announceRare(o.p.n, F, fs.cm); }
+      if (F && Date.now() - fs.at < 4000) { const id = peer; showBubble(() => (others.get(id) || {}).obj, F.rare === 4 ? `${F.icon} ${F.name}!` : F.rare === 3 ? `${F.name}…?` : `${F.name} ${fs.cm}cm!`, 3, id); if (F.ann) announceRare(o.p.n, F, fs.cm); }
     }
   }
 }
@@ -5039,7 +5113,7 @@ function rodPose(v, fs) {
 
 /* treasures: an announcement for everyone, sparkles, and the baby whale */
 function announceRare(name, F, cm) {
-  const bar = $("annBar"); bar.textContent = `${F.icon} ${name}님이 한강에서 ${F.name}${F.k === "whale" ? "를 만났어요" : "를 낚았어요"}!`;
+  const bar = $("annBar"); bar.textContent = `${F.icon} ${name}님이 ${F.deep ? "깊은 한강에서" : "한강에서"} ${F.name}${F.k === "whale" ? "를 만났어요" : F.cm[1] ? ` ${cm}cm를 낚았어요` : "를 낚았어요"}!`;
   bar.hidden = false; bar.classList.remove("go"); void bar.offsetWidth; bar.classList.add("go");
   clearTimeout(bar._t); bar._t = setTimeout(() => { bar.hidden = true; }, 6000);
   if (audio.ready) audio.ding();
@@ -5299,7 +5373,7 @@ function diveClick(a) {
   return false;
 }
 /* ================= 낚시 대결: 2~4명, 3분 점수전 ================= */
-const FD_TIME = 180000, FD_COUNT = 3000, FD_MULT = [1, 2, 5, 0], FD_MAX = 4;
+const FD_TIME = 180000, FD_COUNT = 3000, FD_MULT = [1, 2, 5, 0, 0, 6], FD_MAX = 4;
 const FD_SHARE = { 2: [.8, .2], 3: [.55, .3, .15], 4: [.5, .25, .15, .1] };
 // host: me.fd = { id, bet, st: "open" | "go", go }   joiner: me.fj = { h, id, at, bet }   score: me.fsc = { id, s, n }
 function fdOf(hostKey) {

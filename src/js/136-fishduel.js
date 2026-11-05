@@ -1,5 +1,5 @@
 /* ================= 낚시 대결: 2~4명, 3분 점수전 ================= */
-const FD_TIME = 180000, FD_COUNT = 3000, FD_MULT = [1, 2, 5, 0], FD_MAX = 4;
+const FD_TIME = 180000, FD_COUNT = 3000, FD_MULT = [1, 2, 5, 0, 0, 6], FD_MAX = 4;
 const FD_SHARE = { 2: [.8, .2], 3: [.55, .3, .15], 4: [.5, .25, .15, .1] };
 // host: me.fd = { id, bet, st: "open" | "go", go }   joiner: me.fj = { h, id, at, bet }   score: me.fsc = { id, s, n }
 function fdOf(hostKey) {
