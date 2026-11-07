@@ -1,6 +1,11 @@
-/* ================= 낚시 대결: 2~4명, 3분 점수전 ================= */
-const FD_TIME = 180000, FD_COUNT = 3000, FD_MULT = [1, 2, 5, 0, 0, 6], FD_MAX = 4;
+/* ================= 낚시 대결: 같은 낚시터에 있는 사람 누구나, 3분 점수전 ================= */
+// 낚시터 = 데크 · 징검다리 바위 · 수상 낚시터(1·2층 합쳐 한 곳). 대결을 연 곳에 있는 사람만 참가하고, 그곳에서 잡은 물고기만 점수
+const FD_TIME = 180000, FD_COUNT = 3000, FD_MULT = [1, 2, 5, 0, 0, 6], FD_MAX = 20; // 20 = 공원 정원 (사실상 제한 없음)
+const FD_ZONE_NAME = { deck: "데크", rock: "징검다리 바위", range: "수상 낚시터" };
+const fdZone = () => { const s = fishSpot(me.x, me.z, me.level); return s ? (s.id === "range1" || s.id === "range2" ? "range" : s.id) : null; };
 const FD_SHARE = { 2: [.8, .2], 3: [.55, .3, .15], 4: [.5, .25, .15, .1] };
+// 5명부터: 1등 40% · 2등 22% · 3등 13%, 나머지 25%는 4등 아래가 똑같이 나눔
+function fdShare(n) { if (n <= 4) return FD_SHARE[Math.max(2, n)]; const rest = .25 / (n - 3); return [.4, .22, .13, ...new Array(n - 3).fill(rest)]; }
 // host: me.fd = { id, bet, st: "open" | "go", go }   joiner: me.fj = { h, id, at, bet }   score: me.fsc = { id, s, n }
 function fdOf(hostKey) {
   const h = hostKey === "me" ? { key: "me", peer: myPeer, fd: me.fd, n: me.name } : (() => { const o = others.get(hostKey); return o && o.p.fd ? { key: hostKey, peer: hostKey, fd: o.p.fd, n: o.p.n } : null; })();
@@ -25,16 +30,16 @@ function duelActions(acts, status) {
     if (d.fd.st !== "go") {
       if (me.fd) { if (d.list.length >= 2) acts.unshift(["fdgo", `대결 시작! (${d.list.length}명)`, "primary"]); acts.push(["fdcancel", "대결 취소", ""]); }
       else acts.push(["fdleave", "대결 나가기", ""]);
-      return `🎣 낚시 대결 · 판돈 ${won(d.fd.bet)} · ${d.list.map(m => m.n).join(", ")} · ${d.list.length}/${FD_MAX}명` + (d.list.length < 2 ? " · 한 명 더 오면 시작할 수 있어요" : "");
+      return `🎣 ${FD_ZONE_NAME[d.fd.z] || "낚시터"} 낚시 대결 · 판돈 ${won(d.fd.bet)} · ${d.list.length}명: ${d.list.map(m => m.n).join(", ")}` + (d.list.length < 2 ? " · 한 명 더 오면 시작할 수 있어요" : "");
     }
     const left = d.fd.go + FD_TIME - now;
     if (left > 0 && now >= d.fd.go) return `🎣 ${fmt(left / 1000)} · ${fdBoardText(d)}`;
     return status;
   }
-  if (me.st !== "walk" || !fishSpot(me.x, me.z, me.level)) return status;
+  const zone = fdZone(); if (me.st !== "walk" || !zone) return status;
   for (const [peer, o] of others) {
-    const fd = o.p.fd; if (!fd || fd.st !== "open" || now - fd.id > 180000) continue;
-    const r = fdOf(peer); if (r && r.list.length < FD_MAX && Math.hypot(o.x - me.x, o.z - me.z) < 90) acts.push(["fdjoin:" + peer, `🎣 ${o.p.n}님 대결 참가 · ${won(fd.bet)} (${r.list.length}/${FD_MAX})`, ""]);
+    const fd = o.p.fd; if (!fd || fd.st !== "open" || now - fd.id > 180000 || (fd.z || "deck") !== zone) continue; // 같은 낚시터에서 연 대결만
+    const r = fdOf(peer); if (r && r.list.length < FD_MAX) acts.push(["fdjoin:" + peer, `🎣 ${o.p.n}님 대결 참가 · ${won(fd.bet)} (지금 ${r.list.length}명)`, ""]);
   }
   acts.push(["fdopen", "낚시 대결 열기", ""]);
   return status;
@@ -43,6 +48,7 @@ function duelClick(a) {
   if (a === "fdopen") { openBet("fish"); return true; }
   if (a.startsWith("fdjoin:")) {
     const r = fdOf(a.slice(7)); if (!r || r.list.length >= FD_MAX || r.fd.st !== "open") { toast("자리가 없거나 이미 시작했어요"); return true; }
+    if ((r.fd.z || "deck") !== fdZone()) { toast(`${FD_ZONE_NAME[r.fd.z] || "그 낚시터"}에 가야 참가할 수 있어요`); return true; }
     if (wallet.money < r.fd.bet) { toast("판돈이 모자라요"); return true; }
     wallet.money -= r.fd.bet; saveWallet(); me.fj = { h: r.h.peer, id: r.fd.id, at: Date.now(), bet: r.fd.bet }; me.fsc = { id: r.fd.id, s: 0, n: 0 };
     toast(`${won(r.fd.bet)}을 걸고 ${r.h.n}님의 낚시 대결에 참가했어요!`); return true;
@@ -56,12 +62,14 @@ function duelClick(a) {
 }
 BET_FN.fish = bet => {
   if (!me.rod) { toast("낚싯대를 빌린 뒤에 대결을 열 수 있어요"); return; }
-  wallet.money -= bet; saveWallet(); me.fd = { id: Date.now(), bet, st: "open" }; me.fj = null; me.fsc = { id: me.fd.id, s: 0, n: 0 };
-  toast(`${won(bet)}을 걸고 낚시 대결을 열었어요. 데크 위 사람들이 참가할 수 있어요 (최대 ${FD_MAX}명)`); publish(true); actKey = ""; refreshActions();
+  const z = fdZone(); if (!z) { toast("낚시터(데크·바위·수상 낚시터)에서 대결을 열 수 있어요"); return; }
+  wallet.money -= bet; saveWallet(); me.fd = { id: Date.now(), bet, st: "open", z }; me.fj = null; me.fsc = { id: me.fd.id, s: 0, n: 0 };
+  toast(`${won(bet)}을 걸고 낚시 대결을 열었어요. ${FD_ZONE_NAME[z]}에 있는 사람은 누구나 참가할 수 있어요`); publish(true); actKey = ""; refreshActions();
 };
 // called from strike(): only fish caught during the 3 minutes count
 function duelCatch(F, cm) {
   if (!inFishDuel()) return 0;
+  if (fdZone() !== (myDuel().fd.z || "deck")) { toast(`대결 점수는 ${FD_ZONE_NAME[myDuel().fd.z] || "대결 낚시터"}에서 잡은 물고기만 쳐요`); return 0; }
   const pts = F.pts != null ? F.pts : Math.round(cm * FD_MULT[F.rare]), d = myDuel();
   me.fsc = { id: d.fd.id, s: (me.fsc && me.fsc.id === d.fd.id ? me.fsc.s : 0) + pts, n: (me.fsc && me.fsc.id === d.fd.id ? me.fsc.n : 0) + 1 };
   publish(true); return pts;
@@ -86,7 +94,7 @@ function updateDuel() {
   if (now < d.fd.go + FD_TIME || fdPaid === d.fd.id) return;
   fdPaid = d.fd.id;
   // rank by score; people tied on points split the shares of the places they share
-  const board = fdBoard(d), n = board.length, pot = d.fd.bet * n, share = FD_SHARE[Math.max(2, Math.min(FD_MAX, n))];
+  const board = fdBoard(d), n = board.length, pot = d.fd.bet * n, share = fdShare(n);
   const pays = new Array(n).fill(0);
   for (let i = 0; i < n;) { let j = i; while (j + 1 < n && board[j + 1].s === board[i].s) j++; let sum = 0; for (let k = i; k <= j; k++) sum += share[k]; for (let k = i; k <= j; k++) pays[k] = Math.floor(pot * sum / (j - i + 1) / 10) * 10; i = j + 1; }
   const rest = pot - pays.reduce((a, b) => a + b, 0); pays[0] += rest;

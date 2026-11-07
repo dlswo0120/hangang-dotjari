@@ -29,7 +29,7 @@ function cleanPresence(p) {
   if (p.ac && typeof p.ac === "object" && typeof p.ac.id === "number" && RACE_BETS.includes(p.ac.bet)) o.ac = { id: p.ac.id, bet: p.ac.bet, st: p.ac.st === "go" ? "go" : "open", go: num(p.ac.go, 0, 1e15, 0) };
   if (p.aj && typeof p.aj === "object" && typeof p.aj.h === "string" && typeof p.aj.id === "number") o.aj = { h: p.aj.h.slice(0, 80), id: p.aj.id, at: num(p.aj.at, 0, 1e15, 0) };
   if (p.ap && typeof p.ap === "object" && typeof p.ap.id === "number") o.ap = { id: p.ap.id, s: num(p.ap.s, -20, 2000, 0), f: num(p.ap.f, 0, 600000, 0), k: Number.isInteger(p.ap.k) ? clamp(p.ap.k, 0, STEEDS.length - 1) : 1, b: p.ap.b === 1 ? 1 : 0 };
-  if (p.fd && typeof p.fd === "object" && typeof p.fd.id === "number" && RACE_BETS.includes(p.fd.bet)) o.fd = { id: p.fd.id, bet: p.fd.bet, st: p.fd.st === "go" ? "go" : "open", go: num(p.fd.go, 0, 1e15, 0) };
+  if (p.fd && typeof p.fd === "object" && typeof p.fd.id === "number" && RACE_BETS.includes(p.fd.bet)) o.fd = { id: p.fd.id, bet: p.fd.bet, st: p.fd.st === "go" ? "go" : "open", go: num(p.fd.go, 0, 1e15, 0), z: ["deck", "rock", "range"].includes(p.fd.z) ? p.fd.z : "deck" };
   if (p.fj && typeof p.fj === "object" && typeof p.fj.h === "string" && typeof p.fj.id === "number") o.fj = { h: p.fj.h.slice(0, 80), id: p.fj.id, at: num(p.fj.at, 0, 1e15, 0) };
   if (p.fsc && typeof p.fsc === "object" && typeof p.fsc.id === "number") o.fsc = { id: p.fsc.id, s: num(p.fsc.s, 0, 1e6, 0), n: num(p.fsc.n, 0, 999, 0) };
   if (p.rc && typeof p.rc === "object" && typeof p.rc.id === "number" && RACE_BETS.includes(p.rc.bet)) o.rc = { id: p.rc.id, bet: p.rc.bet, st: p.rc.st === "go" ? "go" : "open", go: num(p.rc.go, 0, 1e15, 0) };
