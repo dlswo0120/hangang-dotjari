@@ -1566,7 +1566,7 @@ function makeAvatar({ g, c, pose, name, mine, matStyle }) {
     if (g === "f") { add(ap, new THREE.CylinderGeometry(.075, .065, .1, 10), top, 0, -.04, 0); add(ap, new THREE.CylinderGeometry(.05, .048, .18, 8), skin2, 0, -.17, 0); }
     else add(ap, new THREE.CylinderGeometry(.062, .056, .25, 10), top, 0, -.12, 0);
     add(ap, G_SPH_S, skin2, 0, -.29, 0, .065, .065, .065);
-    arms.push(ap);
+    ap.userData.base = ap.children.slice(); arms.push(ap);
   });
   root.traverse(o => { if (o.isMesh) o.castShadow = true; });
   // picnic mat that rolls out
@@ -1715,6 +1715,10 @@ function applyRig(av, v) {
   u.torso.rotation.x = -v.lean; u.head.rotation.x = -v.nod;
   u.legs[0].rotation.x = v.thL; u.legs[1].rotation.x = v.thR; u.knees[0].rotation.x = v.knL; u.knees[1].rotation.x = v.knR;
   u.arms[0].rotation.set(v.arL, 0, -v.azL); u.arms[1].rotation.set(v.arR, 0, v.azR);
+  // extra joints used only by some dances (0 = the usual body)
+  u.hips.position.x = v.hx || 0; u.torso.rotation.z = v.tz || 0; u.head.rotation.y = v.hy || 0; u.head.rotation.z = v.hz || 0;
+  u.legs[0].rotation.z = v.lzL || 0; u.legs[1].rotation.z = v.lzR || 0;
+  if (u.dArms && u.dArms.on) u.dArms.forEach((d, k) => { const s = k ? 1 : -1, n = k ? "R" : "L"; d.elb.rotation.set(v["el" + n] || 0, 0, s * (v["ez" + n] || 0)); d.wr.rotation.set(v["wx" + n] || 0, v["wy" + n] || 0, 0); });
   if (u.matG) {
     const p = clamp(v.matP, 0, 1), back = v.matZ + MAT_L / 2;
     u.matG.visible = p > .02; u.matG.position.z = back; u.matG.scale.z = Math.max(p, .001);
@@ -4023,37 +4027,66 @@ function thumbs(u, on) {
   }
   if (u.thumbs) u.thumbs.forEach(f => { f.visible = on; });
 }
-// "money" hands: a little ring (thumb and finger touching) on each fist
-function moneyHands(u, on) {
-  if (on && !u.money) {
-    const sk = new THREE.MeshLambertMaterial({ color: 0xf2c9a0 });
-    u.money = [0, 1].map(k => { const r = new THREE.Mesh(new THREE.TorusGeometry(.05, .016, 6, 14), sk); r.position.set(0, -.36, -.07); u.arms[k].add(r); return r; });
+// 팔꿈치·손목이 있는 춤용 팔: 춤추는 동안만 원래 팔 대신 보임 (평소 모델은 그대로)
+function danceArms(u, on) {
+  if (on && !u.dArms) {
+    u.dArms = u.arms.map(ap => {
+      const base = ap.userData.base || [], top = base[0] ? base[0].material : mat(0x888888), skin = base[base.length - 1] ? base[base.length - 1].material : top;
+      const fore = base.length > 2 ? skin : top, g = new THREE.Group(); ap.add(g);
+      const cyl = (p, r1, r2, h, m, y) => { const c = new THREE.Mesh(new THREE.CylinderGeometry(r1, r2, h, 10), m); c.position.y = y; c.castShadow = true; p.add(c); return c; };
+      cyl(g, .062, .058, .16, top, -.08);
+      const elb = new THREE.Group(); elb.position.y = -.15; g.add(elb);
+      const ball = new THREE.Mesh(new THREE.SphereGeometry(.057, 10, 8), fore); elb.add(ball);
+      cyl(elb, .056, .05, .13, fore, -.065);
+      const wr = new THREE.Group(); wr.position.y = -.13; elb.add(wr);
+      const palm = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 10), skin); palm.scale.set(.058, .062, .042); palm.position.y = -.045; wr.add(palm);
+      // 펼친 손가락 셋 / 돈 모양: 엄지와 검지로 만든 동그라미 + 접은 손가락
+      const fingers = new THREE.Group(); wr.add(fingers);
+      [-.028, 0, .028].forEach(x => { const f = cyl(fingers, .014, .012, .065, skin, -.11); f.position.x = x; });
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(.044, .016, 8, 18), skin); ring.position.set(0, -.11, -.02); ring.rotation.x = -1.6; wr.add(ring); // 손을 가슴 앞에 세우면 동그라미가 정면을 봄
+      const curl = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), skin); curl.scale.set(.05, .03, .035); curl.position.set(0, -.085, .02); wr.add(curl);
+      return { g, elb, wr, fingers, ring, curl, base };
+    });
   }
-  if (u.money) u.money.forEach(r => { r.visible = on; });
+  if (!u.dArms) return;
+  if (u.dArms.on !== on) { u.dArms.on = on; u.dArms.forEach(d => { d.g.visible = on; d.base.forEach(m => { m.visible = !on; }); }); }
 }
-/* 연애의 조건 춤 (베스티 - 연애의 조건 챌린지 참고): 8박자 한 바퀴를 두 번.
-   팔꿈치·손목·발목·골반 옆 이동·고개 돌리기는 캐릭터에 관절이 없어 어깨 각도·몸 기울기·무릎으로 비슷하게 표현.
-   박 0 시작 자세 = 박 8 끝 자세라 반복해도 이어짐 */
+function moneyShape(u, k) { if (!u || !u.dArms) return; u.dArms.forEach(d => { d.ring.visible = k; d.curl.visible = k; d.fingers.visible = !k; }); }
+/* 연애의 조건 춤 (베스티 - 연애의 조건 챌린지 참고): 8박자를 두 번.
+   순서: ① 왼발 교차 + 돈 모양 손 흔들고 뻗기 → ② '하나 앤 둘'에 상체 내리며 손 뻗기 → ③ 오른발 빼며 양팔 크게 →
+         ④ 오른손 배, 왼손 허리, 시선·무게 왼쪽 → ⑤ '하나 둘' 골반 → ⑥ '오' 하며 앉기 → 처음 자세(반복)
+   키 자세 사이는 부드럽게 잇고, 그 위에 박마다 무릎·상체 바운스와 손목 흔들기를 얹어 계속 움직이게 함 */
+const LOVE_DEF = { arL: .3, arR: .3, azL: .15, azR: .15, elL: .45, elR: .45, ezL: 0, ezR: 0, wxL: 0, wxR: 0, lean: 0, nod: 0, hy: 0, hz: 0, tz: 0, hx: 0, hipY: 0, thL: 0, thR: 0, knL: 0, knR: 0, lzL: 0, lzR: 0 };
+const M = { arL: .95, arR: .95, azL: .05, azR: .05, elL: 1.25, elR: 1.25, wxL: -.55, wxR: -.55 };  // 가슴 앞 돈 모양 손
+const CROSS = { thL: .2, lzL: .2, knL: -.14, knR: -.1, hx: .02 };                               // 왼발을 오른발 앞으로
+const BELLY = { arR: .55, azR: -.3, elR: 1.55, wxR: .1, arL: -.1, azL: .65, elL: .15, ezL: -1.35, wxL: .3 }; // 오른손 배, 왼손 허리
 const LOVE_KEYS = [
-  // beat, pose  (ar = 팔 앞으로 들기, az = 팔 옆으로 벌리기(−는 몸 안쪽), lean = 상체 숙이기, nod = 고개 숙이기, roll = 몸 좌우 기울기, th/kn = 허벅지·무릎, hipY = 몸 높이)
-  [0,   { arL: .25, arR: .25, azL: .25, azR: .25 }],                                                      // 준비: 팔 내리고 바로 서기
-  [1,   { arL: 1.1, arR: 1.1, azL: -.3, azR: -.3, thL: .28, knL: -.18, nod: .05 }],                       // 1-2: 왼발을 오른발 앞으로, 가슴 앞에서 돈 모양 손 흔들기
-  [2,   { arL: 1.15, arR: 1.15, azL: -.28, azR: -.28, thL: .28, knL: -.18, nod: .05 }],
-  [3,   { arL: 1.55, arR: 1.55, azL: .02, azR: .02, lean: .42, nod: .12, thL: .3, knL: -.28, knR: -.2, thR: .08 }], // 3 "하나 앤": 상체 숙이며 손 뻗기
-  [4,   { arL: 1.45, arR: 1.45, azL: .05, azR: .05, lean: .55, nod: .16, thL: .32, knL: -.36, knR: -.28, thR: .12 }], // 4 "둘": 더 깊게
-  [5,   { arL: .35, arR: .35, azL: 1.45, azR: 1.45, lean: .02, nod: -.04 }],                             // 5: 오른발 빼며 양팔 크게 벌리기
-  [6,   { arL: .15, arR: .95, azL: .5, azR: -.55, roll: .16, knR: -.22, thR: .1, nod: .02 }],             // 6: 오른손 배 위, 왼손 허리, 무게 왼쪽으로
-  [6.5, { arL: .15, arR: .95, azL: .5, azR: -.55, roll: .24, knR: -.36, thR: .16 }],                     // 7 "하나 둘": 골반 왼쪽으로 두 번
-  [6.75,{ arL: .15, arR: .95, azL: .5, azR: -.55, roll: .14, knR: -.18, thR: .08 }],
-  [7,   { arL: .15, arR: .95, azL: .5, azR: -.55, roll: .24, knR: -.36, thR: .16 }],
-  [7.5, { arL: .15, arR: .95, azL: .5, azR: -.55, roll: .1, hipY: -.13, knL: -.62, knR: -.62, thL: .32, thR: .32, nod: .08 }], // 8 "오": 살짝 앉기
-  [8,   { arL: .25, arR: .25, azL: .25, azR: .25 }]                                                       // 처음 자세로 → 다음 바퀴
+  [0,    {}],
+  [.5,   { ...M, thL: .1, lzL: .1, knL: -.08 }],
+  [1,    { ...M, ...CROSS }],
+  [1.5,  { ...M, ...CROSS }],
+  [2,    { ...M, ...CROSS, arL: 1.25, arR: 1.25, azL: .35, azR: .35, elL: .25, elR: .25, wxL: -.25, wxR: -.25 }],             // 흔들던 손을 앞으로 뻗기
+  [2.5,  { ...M, ...CROSS, arL: .8, arR: .8, elL: .95, elR: .95 }],
+  [3,    { ...M, ...CROSS, arL: 1.15, arR: 1.15, azL: .4, azR: .4, elL: .15, elR: .15, wxL: -.2, wxR: -.2, lean: .26, knL: -.32, knR: -.3, thR: .12 }], // "하나"
+  [3.5,  { ...M, ...CROSS, arL: .75, arR: .75, elL: .85, elR: .85, lean: .1, knL: -.16, knR: -.14 }],                           // "앤"
+  [4,    { ...M, ...CROSS, arL: 1.05, arR: 1.05, azL: .45, azR: .45, elL: .1, elR: .1, wxL: -.2, wxR: -.2, lean: .34, knL: -.42, knR: -.4, thR: .18, thL: .3 }], // "둘"
+  [4.5,  { arL: .55, arR: .55, azL: .5, azR: .5, elL: .6, elR: .6, lean: .12, lzL: .05, knL: -.12, knR: -.12 }],
+  [5,    { arL: .2, arR: .2, azL: 1.35, azR: 1.35, elL: .2, elR: .2, wxL: .45, wxR: .45, lzL: -.07, lzR: .07, nod: -.04 }], // 오른발 빼며 양팔 크게
+  [5.5,  { arL: .1, arR: .35, azL: .9, azR: .3, elL: .3, elR: 1, ezL: .5, lzL: -.07, lzR: .07 }],
+  [6,    { ...BELLY, hx: -.05, tz: .07, hy: .32, hz: .05, knR: -.24, thR: .1, lzL: -.07, lzR: .07 }],   // 시선·무게 왼쪽
+  [6.5,  { ...BELLY, hx: -.1, tz: .12, hy: .35, hz: .06, knR: -.38, thR: .16, lzL: -.07, lzR: .07 }],  // "하나"
+  [6.75, { ...BELLY, hx: -.05, tz: .06, hy: .35, hz: .05, knR: -.2, thR: .08, lzL: -.07, lzR: .07 }],
+  [7,    { ...BELLY, hx: -.1, tz: .12, hy: .35, hz: .06, knR: -.38, thR: .16, lzL: -.07, lzR: .07 }],  // "둘"
+  [7.25, { ...BELLY, hx: -.06, tz: .07, hy: .3, hz: .04, knR: -.25, thR: .1, lzL: -.07, lzR: .07 }],
+  [7.6,  { ...BELLY, hx: -.04, tz: .04, hy: .2, hipY: -.14, knL: -.78, knR: -.82, thL: .4, thR: .42, lean: .14, lzL: -.07, lzR: .07, nod: -.06 }], // "오" 앉기
+  [8,    {}]
 ];
-const LOVE_ARMS = ["arL", "arR", "azL", "azR"], LOVE_ADD = ["lean", "nod", "roll", "thL", "thR", "knL", "knR", "hipY"];
+const loveKey = k => Object.assign({}, LOVE_DEF, k);
+const smoother = x => x * x * x * (x * (x * 6 - 15) + 10);
 function lovePose(beat) {
   const b = ((beat % 8) + 8) % 8; let i = 0; while (i < LOVE_KEYS.length - 2 && LOVE_KEYS[i + 1][0] <= b) i++;
-  const [b0, p0] = LOVE_KEYS[i], [b1, p1] = LOVE_KEYS[i + 1], k = ease(clamp((b - b0) / (b1 - b0), 0, 1)), o = {};
-  [...LOVE_ARMS, ...LOVE_ADD].forEach(n => { const a = p0[n] ?? (LOVE_ARMS.includes(n) ? .25 : 0), c = p1[n] ?? (LOVE_ARMS.includes(n) ? .25 : 0); o[n] = a + (c - a) * k; });
+  const [b0, k0] = LOVE_KEYS[i], [b1, k1] = LOVE_KEYS[i + 1], p0 = loveKey(k0), p1 = loveKey(k1), k = smoother(clamp((b - b0) / (b1 - b0), 0, 1)), o = {};
+  for (const n in LOVE_DEF) o[n] = p0[n] + (p1[n] - p0[n]) * k;
   return o;
 }
 // an empty tin can in front of someone asking for pocket money
@@ -4069,7 +4102,7 @@ function begCan(u, on) {
   if (u.can) u.can.visible = on;
 }
 function emotePose(v, i, t, standing, u, side) {
-  if (u) { vSign(u, false); thumbs(u, false); begCan(u, false); moneyHands(u, false); }
+  if (u) { vSign(u, false); thumbs(u, false); begCan(u, false); danceArms(u, false); }
   const E = EMOTES[i]; if (!E || t < 0 || t > E.dur) return;
   const env = clamp(Math.min(t / .2, (E.dur - t) / .25), 0, 1), to = (k, val) => { v[k] += (val - v[k]) * env; };
   // arms are short next to the big head, so raises go out to the side where they stay visible
@@ -4124,12 +4157,23 @@ function emotePose(v, i, t, standing, u, side) {
     if (standing) { v.lift += hit * .04 * env; v.knL -= hit * .12 * env; v.knR -= hit * .12 * env; }
   }
   else if (E.id === "love") {
-    const beat = t * E.bpm, P = lovePose(beat), b = beat % 8;
-    LOVE_ARMS.forEach(n => to(n, P[n]));
-    if (standing) LOVE_ADD.forEach(n => { v[n] = (v[n] || 0) + P[n] * env; });
-    else { v.lean += P.lean * env; v.nod += P.nod * env; v.roll = (v.roll || 0) + P.roll * env; }
-    if (b < 2.6) { const sh = Math.sin(t * 22) * .1 * env; v.azL += sh; v.azR -= sh; } // 돈 모양 손 흔들기
-    if (u) moneyHands(u, env > .4 && b > .6 && b < 4.6);
+    const beat = t * E.bpm, b = ((beat % 8) + 8) % 8, P = lovePose(beat), env2 = env * env;
+    // 박마다 바운스: 무릎이 살짝 굽었다 펴지고 상체가 따라 튕김 (앉기 직전엔 쉼)
+    const fr = beat % 1, pulse = Math.exp(-fr * 6) * (b < 7.3 ? 1 : 0) * env, half = b >= 3 && b < 4.5 ? Math.exp(-((beat * 2) % 1) * 7) * .5 * env : 0;
+    // 돈 모양 손 흔들기(손목 비틀기·까딱), 펼친 손은 손목만 살짝
+    const shake = b > .4 && b < 2.6 ? Math.sin(t * Math.PI * 2 * 4) * env : 0;
+    for (const n of ["arL", "arR", "azL", "azR", "elL", "elR", "ezL", "ezR", "wxL", "wxR"]) { const cur = v[n] ?? 0; v[n] = cur + (P[n] - cur) * env; }
+    v.wyL = shake * .45; v.wyR = -shake * .45; v.wxL += shake * .12; v.wxR += shake * .12;
+    v.lean += (P.lean + pulse * .05 + half * .05) * env; v.nod += (P.nod - P.lean * .55) * env; // 숙여도 얼굴은 앞을 봄
+    v.hy = P.hy * env; v.hz = P.hz * env; v.tz = P.tz * env;
+    if (standing) {
+      v.hx = P.hx * env; v.hipY += (P.hipY - pulse * .02 - half * .02) * env;
+      const keep = Math.asin(clamp(-v.hx / .44, -.5, .5)); // 골반이 옆으로 가도 발은 제자리
+      v.lzL = (P.lzL + keep) * env; v.lzR = (P.lzR + keep) * env;
+      v.thL += (P.thL + pulse * .06) * env; v.thR += (P.thR + pulse * .06) * env;
+      v.knL += (P.knL - pulse * .14 - half * .1) * env; v.knR += (P.knR - pulse * .14 - half * .1) * env;
+    }
+    if (u) { danceArms(u, env > .02); moneyShape(u, b > .3 && b < 4.4); }
   }
   // photo poses (the arms are short, so hands go to the side of the big face)
   else if (E.id === "pv" || E.id === "pv2") { to("arR", .75); to("azR", 1.55); v.roll = (v.roll || 0) + .14 * env; v.nod += .05 * env; if (u) vSign(u, env > .5); }

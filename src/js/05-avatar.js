@@ -97,7 +97,7 @@ function makeAvatar({ g, c, pose, name, mine, matStyle }) {
     if (g === "f") { add(ap, new THREE.CylinderGeometry(.075, .065, .1, 10), top, 0, -.04, 0); add(ap, new THREE.CylinderGeometry(.05, .048, .18, 8), skin2, 0, -.17, 0); }
     else add(ap, new THREE.CylinderGeometry(.062, .056, .25, 10), top, 0, -.12, 0);
     add(ap, G_SPH_S, skin2, 0, -.29, 0, .065, .065, .065);
-    arms.push(ap);
+    ap.userData.base = ap.children.slice(); arms.push(ap);
   });
   root.traverse(o => { if (o.isMesh) o.castShadow = true; });
   // picnic mat that rolls out
@@ -246,6 +246,10 @@ function applyRig(av, v) {
   u.torso.rotation.x = -v.lean; u.head.rotation.x = -v.nod;
   u.legs[0].rotation.x = v.thL; u.legs[1].rotation.x = v.thR; u.knees[0].rotation.x = v.knL; u.knees[1].rotation.x = v.knR;
   u.arms[0].rotation.set(v.arL, 0, -v.azL); u.arms[1].rotation.set(v.arR, 0, v.azR);
+  // extra joints used only by some dances (0 = the usual body)
+  u.hips.position.x = v.hx || 0; u.torso.rotation.z = v.tz || 0; u.head.rotation.y = v.hy || 0; u.head.rotation.z = v.hz || 0;
+  u.legs[0].rotation.z = v.lzL || 0; u.legs[1].rotation.z = v.lzR || 0;
+  if (u.dArms && u.dArms.on) u.dArms.forEach((d, k) => { const s = k ? 1 : -1, n = k ? "R" : "L"; d.elb.rotation.set(v["el" + n] || 0, 0, s * (v["ez" + n] || 0)); d.wr.rotation.set(v["wx" + n] || 0, v["wy" + n] || 0, 0); });
   if (u.matG) {
     const p = clamp(v.matP, 0, 1), back = v.matZ + MAT_L / 2;
     u.matG.visible = p > .02; u.matG.position.z = back; u.matG.scale.z = Math.max(p, .001);
