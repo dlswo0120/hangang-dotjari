@@ -69,7 +69,7 @@ def build():
     public = PUBLIC_HEAD.replace("__CSP__", CSP) + top + "</head>\n<body>\n" + rest.replace(THREE, glue + THREE_PUBLIC) + "\n</body>\n</html>\n"
     (ROOT / "index.html").write_text(public, encoding="utf-8")
     top = updates()[0]
-    (ROOT / "version.json").write_text(json.dumps({"v": top["v"], "date": top["date"], "items": top["items"]}, ensure_ascii=False) + "\n", encoding="utf-8")
+    (ROOT / "version.json").write_text(json.dumps({"v": top["v"], "date": top["date"], "items": top["items"], "big": bool(top.get("big"))}, ensure_ascii=False) + "\n", encoding="utf-8")
     (ROOT / "dist").mkdir(exist_ok=True)
     (ROOT / "dist" / "claude-artifact.html").write_text(ARTIFACT_HEAD + body + "</body></html>", encoding="utf-8")
     print("index.html", len(public.encode()), "bytes / dist/claude-artifact.html", len(body.encode()), "bytes")

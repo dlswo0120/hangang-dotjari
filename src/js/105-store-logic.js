@@ -1,6 +1,6 @@
 /* ================= 한강 편의점: wallet, basket, queue, checkout ================= */
 // Money lives in this browser only (localStorage): a daily allowance, so coming back tomorrow buys the chicken.
-const WALLET_KEY = "hangang-wallet", ALLOWANCE = 4000, BASKET_MAX = 10, BAG_MAX = 20, SCAN_STEP = .55;
+const WALLET_KEY = "hangang-wallet", ALLOWANCE = 5000, BASKET_MAX = 10, BAG_MAX = 20, SCAN_STEP = .55;
 const wallet = (() => {
   let w = null; try { w = JSON.parse(localStorage.getItem(WALLET_KEY) || "null"); } catch (e) {}
   if (!w || typeof w.money !== "number" || !isFinite(w.money)) w = { money: 0, day: "", bag: [] };

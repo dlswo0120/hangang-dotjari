@@ -277,6 +277,24 @@ $("fishRelease").addEventListener("click", () => {
   if (audio.ready) audio.paddle();
   fishing.catch = null; fishing.st = "ready"; fishing.power = 0; setFs("idle"); drawFish();
 });
+// 못 잡은 칸의 힌트: 이름 초성 + 어디서·어떻게 잘 나오는지 (물고기 데이터에서 바로 만들어서 새 어종이 생겨도 자동)
+const CHO = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ";
+const choOf = name => [...name].map(c => { const k = c.charCodeAt(0) - 0xac00; return k >= 0 && k < 11172 ? CHO[Math.floor(k / 588)] : c === " " ? " " : "·"; }).join("");
+function fishHint(F) {
+  const tips = [];
+  if (F.w === 0 && F.rockW) tips.push("징검다리 바위에서만 보여요");
+  else if (F.k === "sogari" || F.k === "hwangso") tips.push("바위에서 더 잘 나와요");
+  if (F.deep) tips.push("밤에 아주 멀리 던지면… 새우를 좋아해요");
+  else if (F.g === "pred") tips.push("루어를 좋아해요");
+  else if (F.g === "veg") tips.push("떡밥을 좋아해요");
+  else if (F.g === "bottom") tips.push("새우를 좋아해요");
+  if (F.k === "gold") tips.push("떡밥에 반짝");
+  if (F.alien) tips.push("한강에 원래 살지 않던 물고기");
+  if (F.rare === 3) tips.push("누가 강에 버린 물건");
+  if (F.rare === 4) tips.push("강이 아주 가끔 주는 선물");
+  if (F.cm[1]) tips.push(F.cm[1] >= 100 ? "아주 커요" : F.cm[1] <= 16 ? "아주 작아요" : `${F.cm[0]}~${F.cm[1]}cm쯤`);
+  return `${choOf(F.name)} · ${tips.slice(0, 2).join(" · ")}`;
+}
 $("fishDexBtn").addEventListener("click", () => {
   const box = $("dexBox"); box.hidden = !box.hidden; if (box.hidden) return; box.textContent = "";
   FISH.forEach(F => {
@@ -284,6 +302,7 @@ $("fishDexBtn").addEventListener("click", () => {
     const dot = document.createElement("i"); dot.style.background = d ? "#" + F.col.toString(16).padStart(6, "0") : "#555";
     const t = document.createElement("span"); t.textContent = d ? `${F.icon && F.rare !== 4 ? F.icon + " " : ""}${F.name}${F.cm[1] ? " · 최고 " + d.best + "cm" : ""} · ${d.n}번` : "??? · " + RARE_LABEL[F.rare];
     if (d && F.desc) t.title = F.desc;
+    if (!d) { const h = document.createElement("small"); h.className = "dex-hint"; h.textContent = "💡 " + fishHint(F); t.append(document.createElement("br"), h); }
     cell.append(dot, t); box.appendChild(cell);
   });
 });

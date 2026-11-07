@@ -17,7 +17,17 @@ function checkNews() {
   if (seen === APP_VERSION || (!seen && !RETURNING)) return; // first visit: nothing to announce
   const idx = UPDATES.findIndex(u => u.v === seen), fresh = UPDATES.slice(0, idx < 0 ? 2 : Math.min(idx, 3));
   if (!fresh.length) return;
-  fillNews(fresh); $("newsTitle").textContent = "한강이 새로 단장했어요"; $("newsModal").hidden = false;
+  fillNews(fresh); $("newsTitle").textContent = "한강이 새로 단장했어요";
+  const big = fresh.find(u => u.big), card = $("newsModal").querySelector(".card"), hero = $("newsHero");
+  card.classList.toggle("big", !!big); hero.hidden = !big; hero.textContent = "";
+  if (big) { // 대규모 업데이트: 큰 제목과 한눈에 보는 카드 몇 장, 자세한 목록은 아래에
+    $("newsTitle").textContent = big.big.title;
+    const sub = document.createElement("p"); sub.className = "news-sub"; sub.textContent = big.big.sub || ""; hero.appendChild(sub);
+    (big.big.hl || []).forEach(([ic, t, d]) => { const c = document.createElement("div"); c.className = "news-hl"; const i = document.createElement("span"); i.className = "ic"; i.textContent = ic; const b = document.createElement("b"); b.textContent = t; const s = document.createElement("small"); s.textContent = d; const w = document.createElement("div"); w.append(b, s); c.append(i, w); hero.appendChild(c); });
+    $("newsList").classList.add("fold");
+    if (audio.ready) audio.ding();
+  } else $("newsList").classList.remove("fold");
+  $("newsModal").hidden = false;
 }
 $("newsOk").addEventListener("click", () => { $("newsModal").hidden = true; });
 $("newsModal").addEventListener("click", e => { if (e.target === $("newsModal")) $("newsModal").hidden = true; });
@@ -31,6 +41,7 @@ async function pollVersion() {
     const j = await r.json(); if (!j || typeof j.v !== "string" || j.v === APP_VERSION || j.v === newerShown) return;
     newerShown = j.v;
     $("updText").textContent = Array.isArray(j.items) && j.items[0] ? "한강이 새로 단장했어요 · " + String(j.items[0]).slice(0, 60) : "한강이 새로 단장했어요";
+    $("updBanner").classList.toggle("big", !!j.big); if (j.big) $("updText").textContent = "🎉 대규모 업데이트가 나왔어요! 새로고침하면 새 한강으로 바뀌어요";
     $("updBanner").hidden = false;
   } catch (e) {}
 }

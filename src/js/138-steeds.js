@@ -1,17 +1,17 @@
 /* ================= 탈것 동물: 경주 때 랜덤으로 배정 ================= */
-// rare 0 = 일반, 1 = 희귀, 2 = 전설. w = draw weight in percent (sums to 100)
+// rare 0 = 일반, 1 = 희귀, 2 = 전설. v = 최고 속도 배율 (설문 반영: 말과의 차이를 1.5배로 벌림) w = draw weight in percent (sums to 100)
 const STEEDS = [
-  { id: "pony", name: "망아지", icon: "🐴", rare: 0, w: 10.875, v: 0.95, acc: 1.35, cn: 0.55, ti: 1.5, lr: 1.3 },
+  { id: "pony", name: "망아지", icon: "🐴", rare: 0, w: 10.875, v: 0.925, acc: 1.35, cn: 0.55, ti: 1.5, lr: 1.3 },
   { id: "horse", name: "말", icon: "🐎", rare: 0, w: 10.875, v: 1, acc: 1, cn: 1, ti: 1, lr: 1 },
-  { id: "donkey", name: "당나귀", icon: "🫏", rare: 0, w: 10.875, v: 0.92, acc: 1, cn: 0.8, ti: 0, lr: 1.05 },
-  { id: "camel", name: "낙타", icon: "🐪", rare: 0, w: 10.875, v: 0.94, acc: 0.85, cn: 1.4, ti: 0.5, lr: 0.85 },
-  { id: "alpaca", name: "알파카", icon: "🦙", rare: 0, w: 10.875, v: 0.9, acc: 0.85, cn: 0.9, ti: 0.6, lr: 1.1 },
-  { id: "reindeer", name: "순록", icon: "🦌", rare: 0, w: 10.875, v: 0.97, acc: 1, cn: 0.7, ti: 1, lr: 1 },
-  { id: "cow", name: "젖소", icon: "🐄", rare: 0, w: 10.875, v: 0.88, acc: 0.8, cn: 0.6, ti: 0.4, lr: 0.85 },
-  { id: "ostrich", name: "타조", icon: "🪿", rare: 0, w: 10.875, v: 1.03, acc: 1.25, cn: 1.6, ti: 1.3, lr: 1.7 },
-  { id: "zebra", name: "얼룩말", icon: "🦓", rare: 1, w: 8, v: 1.04, acc: 1.2, cn: 1, ti: 1, lr: 1.05 },
-  { id: "redhare", name: "적토마", icon: "🔥", rare: 1, w: 4, v: 1.07, acc: 1.1, cn: 0.9, ti: 0.9, lr: 1.05 },
-  { id: "unicorn", name: "유니콘", icon: "🦄", rare: 2, w: 1, v: 1.08, acc: 1.1, cn: 0.9, ti: 0.9, lr: 1 }
+  { id: "donkey", name: "당나귀", icon: "🫏", rare: 0, w: 10.875, v: 0.88, acc: 1, cn: 0.8, ti: 0, lr: 1.05 },
+  { id: "camel", name: "낙타", icon: "🐪", rare: 0, w: 10.875, v: 0.91, acc: 0.85, cn: 1.4, ti: 0.5, lr: 0.85 },
+  { id: "alpaca", name: "알파카", icon: "🦙", rare: 0, w: 10.875, v: 0.85, acc: 0.85, cn: 0.9, ti: 0.6, lr: 1.1 },
+  { id: "reindeer", name: "순록", icon: "🦌", rare: 0, w: 10.875, v: 0.955, acc: 1, cn: 0.7, ti: 1, lr: 1 },
+  { id: "cow", name: "젖소", icon: "🐄", rare: 0, w: 10.875, v: 0.82, acc: 0.8, cn: 0.6, ti: 0.4, lr: 0.85 },
+  { id: "ostrich", name: "타조", icon: "🪿", rare: 0, w: 10.875, v: 1.045, acc: 1.25, cn: 1.6, ti: 1.3, lr: 1.7 },
+  { id: "zebra", name: "얼룩말", icon: "🦓", rare: 1, w: 8, v: 1.06, acc: 1.2, cn: 1, ti: 1, lr: 1.05 },
+  { id: "redhare", name: "적토마", icon: "🔥", rare: 1, w: 4, v: 1.105, acc: 1.1, cn: 0.9, ti: 0.9, lr: 1.05 },
+  { id: "unicorn", name: "유니콘", icon: "🦄", rare: 2, w: 1, v: 1.12, acc: 1.1, cn: 0.9, ti: 0.9, lr: 1 }
 ];
 const RARE_NAME = ["일반", "희귀", "전설"];
 function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
