@@ -13,7 +13,7 @@ function pushOut(x, z, rad) {
   }
   return [x, z];
 }
-function onDock(x, z) { return (Math.abs(x - DOCK.x) < 8.5 && z > -2.2 && z < BOUND.landZ0 + 0.1) || onFishDeck(x, z); }
+function onDock(x, z) { return (Math.abs(x - DOCK.x) < 8.5 && z > -2.2 && z < BOUND.landZ0 + 0.1) || onFishDeck(x, z) || onWaterFloor(x, z); }
 function stepPlayer(dt) {
   if (anim) {
     anim.t += dt; const u = Math.min(1, anim.t / anim.dur);
@@ -62,6 +62,8 @@ function stepPlayer(dt) {
       if (cz !== nz) hitBound();
       nx = cx; nz = cz; me.y = BR.y;
     }
+  } else if (me.st === "walk" && me.level === "loft") { // the fishing range's upper floor
+    [nx, nz] = loftStep(nx, nz); me.y = RANGE.y2;
   } else if (me.st === "walk" && inStairs(nx, nz)) {
     if (me.x >= STAIR.bot - 0.6) { me.level = "stairs"; me.y = stairY(nx); }
     else { nx = me.x; nz = me.z; }
@@ -69,6 +71,7 @@ function stepPlayer(dt) {
     if (nx < BOUND.x0 || nx > BOUND.x1 || nz > BOUND.landZ1) { hitBound(); nx = clamp(nx, BOUND.x0, BOUND.x1); nz = Math.min(nz, BOUND.landZ1); }
     [nx, nz] = pushOut(nx, nz, .35);
     [nx, nz] = storeGate(nx, nz);
+    if (onRock(nx, nz) && !onRock(me.x, me.z) && rockFull()) { nx = me.x; nz = me.z; if (!me._rockToast || Date.now() - me._rockToast > 3000) { me._rockToast = Date.now(); toast("바위에 벌써 3명이 있어요. 조금 기다려 주세요"); } }
     if (nz < BOUND.landZ0 && !onDock(nx, nz)) {
       if (me.hold) dropRamen(me.hold === "ramen" ? "앗, 라면이 한강에 빠졌어요…" : "앗, 들고 있던 간식이 한강에 빠졌어요…");
       const dockSide = Math.abs(nx - DOCK.x) < 8.5;

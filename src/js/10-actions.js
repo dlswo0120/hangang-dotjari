@@ -132,6 +132,7 @@ function refreshActions() {
   status = boatRaceActions(acts, status);
   status = begActions(acts, status);
   status = shareActions(acts, status);
+  status = spotActions(acts, status);
   status = circuitActions(acts, status);
   if ($("status").textContent !== status) { $("status").textContent = status; $("status").hidden = !status; }
   // rebuild the buttons only when they change, so a running timer in the status line never eats a tap
@@ -141,7 +142,7 @@ function refreshActions() {
 }
 $("actRow").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return; const a = b.dataset.act;
-  if (storeClick(a) || rentalClick(a) || deliveryClick(a) || boardClick(a) || fireClick(a) || photoClick(a) || beerClick(a) || fishClick(a) || raceClick(a) || diveClick(a) || duelClick(a) || boatRaceClick(a) || begClick(a) || shareClick(a) || circuitClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
+  if (storeClick(a) || rentalClick(a) || deliveryClick(a) || boardClick(a) || fireClick(a) || photoClick(a) || beerClick(a) || fishClick(a) || raceClick(a) || diveClick(a) || duelClick(a) || boatRaceClick(a) || begClick(a) || shareClick(a) || spotClick(a) || circuitClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
   if (a === "sit" || a === "lie") {
     if (me.st === "walk") {
       if (!canSpread()) { toast("잔디나 대교 위에서만 돗자리를 펼 수 있습니다"); return; }

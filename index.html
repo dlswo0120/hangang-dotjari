@@ -235,6 +235,13 @@ body.mung #jumpBtn{opacity:0!important;pointer-events:none!important}
 .race-btns button{pointer-events:auto;width:38vw;max-width:170px;height:96px;border-radius:24px;border:0;font-size:20px;font-weight:800;background:rgba(193,84,63,.92);color:#fff;touch-action:manipulation;user-select:none;-webkit-user-select:none}
 .race-btns button:active{transform:scale(.95)}
 .race-btns.whip{justify-content:flex-end}.race-btns.whip button{background:rgba(42,157,143,.94)}
+.bait-row{display:flex;gap:6px;flex-wrap:wrap}
+.bait-chip{border:1px solid var(--line);background:rgba(255,255,255,.06);color:inherit;border-radius:999px;padding:6px 10px;font:inherit;font-size:12.5px}
+.bait-chip.on{border-color:#f2b46b;background:rgba(242,180,107,.2);font-weight:700}.bait-chip:disabled{opacity:.4}
+.bait-ic{font-size:34px;line-height:1;text-align:center}.bait-desc{font-size:11.5px;opacity:.75;line-height:1.35}
+#baitGrid{grid-template-columns:1fr}
+#baitGrid .item{display:grid;grid-template-columns:44px 1fr auto;column-gap:12px;row-gap:2px;align-items:center;text-align:left}
+#baitGrid .bait-ic{grid-row:1/4}#baitGrid b,#baitGrid .bait-desc,#baitGrid .price{grid-column:2}#baitGrid button{grid-column:3;grid-row:1/4;padding:10px 16px}
 .bite-alert{text-align:center;font-size:20px;font-weight:900;color:#ff6b5b;letter-spacing:.04em;animation:alertShake .35s ease-in-out infinite alternate}
 .bite-alert.now{font-size:44px;color:#ffe08a;text-shadow:0 0 18px rgba(255,200,80,.7);animation:alertPop .5s ease-out infinite alternate}
 @keyframes alertShake{from{transform:translateX(-3px) rotate(-1deg)}to{transform:translateX(3px) rotate(1deg)}}
@@ -390,6 +397,7 @@ body.mung #jumpBtn{opacity:0!important;pointer-events:none!important}
     <div class="shop-head"><h2 id="fishTitle">한강 낚시</h2><button class="x" id="fishClose" aria-label="닫기">닫기</button></div>
     <p class="fish-duel" id="fishDuel" hidden></p>
     <p id="fishMsg"></p>
+    <div class="bait-row" id="baitRow"></div>
     <div class="fish-power" id="fishPower"><div id="fishPowerBar"></div></div>
     <div class="fish-card" id="fishCard" hidden><i id="fishIcon"></i><div><b id="fishName"></b><span id="fishRare"></span></div></div>
     <div class="bite-alert" id="biteAlert" hidden>…!</div>
@@ -456,6 +464,15 @@ body.mung #jumpBtn{opacity:0!important;pointer-events:none!important}
     <p class="dv-sub">배달비 1,000원 포함 · 2분쯤 뒤에 지금 있는 곳으로 가져다 드려요</p>
     <div class="shop-grid" id="dvGrid"></div>
     <div class="shop-foot"><span>튀기는 동안에는 취소할 수 있어요</span><span id="dvWallet">내 돈 0원</span></div>
+  </div>
+</div>
+
+<div class="modal" id="baitModal" hidden role="dialog" aria-modal="true" aria-labelledby="baitTitle">
+  <div class="card shop">
+    <div class="shop-head"><h2 id="baitTitle">강태공 미끼 가게</h2><button class="x" id="baitClose" aria-label="닫기">닫기</button></div>
+    <p class="dv-sub">미끼마다 잘 무는 물고기가 달라요. 지렁이는 언제나 공짜!</p>
+    <div class="shop-grid" id="baitGrid"></div>
+    <div class="shop-foot"><span>한 묶음 5개 · 던질 때마다 1개씩 써요</span><span id="baitWallet">내 돈 0원</span></div>
   </div>
 </div>
 
@@ -2391,7 +2408,7 @@ function cleanPresence(p) {
   if (p.gv && typeof p.gv === "object" && typeof p.gv.to === "string" && typeof p.gv.id === "number" && RACE_BETS.includes(p.gv.a)) o.gv = { to: p.gv.to.slice(0, 80), id: p.gv.id, a: p.gv.a };
   o.gr = num(p.gr, 0, RECV_DAY_MAX, 0);
   if (p.sh && typeof p.sh === "object" && typeof p.sh.to === "string" && typeof p.sh.id === "number" && (p.sh.k === "chkshare" || p.sh.k === "chkshareY")) o.sh = { to: p.sh.to.slice(0, 80), id: p.sh.id, k: p.sh.k };
-  o.sa = num(p.sa, 0, 1e15, 0); o.jp = num(p.jp, 0, 1e15, 0);
+  o.sa = num(p.sa, 0, 1e15, 0); o.jp = num(p.jp, 0, 1e15, 0); o.lv = p.lv === "loft" ? "loft" : null;
   if (p.ac && typeof p.ac === "object" && typeof p.ac.id === "number" && RACE_BETS.includes(p.ac.bet)) o.ac = { id: p.ac.id, bet: p.ac.bet, st: p.ac.st === "go" ? "go" : "open", go: num(p.ac.go, 0, 1e15, 0) };
   if (p.aj && typeof p.aj === "object" && typeof p.aj.h === "string" && typeof p.aj.id === "number") o.aj = { h: p.aj.h.slice(0, 80), id: p.aj.id, at: num(p.aj.at, 0, 1e15, 0) };
   if (p.ap && typeof p.ap === "object" && typeof p.ap.id === "number") o.ap = { id: p.ap.id, s: num(p.ap.s, -20, 2000, 0), f: num(p.ap.f, 0, 600000, 0), k: Number.isInteger(p.ap.k) ? clamp(p.ap.k, 0, STEEDS.length - 1) : 1, b: p.ap.b === 1 ? 1 : 0 };
@@ -2477,7 +2494,7 @@ function syncPeers(peers) {
 })();
 let lastPub = 0, lastPubKey = "", mySay = null;
 function presenceObj() {
-  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id, at: me.bt.at } : null, say: mySay, rm: me.rm, hr: me.hold ? 1 : 0, hi: me.hold || null, ea: me.eat || 0, q: me.q || 0, bk: me.basket ? me.basket.length : -1, ch: me.ch || 0, pb: me.pb || null, mt: me.mat ? 1 : 0, bl: me.bl || 0, dv: me.dv ? { k: me.dv.k, at: me.dv.at } : null, em: me.em || null, lt: me.lit || 0, tw: me.tw || 0, gf: me.gf || null, ph: me.ph || null, pj: me.pj || null, rd: redness(), bq: me.bq || null, fr: me.rod ? 1 : 0, fs: me.fs || null, rc: me.rc || null, rj: me.rj ? { h: me.rj.h, id: me.rj.id, at: me.rj.at } : null, rp: me.rp || null, fd: me.fd || null, fj: me.fj ? { h: me.fj.h, id: me.fj.id, at: me.fj.at } : null, fsc: me.fsc || null, bh: me.bh || null, bj: me.bj ? { h: me.bj.h, id: me.bj.id, at: me.bj.at } : null, bp: me.bp ? { id: me.bp.id } : null, bf: me.bf || null, bpw: me.bpw || 0, gv: me.gv || null, gr: me.gr || 0, ac: me.ac || null, aj: me.aj ? { h: me.aj.h, id: me.aj.id, at: me.aj.at } : null, ap: me.ap || null, sh: me.sh || null, sa: me.sa || 0, jp: me.jp || 0 };
+  const o = { n: me.name, g: me.g, c: me.c, m: me.m, x: +me.x.toFixed(2), z: +me.z.toFixed(2), y: +me.y.toFixed(2), r: +me.r.toFixed(2), st: me.st, tb: me.tube, bt: me.bt ? { id: me.bt.id, at: me.bt.at } : null, say: mySay, rm: me.rm, hr: me.hold ? 1 : 0, hi: me.hold || null, ea: me.eat || 0, q: me.q || 0, bk: me.basket ? me.basket.length : -1, ch: me.ch || 0, pb: me.pb || null, mt: me.mat ? 1 : 0, bl: me.bl || 0, dv: me.dv ? { k: me.dv.k, at: me.dv.at } : null, em: me.em || null, lt: me.lit || 0, tw: me.tw || 0, gf: me.gf || null, ph: me.ph || null, pj: me.pj || null, rd: redness(), bq: me.bq || null, fr: me.rod ? 1 : 0, fs: me.fs || null, rc: me.rc || null, rj: me.rj ? { h: me.rj.h, id: me.rj.id, at: me.rj.at } : null, rp: me.rp || null, fd: me.fd || null, fj: me.fj ? { h: me.fj.h, id: me.fj.id, at: me.fj.at } : null, fsc: me.fsc || null, bh: me.bh || null, bj: me.bj ? { h: me.bj.h, id: me.bj.id, at: me.bj.at } : null, bp: me.bp ? { id: me.bp.id } : null, bf: me.bf || null, bpw: me.bpw || 0, gv: me.gv || null, gr: me.gr || 0, ac: me.ac || null, aj: me.aj ? { h: me.aj.h, id: me.aj.id, at: me.aj.at } : null, ap: me.ap || null, sh: me.sh || null, sa: me.sa || 0, jp: me.jp || 0, lv: me.level === "loft" ? "loft" : null };
   if (boarded && boarded.driver) { o.bx = +boatLocal.x.toFixed(2); o.bz = +boatLocal.z.toFixed(2); o.br = +boatLocal.r.toFixed(2); }
   else { o.bx = null; o.bz = null; o.br = null; }
   return o;
@@ -2674,6 +2691,7 @@ function refreshActions() {
   status = boatRaceActions(acts, status);
   status = begActions(acts, status);
   status = shareActions(acts, status);
+  status = spotActions(acts, status);
   status = circuitActions(acts, status);
   if ($("status").textContent !== status) { $("status").textContent = status; $("status").hidden = !status; }
   // rebuild the buttons only when they change, so a running timer in the status line never eats a tap
@@ -2683,7 +2701,7 @@ function refreshActions() {
 }
 $("actRow").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return; const a = b.dataset.act;
-  if (storeClick(a) || rentalClick(a) || deliveryClick(a) || boardClick(a) || fireClick(a) || photoClick(a) || beerClick(a) || fishClick(a) || raceClick(a) || diveClick(a) || duelClick(a) || boatRaceClick(a) || begClick(a) || shareClick(a) || circuitClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
+  if (storeClick(a) || rentalClick(a) || deliveryClick(a) || boardClick(a) || fireClick(a) || photoClick(a) || beerClick(a) || fishClick(a) || raceClick(a) || diveClick(a) || duelClick(a) || boatRaceClick(a) || begClick(a) || shareClick(a) || spotClick(a) || circuitClick(a)) { publish(true); actKey = ""; refreshActions(); return; }
   if (a === "sit" || a === "lie") {
     if (me.st === "walk") {
       if (!canSpread()) { toast("잔디나 대교 위에서만 돗자리를 펼 수 있습니다"); return; }
@@ -3124,7 +3142,7 @@ function pushOut(x, z, rad) {
   }
   return [x, z];
 }
-function onDock(x, z) { return (Math.abs(x - DOCK.x) < 8.5 && z > -2.2 && z < BOUND.landZ0 + 0.1) || onFishDeck(x, z); }
+function onDock(x, z) { return (Math.abs(x - DOCK.x) < 8.5 && z > -2.2 && z < BOUND.landZ0 + 0.1) || onFishDeck(x, z) || onWaterFloor(x, z); }
 function stepPlayer(dt) {
   if (anim) {
     anim.t += dt; const u = Math.min(1, anim.t / anim.dur);
@@ -3173,6 +3191,8 @@ function stepPlayer(dt) {
       if (cz !== nz) hitBound();
       nx = cx; nz = cz; me.y = BR.y;
     }
+  } else if (me.st === "walk" && me.level === "loft") { // the fishing range's upper floor
+    [nx, nz] = loftStep(nx, nz); me.y = RANGE.y2;
   } else if (me.st === "walk" && inStairs(nx, nz)) {
     if (me.x >= STAIR.bot - 0.6) { me.level = "stairs"; me.y = stairY(nx); }
     else { nx = me.x; nz = me.z; }
@@ -3180,6 +3200,7 @@ function stepPlayer(dt) {
     if (nx < BOUND.x0 || nx > BOUND.x1 || nz > BOUND.landZ1) { hitBound(); nx = clamp(nx, BOUND.x0, BOUND.x1); nz = Math.min(nz, BOUND.landZ1); }
     [nx, nz] = pushOut(nx, nz, .35);
     [nx, nz] = storeGate(nx, nz);
+    if (onRock(nx, nz) && !onRock(me.x, me.z) && rockFull()) { nx = me.x; nz = me.z; if (!me._rockToast || Date.now() - me._rockToast > 3000) { me._rockToast = Date.now(); toast("바위에 벌써 3명이 있어요. 조금 기다려 주세요"); } }
     if (nz < BOUND.landZ0 && !onDock(nx, nz)) {
       if (me.hold) dropRamen(me.hold === "ramen" ? "앗, 라면이 한강에 빠졌어요…" : "앗, 들고 있던 간식이 한강에 빠졌어요…");
       const dockSide = Math.abs(nx - DOCK.x) < 8.5;
@@ -4211,6 +4232,7 @@ function frame() {
   updateShare();
   updateJump();
   updateRaft();
+  updateSpots();
   updateCircuit(dt);
   // bubbles follow their owners
   for (let i = bubbles.length - 1; i >= 0; i--) {
@@ -4728,33 +4750,34 @@ function updateBeer() {
 /* ================= 한강 낚시: 데크 · 대여 · 던지기 · 챔질 · 도감 ================= */
 const FISH_DECK = { x: 120, half: 6, z0: -2.6 }, ROD_FEE = 1000, ROD_TIME = 30 * 60000, FISH_DAY_CAP = 4000;
 const FISH = [
-  { k: "bung", name: "붕어", rare: 0, w: 20, cm: [15, 32], col: 0x8a7a4a, pay: 200 },
-  { k: "ing", name: "잉어", rare: 0, w: 20, cm: [30, 72], col: 0xb08a40, pay: 200 },
-  { k: "nuchi", name: "누치", rare: 0, w: 20, cm: [25, 48], col: 0x9aa0a8, pay: 200 },
-  { k: "megi", name: "메기", rare: 1, w: 8, cm: [30, 75], col: 0x55504a, pay: 600 },
-  { k: "junchi", name: "강준치", rare: 1, w: 8, cm: [40, 85], col: 0xc8d0d8, pay: 600 },
-  { k: "sogari", name: "쏘가리", rare: 1, w: 8, cm: [20, 42], col: 0xb89040, pay: 600 },
-  { k: "pirami", name: "피라미", rare: 0, w: 14, cm: [8, 16], col: 0xb8c4cc, pay: 150, desc: "작지만 반짝반짝 빛나요" },
-  { k: "bluegill", name: "블루길", rare: 0, w: 10, cm: [12, 24], col: 0x4f7a8a, pay: 300, alien: true, desc: "외래종이라 강에 돌려보내지 않고 수거해요" },
-  { k: "bass", name: "배스", rare: 0, w: 9, cm: [25, 55], col: 0x5f7a3a, pay: 300, alien: true, desc: "외래종이라 강에 돌려보내지 않고 수거해요" },
-  { k: "kkeuri", name: "끄리", rare: 0, w: 5, cm: [20, 40], col: 0x9aa8b8, pay: 200, body: [.08, .1, .32], desc: "입이 커서 먹이를 덥석 물어요" },
-  { k: "moraemuji", name: "모래무지", rare: 0, w: 5, cm: [12, 25], col: 0xc8b48a, pay: 200, body: [.07, .07, .3], desc: "모래 속에 숨어 있다가 걸렸어요" },
-  { k: "chammaja", name: "참마자", rare: 0, w: 5, cm: [15, 30], col: 0xa8a090, pay: 200, body: [.07, .08, .3], desc: "몸에 점무늬가 콕콕" },
-  { k: "napjaru", name: "납자루", rare: 0, w: 5, cm: [6, 10], col: 0x8a7ad0, pay: 150, body: [.05, .09, .18], desc: "무지갯빛이 도는 작은 물고기예요" },
-  { k: "bbaga", name: "동자개", rare: 0, w: 5, cm: [15, 30], col: 0xc89a3a, pay: 200, body: [.09, .08, .28], desc: "빠가빠가 소리를 내서 '빠가사리'라고도 불러요" },
-  { k: "sungeo", name: "숭어", rare: 0, w: 5, cm: [30, 70], col: 0x8a96a4, pay: 200, body: [.09, .1, .34], desc: "한강 숭어는 물 위로 점프를 잘해요" },
-  { k: "eel", name: "뱀장어", rare: 1, w: 2.5, cm: [40, 90], col: 0x3a4a3a, pay: 600, desc: "미끌미끌… 손에서 자꾸 빠져나가요" },
-  { k: "chamge", name: "참게", rare: 1, w: 2.5, cm: [6, 10], col: 0x5a4a34, pay: 600, shape: "up", desc: "털 난 집게발로 낚싯줄을 꽉 잡았어요" },
-  { k: "saeu", name: "징거미새우", rare: 1, w: 2.5, cm: [8, 15], col: 0x8a9a7a, pay: 500, shape: "up", desc: "팔이 몸보다 길어요" },
-  { k: "jara", name: "자라", rare: 1, w: 2, cm: [20, 35], col: 0x6a7a4a, pay: 700, shape: "up", desc: "놀라서 목을 쏙 집어넣었어요" },
-  { k: "gamulchi", name: "가물치", rare: 1, w: 2, cm: [40, 85], col: 0x3f4a3a, pay: 700, body: [.1, .11, .38], desc: "힘이 엄청 세서 팔이 저려요" },
-  { k: "ungeo", name: "웅어", rare: 1, w: 2, cm: [20, 30], col: 0xd8dce2, pay: 600, body: [.05, .08, .32], desc: "옛날 한강의 명물이었던 물고기예요" },
-  { k: "jjukku", name: "쭈꾸미", rare: 1, w: 4, cm: [12, 24], col: 0x9a6a7a, pay: 600, shape: "up", desc: "민물에 웬 쭈꾸미…? 누가 놓쳤나 봐요" },
-  { k: "gold", name: "황금 잉어", rare: 2, w: 2, cm: [55, 95], col: 0xffcf3a, pay: 3000, icon: "✨", ann: true },
-  { k: "octo", name: "문어", rare: 2, w: 1.4, cm: [40, 90], col: 0xd2553a, pay: 2000, icon: "🐙", ann: true, shape: "up", desc: "여덟 다리로 낚싯줄을 꽉 붙잡고 버텼어요!" },
-  { k: "hwangso", name: "황쏘가리", rare: 2, w: 1, cm: [20, 45], col: 0xf2c230, pay: 2500, icon: "🟡", ann: true, body: [.08, .1, .3], desc: "천연기념물이에요! 사진만 찍고 바로 놓아줘요" },
-  { k: "puffer", name: "복어", rare: 2, w: .9, cm: [15, 30], col: 0xd8c27a, pay: 2000, icon: "🐡", ann: true, shape: "up", desc: "화가 나서 빵빵하게 부풀었어요" },
-  { k: "sturgeon", name: "철갑상어", rare: 2, w: .7, cm: [80, 160], col: 0x6a7480, pay: 2500, icon: "🦈", ann: true, desc: "공룡 시대부터 살아온 갑옷 물고기예요" },
+  { k: "bung", g: "veg", name: "붕어", rare: 0, w: 20, cm: [15, 32], col: 0x8a7a4a, pay: 200 },
+  { k: "ing", g: "veg", name: "잉어", rare: 0, w: 20, cm: [30, 72], col: 0xb08a40, pay: 200 },
+  { k: "nuchi", g: "veg", name: "누치", rare: 0, w: 20, cm: [25, 48], col: 0x9aa0a8, pay: 200 },
+  { k: "megi", g: "bottom", name: "메기", rare: 1, w: 8, cm: [30, 75], col: 0x55504a, pay: 600 },
+  { k: "junchi", g: "pred", name: "강준치", rare: 1, w: 8, cm: [40, 85], col: 0xc8d0d8, pay: 600 },
+  { k: "sogari", g: "pred", name: "쏘가리", rare: 1, w: 8, cm: [20, 42], col: 0xb89040, pay: 600 },
+  { k: "pirami", g: "veg", name: "피라미", rare: 0, w: 14, cm: [8, 16], col: 0xb8c4cc, pay: 150, desc: "작지만 반짝반짝 빛나요" },
+  { k: "bluegill", g: "pred", name: "블루길", rare: 0, w: 10, cm: [12, 24], col: 0x4f7a8a, pay: 300, alien: true, desc: "외래종이라 강에 돌려보내지 않고 수거해요" },
+  { k: "bass", g: "pred", name: "배스", rare: 0, w: 9, cm: [25, 55], col: 0x5f7a3a, pay: 300, alien: true, desc: "외래종이라 강에 돌려보내지 않고 수거해요" },
+  { k: "kkeuri", g: "pred", name: "끄리", rare: 0, w: 5, cm: [20, 40], col: 0x9aa8b8, pay: 200, body: [.08, .1, .32], desc: "입이 커서 먹이를 덥석 물어요" },
+  { k: "moraemuji", g: "veg", name: "모래무지", rare: 0, w: 5, cm: [12, 25], col: 0xc8b48a, pay: 200, body: [.07, .07, .3], desc: "모래 속에 숨어 있다가 걸렸어요" },
+  { k: "chammaja", g: "veg", name: "참마자", rare: 0, w: 5, cm: [15, 30], col: 0xa8a090, pay: 200, body: [.07, .08, .3], desc: "몸에 점무늬가 콕콕" },
+  { k: "napjaru", g: "veg", name: "납자루", rare: 0, w: 5, cm: [6, 10], col: 0x8a7ad0, pay: 150, body: [.05, .09, .18], desc: "무지갯빛이 도는 작은 물고기예요" },
+  { k: "bbaga", g: "bottom", name: "동자개", rare: 0, w: 5, cm: [15, 30], col: 0xc89a3a, pay: 200, body: [.09, .08, .28], desc: "빠가빠가 소리를 내서 '빠가사리'라고도 불러요" },
+  { k: "sungeo", g: "veg", name: "숭어", rare: 0, w: 5, cm: [30, 70], col: 0x8a96a4, pay: 200, body: [.09, .1, .34], desc: "한강 숭어는 물 위로 점프를 잘해요" },
+  { k: "kkeokji", g: "pred", name: "꺽지", rare: 1, w: 0, rockW: 5, cm: [10, 22], col: 0x6a6040, pay: 700, body: [.07, .1, .24], desc: "바위틈에만 사는 물고기예요. 바위 포인트 전용!" },
+  { k: "eel", g: "bottom", name: "뱀장어", rare: 1, w: 2.5, cm: [40, 90], col: 0x3a4a3a, pay: 600, desc: "미끌미끌… 손에서 자꾸 빠져나가요" },
+  { k: "chamge", g: "bottom", name: "참게", rare: 1, w: 2.5, cm: [6, 10], col: 0x5a4a34, pay: 600, shape: "up", desc: "털 난 집게발로 낚싯줄을 꽉 잡았어요" },
+  { k: "saeu", g: "bottom", name: "징거미새우", rare: 1, w: 2.5, cm: [8, 15], col: 0x8a9a7a, pay: 500, shape: "up", desc: "팔이 몸보다 길어요" },
+  { k: "jara", g: "bottom", name: "자라", rare: 1, w: 2, cm: [20, 35], col: 0x6a7a4a, pay: 700, shape: "up", desc: "놀라서 목을 쏙 집어넣었어요" },
+  { k: "gamulchi", g: "pred", name: "가물치", rare: 1, w: 2, cm: [40, 85], col: 0x3f4a3a, pay: 700, body: [.1, .11, .38], desc: "힘이 엄청 세서 팔이 저려요" },
+  { k: "ungeo", g: "bottom", name: "웅어", rare: 1, w: 2, cm: [20, 30], col: 0xd8dce2, pay: 600, body: [.05, .08, .32], desc: "옛날 한강의 명물이었던 물고기예요" },
+  { k: "jjukku", g: "bottom", name: "쭈꾸미", rare: 1, w: 4, cm: [12, 24], col: 0x9a6a7a, pay: 600, shape: "up", desc: "민물에 웬 쭈꾸미…? 누가 놓쳤나 봐요" },
+  { k: "gold", g: "veg", name: "황금 잉어", rare: 2, w: 2, cm: [55, 95], col: 0xffcf3a, pay: 3000, icon: "✨", ann: true },
+  { k: "octo", g: "bottom", name: "문어", rare: 2, w: 1.4, cm: [40, 90], col: 0xd2553a, pay: 2000, icon: "🐙", ann: true, shape: "up", desc: "여덟 다리로 낚싯줄을 꽉 붙잡고 버텼어요!" },
+  { k: "hwangso", g: "pred", name: "황쏘가리", rare: 2, w: 1, cm: [20, 45], col: 0xf2c230, pay: 2500, icon: "🟡", ann: true, body: [.08, .1, .3], desc: "천연기념물이에요! 사진만 찍고 바로 놓아줘요" },
+  { k: "puffer", g: "bottom", name: "복어", rare: 2, w: .9, cm: [15, 30], col: 0xd8c27a, pay: 2000, icon: "🐡", ann: true, shape: "up", desc: "화가 나서 빵빵하게 부풀었어요" },
+  { k: "sturgeon", g: "bottom", name: "철갑상어", rare: 2, w: .7, cm: [80, 160], col: 0x6a7480, pay: 2500, icon: "🦈", ann: true, desc: "공룡 시대부터 살아온 갑옷 물고기예요" },
   { k: "boot", name: "장화", rare: 3, w: 7, cm: [0, 0], col: 0x3a4a3a, pay: 100 },
   { k: "can", name: "깡통", rare: 3, w: 7, cm: [0, 0], col: 0xb0b6bc, pay: 100 },
   { k: "cupra", name: "컵라면 용기", rare: 3, w: 5, cm: [0, 0], col: 0xf4f1ea, pay: 100, desc: "누가 라면 먹고 버렸어요… 분리수거!" },
@@ -4813,7 +4836,7 @@ function fishActions(acts, status) {
     else acts.unshift(["rodret", "낚싯대 반납하기", ""]);
   }
   if (me.rod && me.st === "walk") {
-    if (onFishDeck(me.x, me.z)) acts.unshift(["fish", "낚시하기", "primary"]);
+    if (fishSpot(me.x, me.z, me.level)) acts.unshift(["fish", "낚시하기", "primary"]);
     else if (!status) status = `낚싯대 대여 중 · ${fmt(Math.max(0, (ROD_TIME - (Date.now() - me.rod.at)) / 1000))} 남음 · 낚시 데크로 가 보세요`;
   }
   return status;
@@ -4836,7 +4859,8 @@ function endRod(msg) { me.rod = null; me.fs = null; closeFish(); toast(msg); pub
 const fishing = { st: "ready", power: 0, pDir: 1, castAt: 0, biteAt: 0, catch: null, raf: 0 };
 function openFish() {
   if (!me.rod) return; me.r = 0; fishing.st = "ready"; fishing.catch = null;
-  $("fishModal").hidden = false; $("dexBox").hidden = true; drawFish(); fishLoop();
+  $("fishModal").hidden = false; $("dexBox").hidden = true; drawBaitRow(); drawFish(); fishLoop();
+  const sp = fishSpot(me.x, me.z, me.level); if (sp && sp.id !== "deck") toast(`${sp.name}${sp.reach > 1.2 ? " · 높은 곳이라 더 멀리 던져져요" : sp.id === "rock" ? " · 꺽지는 여기서만 잡혀요" : ""}`);
 }
 function closeFish() {
   $("fishModal").hidden = true; fishing.st = "ready"; cancelAnimationFrame(fishing.raf);
@@ -4895,7 +4919,7 @@ function fishLoop() {
       $("reelNeedle").style.left = (R.pos * 100) + "%";
       if (now > R.end) { fishing.st = "ready"; $("biteAlert").hidden = true; toast(R.tense ? "버티다 버티다 놓쳤어요… 엄청 큰 녀석이었는데!" : "힘이 빠져서 놓쳤어요… 다시 던져 보세요"); setFs("idle"); drawFish(); }
     }
-    if ((fishing.st === "wait" || fishing.st === "bite") && (me.moving || me.st !== "walk" || !onFishDeck(me.x, me.z))) { fishing.st = "ready"; setFs("idle"); closeFish(); toast("움직여서 낚싯줄을 걷었어요"); return; }
+    if ((fishing.st === "wait" || fishing.st === "bite") && (me.moving || me.st !== "walk" || !fishSpot(me.x, me.z, me.level))) { fishing.st = "ready"; setFs("idle"); closeFish(); toast("움직여서 낚싯줄을 걷었어요"); return; }
     fishing.raf = requestAnimationFrame(tick);
   };
   fishing.raf = requestAnimationFrame(tick);
@@ -4925,8 +4949,10 @@ function reelTap() {
 const castRelease = () => {
   if (fishing.st !== "charge") return;
   // every cast lands a little differently: wobble in distance and direction, a high or a flat arc
-  const d = (3 + fishing.power * 9) * (.75 + Math.random() * .5), ang = (Math.random() - .5) * .9; me.r = 0;
-  const bx = clamp(me.x - Math.sin(ang) * d, BOUND.x0, BOUND.x1), bz = Math.min(FISH_DECK.z0 - 1, me.z - Math.cos(ang) * d);
+  const sp = fishSpot(me.x, me.z, me.level) || { reach: 1, edge: FISH_DECK.z0 };
+  const d = (3 + fishing.power * 9) * sp.reach * (.75 + Math.random() * .5), ang = (Math.random() - .5) * .9; me.r = 0;
+  const bx = clamp(me.x - Math.sin(ang) * d, BOUND.x0, BOUND.x1), bz = Math.min(sp.edge - 1, me.z - Math.cos(ang) * d);
+  fishing.baitUsed = useBait(); // one bait per cast (worms are free)
   const ah = +(1 + Math.random() * 2.4).toFixed(2), ft = +(.45 + d / 16).toFixed(2);
   fishing.st = "wait"; fishing.castAt = Date.now(); fishing.biteAt = fishing.castAt + 5000 + Math.random() * 17000;
   setFs("cast", { bx: +bx.toFixed(2), bz: +bz.toFixed(2), ah, ft }); if (audio.ready) audio.tone(audio.sfx, "sine", 900, 300, .25, .08);
@@ -4935,9 +4961,28 @@ const castRelease = () => {
 };
 ["pointerup", "pointerleave", "pointercancel"].forEach(ev => $("fishBtn").addEventListener(ev, castRelease));
 const RARE_BOOST = 1.35; // more kinds of common fish shouldn't make the rare ones rarer
+// what bites depends on where you are, how far you cast, the time and the bait
+const BAIT_MULT = {
+  worm: {},
+  paste: { veg: 2.2, pred: .5, gold: 2 },
+  lure: { pred: 2.4, veg: .4, trash: .7 },
+  shrimp: { bottom: 2, deep: 1.5 }
+};
+function fishWeight(f, c) {
+  let w = c.spot === "rock" ? (f.rockW != null ? f.rockW : f.w * (f.k === "sogari" || f.k === "hwangso" ? 2 : 1)) : f.w;
+  w *= f.rare === 2 || f.rare >= 4 ? RARE_BOOST : 1;
+  if (f.deep) w *= (c.far ? 2.2 : 1) * (c.night ? 1.6 : 1);
+  const B = BAIT_MULT[c.bait] || {};
+  if (f.g && B[f.g]) w *= B[f.g];
+  if (f.k === "gold" && B.gold) w *= B.gold;
+  if (f.rare === 3 && B.trash) w *= B.trash;
+  if (f.deep && B.deep) w *= B.deep;
+  return w;
+}
 function rollFish() {
-  const h = kst().getHours(), night = h >= 20 || h < 5, far = fishing.power > .7;
-  const wt = f => f.w * (f.rare === 2 || f.rare >= 4 ? RARE_BOOST : 1) * (f.deep ? (far ? 2.2 : 1) * (night ? 1.6 : 1) : 1);
+  const h = kst().getHours(), sp = fishSpot(me.x, me.z, me.level);
+  const c = { night: h >= 20 || h < 5, far: fishing.power * (sp ? sp.reach : 1) > .7, bait: fishing.baitUsed || "worm", spot: sp && sp.id };
+  const wt = f => fishWeight(f, c);
   const total = FISH.reduce((s, f) => s + wt(f), 0); let r = Math.random() * total;
   for (const f of FISH) { r -= wt(f); if (r <= 0) return f; } return FISH[0];
 }
@@ -5456,10 +5501,10 @@ function duelActions(acts, status) {
     if (left > 0 && now >= d.fd.go) return `🎣 ${fmt(left / 1000)} · ${fdBoardText(d)}`;
     return status;
   }
-  if (me.st !== "walk" || !onFishDeck(me.x, me.z)) return status;
+  if (me.st !== "walk" || !fishSpot(me.x, me.z, me.level)) return status;
   for (const [peer, o] of others) {
     const fd = o.p.fd; if (!fd || fd.st !== "open" || now - fd.id > 180000) continue;
-    const r = fdOf(peer); if (r && r.list.length < FD_MAX && Math.hypot(o.x - me.x, o.z - me.z) < 15) acts.push(["fdjoin:" + peer, `🎣 ${o.p.n}님 대결 참가 · ${won(fd.bet)} (${r.list.length}/${FD_MAX})`, ""]);
+    const r = fdOf(peer); if (r && r.list.length < FD_MAX && Math.hypot(o.x - me.x, o.z - me.z) < 90) acts.push(["fdjoin:" + peer, `🎣 ${o.p.n}님 대결 참가 · ${won(fd.bet)} (${r.list.length}/${FD_MAX})`, ""]);
   }
   acts.push(["fdopen", "낚시 대결 열기", ""]);
   return status;
@@ -6423,9 +6468,9 @@ function qualityTick(dt) {
 }
 /* ================= 확률 게시판 뗏목: 낚시터 앞을 천천히 가로질러 떠다님 ================= */
 // The odds come straight from FISH (the same weights rollFish uses), so the board never goes stale.
-const RAFT = { z: -11, span: 40, period: 220 }; // just past where the floats land, clear of the bridge piers (z 14 / -16)
+const RAFT = { z: -12.5, span: 34, period: 220 }; // just past where the floats land, clear of the bridge piers (z 14 / -16)
 function fishOdds(night, far) {
-  const wt = f => f.w * (f.rare === 2 || f.rare >= 4 ? RARE_BOOST : 1) * (f.deep ? (far ? 2.2 : 1) * (night ? 1.6 : 1) : 1);
+  const wt = f => fishWeight(f, { night, far, bait: "worm", spot: "deck" });
   const total = FISH.reduce((s, f) => s + wt(f), 0);
   return [0, 1, 2, 5, 4, 3].map(t => ({ t, pct: FISH.filter(f => f.rare === t).reduce((s, f) => s + wt(f), 0) / total * 100, n: FISH.filter(f => f.rare === t).length }));
 }
@@ -6468,6 +6513,199 @@ function updateRaft() {
   raft.position.set(FISH_DECK.x + Math.sin(ph) * RAFT.span, -.42 + Math.sin(T * 1.3) * .05, RAFT.z);
   raft.rotation.set(Math.sin(T * 1.1) * .02, 0, Math.sin(T * .9) * .025);
   raft.userData.flag.rotation.y = Math.sin(T * 3) * .3;
+}
+/* ================= 낚시 자리 늘리기: 징검다리 바위 · 2층 수상 낚시터 · 강태공 미끼 가게 ================= */
+// Spots: where fishing is allowed, how far a cast reaches, and where the water starts in front.
+const ROCK = { x: 150, z: -7, r: 2.4, cap: 3, stones: [[150, -.2], [150.4, -1.6], [149.7, -3], [150.2, -4.3]] }; // each overlaps the next a little: walk straight and you stay dry
+const RANGE = { x0: 168, x1: 196, z0: -6.3, z1: -2, walk: [180.5, 183.5], y2: 3.4, stairX: 171, bays: 7 };
+const SPOT_DEFS = [
+  { id: "deck", name: "낚시 데크", reach: 1, edge: FISH_DECK.z0, test: (x, z, lv) => lv !== "loft" && onFishDeck(x, z) },
+  { id: "rock", name: "바위 포인트", reach: 1.1, edge: ROCK.z - ROCK.r, test: (x, z, lv) => lv !== "loft" && onRock(x, z) },
+  { id: "range1", name: "수상 낚시터 1층", reach: 1.1, edge: RANGE.z0, test: (x, z, lv) => lv !== "loft" && x > RANGE.x0 && x < RANGE.x1 && z > RANGE.z0 - .1 && z < RANGE.z1 + .1 },
+  { id: "range2", name: "수상 낚시터 2층", reach: 1.45, edge: RANGE.z0, test: (x, z, lv) => lv === "loft" }
+];
+function fishSpot(x, z, lv) { for (const s of SPOT_DEFS) if (s.test(x, z, lv || me.level)) return s; return null; }
+const onRock = (x, z) => Math.hypot(x - ROCK.x, z - ROCK.z) < ROCK.r;
+const onStone = (x, z) => ROCK.stones.some(([sx, sz]) => Math.hypot(x - sx, z - sz) < .8);
+// the ground floor of the fishing range (and the boardwalk out to it) is walkable like the deck
+const onRange1 = (x, z) => (x > RANGE.x0 && x < RANGE.x1 && z > RANGE.z0 && z < RANGE.z1) || (x > RANGE.walk[0] && x < RANGE.walk[1] && z >= RANGE.z1 - .1 && z < BOUND.landZ0 + .1);
+const onWaterFloor = (x, z) => onRock(x, z) || onStone(x, z) || onRange1(x, z);
+// the rock holds three anglers at most
+function rockFull() { let n = 0; for (const o of others.values()) if (o.p.lv !== "loft" && onRock(o.x, o.z)) n++; return n >= ROCK.cap; }
+// upstairs: walk anywhere on the upper floor except the stairwell
+function loftStep(nx, nz) { return [clamp(nx, RANGE.stairX + 1.4, RANGE.x1 - .3), clamp(nz, RANGE.z0 + .2, RANGE.z1 - .6)]; }
+
+/* ---------- the rock and its stepping stones ---------- */
+{
+  const stoneM = mat(0x6c7078), rockM = mat(0x5f646b), moss = mat(0x5a8a4a);
+  ROCK.stones.forEach(([x, z], i) => { const s = new THREE.Mesh(new THREE.CylinderGeometry(.62, .75, .7, 10), stoneM); s.position.set(x, -.3, z); s.rotation.y = i; s.scale.set(1, 1, .85); s.castShadow = s.receiveShadow = true; scene.add(s); });
+  const body = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14, 0, Math.PI * 2, 0, Math.PI / 2), rockM); body.scale.set(ROCK.r + .5, 1.1, ROCK.r + .3); body.position.set(ROCK.x, -1.05, ROCK.z); body.castShadow = body.receiveShadow = true; scene.add(body);
+  const top = new THREE.Mesh(new THREE.CylinderGeometry(ROCK.r - .1, ROCK.r + .2, .12, 9), mat(0x6e737a)); top.position.set(ROCK.x, -.04, ROCK.z); top.rotation.y = .3; top.receiveShadow = true; scene.add(top);
+  // rough boulders around the rim (mostly on the river side, so the way in stays open)
+  [[2.3, 0, .55], [1.7, -1.6, .7], [0, -2.5, .8], [-1.8, -1.5, .65], [-2.4, .4, .45], [2.1, 1.3, .35], [-1.6, 1.6, .3]].forEach(([dx, dz, h], i) => {
+    const b = new THREE.Mesh(new THREE.DodecahedronGeometry(.7, 0), rockM); b.scale.set(1.1, h * 1.4, .9); b.rotation.set(i, i * 2, 0); b.position.set(ROCK.x + dx, h * .35 - .1, ROCK.z + dz); b.castShadow = b.receiveShadow = true; scene.add(b);
+  });
+  [[-1, .3], [.8, -.9], [1.2, 1]].forEach(([dx, dz]) => { const m = new THREE.Mesh(new THREE.SphereGeometry(.45, 8, 6), moss); m.scale.set(1.3, .25, .9); m.position.set(ROCK.x + dx, .03, ROCK.z + dz); scene.add(m); });
+  const post = new THREE.Mesh(new THREE.BoxGeometry(.08, 1.2, .08), mat(0x6b4f35)); post.position.set(ROCK.x - 2.2, .6, 1.4); scene.add(post);
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.9, .7), signMat(signTex([["징검다리 바위 포인트", 34, .38], ["최대 3명 · 바위 전용 꺽지 · 발 조심!", 22, .78]], "#2f6fb0", "#ffffff", 512, 190)));
+  sign.position.set(ROCK.x - 2.2, 1.45, 1.44); scene.add(sign); const s2 = sign.clone(); s2.rotation.y = Math.PI; s2.position.z = 1.36; scene.add(s2);
+}
+
+/* ---------- the floating fishing range: two floors of numbered bays under a long canopy ---------- */
+{
+  const R = RANGE, W = R.x1 - R.x0, D = R.z1 - R.z0, cx = (R.x0 + R.x1) / 2, cz = (R.z0 + R.z1) / 2;
+  const wood = mat(0x9a7350), dark = mat(0x5b4430), steel = mat(0xe9ece8), green = mat(0x3f9a54), wall = mat(0xcfe0c4), rail = mat(0xf2f2ee);
+  const add = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; scene.add(o); return o; };
+  // piles in the water
+  for (let i = 0; i <= R.bays; i++) [R.z0 + .2, R.z1 - .2].forEach(z => add(new THREE.CylinderGeometry(.18, .2, 2, 8), dark, R.x0 + i * W / R.bays, -.9, z));
+  // ground floor and the boardwalk to the bank
+  add(new THREE.BoxGeometry(W, .3, D), wood, cx, -.15, cz);
+  add(new THREE.BoxGeometry(R.walk[1] - R.walk[0], .3, BOUND.landZ0 - R.z1 + .4), wood, (R.walk[0] + R.walk[1]) / 2, -.15, (R.z1 + BOUND.landZ0) / 2);
+  // the upper floor slab, back wall with windows, and the long canopy roof (sloping down toward the river)
+  add(new THREE.BoxGeometry(W, .3, D + .4), mat(0xbfc3be), cx, R.y2 - .15, cz - .2);
+  const backs = [add(new THREE.BoxGeometry(W, R.y2 - .2, .15), wall, cx, (R.y2 - .2) / 2, R.z1 + .1), add(new THREE.BoxGeometry(W, 3.2, .15), wall, cx, R.y2 + 1.6, R.z1 + .1)];
+  for (let i = 0; i < R.bays; i++) { const x = R.x0 + (i + .5) * W / R.bays; [1.3, R.y2 + 1.7].forEach(y => backs.push(add(new THREE.BoxGeometry(2.2, .9, .05), mat(0xbfe1f2), x, y, R.z1 + .02))); }
+  RANGE.backs = backs;
+  [[R.y2 - .45, 1.2], [R.y2 + 3.3, 1.6]].forEach(([y, over]) => { // canopies over each floor's front, like a driving range
+    const c = add(new THREE.BoxGeometry(W + .6, .12, D + over), steel, cx, y, cz - over / 2); c.rotation.x = -.08;
+    for (let i = 0; i <= R.bays * 2; i++) add(new THREE.BoxGeometry(.08, .1, D + over), mat(0xc8ccc6), R.x0 + i * W / (R.bays * 2), y - .1, cz - over / 2).rotation.x = -.08;
+    add(new THREE.BoxGeometry(W + .6, .08, .08), mat(0xfff1c0), cx, y - .18, R.z0 - over + .25); // a light strip under the lip
+  });
+  // bays: pillars, green mats, stools, bay numbers, railings on both floors
+  const numTex = n => signTex([[String(n), 70, .55]], "#2f6fb0", "#ffffff", 128, 128);
+  for (let f = 0; f < 2; f++) {
+    const y = f ? R.y2 : 0;
+    for (let i = 0; i <= R.bays; i++) add(new THREE.BoxGeometry(.18, f ? 3.2 : R.y2 - .3, .18), steel, R.x0 + i * W / R.bays, y + (f ? 1.6 : (R.y2 - .3) / 2), R.z0 + .15);
+    for (let i = 0; i < R.bays; i++) {
+      const x = R.x0 + (i + .5) * W / R.bays;
+      if (!(f === 1 && x < R.stairX + 1.4)) {
+        add(new THREE.BoxGeometry(W / R.bays - .5, .03, 1.8), green, x, y + .02, R.z0 + 1.2);
+        add(new THREE.CylinderGeometry(.22, .2, .45, 10), mat(0x2f6fb0), x + .9, y + .23, R.z0 + 1.9);
+        const tag = add(new THREE.PlaneGeometry(.45, .45), signMat(numTex(f * R.bays + i + 1)), x - W / R.bays / 2 + .12, y + 1.6, R.z0 + .26); tag.castShadow = false;
+      }
+    }
+    add(new THREE.BoxGeometry(W, .06, .06), rail, cx, y + .95, R.z0 + .08); add(new THREE.BoxGeometry(W, .05, .05), rail, cx, y + .5, R.z0 + .08);
+  }
+  // stairs at the west end (ground floor → upper floor)
+  for (let i = 0; i < 10; i++) add(new THREE.BoxGeometry(1.2, .12, .5), wood, R.stairX - .2, .1 + i * R.y2 / 10, R.z1 - .5 - i * .38);
+  add(new THREE.BoxGeometry(.06, .06, 4), rail, R.stairX + .45, 2.1, R.z1 - 2.2).rotation.x = -.72;
+  // name board on the roof
+  const sign = add(new THREE.PlaneGeometry(7, 1.1), signMat(signTex([["한강 수상 낚시터", 60, .55]], "#1f5f3a", "#ffffff", 768, 120)), cx, R.y2 + 3.9, R.z0 - 1.05);
+  sign.rotation.x = -.08; sign.castShadow = false; const back = sign.clone(); back.rotation.y = Math.PI; back.position.z = R.z1 + .25; scene.add(back);
+  const info = add(new THREE.PlaneGeometry(1.8, .9), signMat(signTex([["수상 낚시터", 38, .3], ["2층은 더 멀리 던져져요", 24, .62], ["→ 심해어가 잘 나와요", 24, .86]], "#1f5f3a", "#ffffff", 384, 192)), R.walk[0] - .6, 1.4, BOUND.landZ0 + .2);
+  info.rotation.y = 0;
+}
+
+/* ---------- 강태공 미끼 가게: an old angler in a straw hat beside a bait cart ---------- */
+const BAITS = [
+  { k: "worm", name: "지렁이", icon: "🪱", price: 0, desc: "무료 · 모든 어종이 고르게" },
+  { k: "paste", name: "떡밥", icon: "🍙", price: 300, desc: "붕어·잉어 같은 순한 물고기 ↑ · 황금 잉어 ×2" },
+  { k: "lure", name: "루어", icon: "🎏", price: 500, desc: "배스·쏘가리·가물치 같은 사냥꾼 물고기 ↑" },
+  { k: "shrimp", name: "새우", icon: "🦐", price: 800, desc: "메기·장어·문어 같은 바닥 물고기 ↑ · 심해어 ×1.5" }
+];
+const BAIT_PACK = 5, BAIT_BY = Object.fromEntries(BAITS.map(b => [b.k, b]));
+const BAIT_NPC = { x: FISH_DECK.box[0] - 3.4, z: FISH_DECK.box[1] + .4 };
+const baitCount = k => k === "worm" ? Infinity : ((wallet.bait || {})[k] || 0);
+function useBait() {
+  const k = fishing.bait || "worm"; if (k === "worm") return "worm";
+  if (baitCount(k) <= 0) { fishing.bait = "worm"; drawBaitRow(); return "worm"; }
+  wallet.bait[k]--; saveWallet(); if (wallet.bait[k] <= 0) { toast(`${BAIT_BY[k].name}를 다 썼어요. 다음부터는 지렁이로 낚아요`); fishing.bait = "worm"; }
+  drawBaitRow(); return k;
+}
+const baitNpc = (() => {
+  const g = new THREE.Group(); g.position.set(BAIT_NPC.x, 0, BAIT_NPC.z); scene.add(g);
+  // the cart: a wooden stall with bait tubs and a little roof
+  const wood = mat(0x8a6a48), cart = new THREE.Mesh(new THREE.BoxGeometry(1.6, .8, .8), wood); cart.position.set(1.1, .55, 0); cart.castShadow = true; g.add(cart);
+  [[.55, -.3], [1.65, -.3], [.55, .3], [1.65, .3]].forEach(([x, z]) => { const w = new THREE.Mesh(new THREE.CylinderGeometry(.16, .16, .08, 12), mat(0x3a3330)); w.rotation.x = Math.PI / 2; w.position.set(x, .16, z * 1.4); g.add(w); });
+  [0x8a5a3a, 0xe8d8a8, 0x6fa8dc, 0xf28c8c].forEach((c, i) => { const tub = new THREE.Mesh(new THREE.CylinderGeometry(.15, .13, .16, 12), mat(c)); tub.position.set(.6 + i * .33, 1.03, .05); g.add(tub); });
+  [.35, 1.85].forEach(x => { const p = new THREE.Mesh(new THREE.CylinderGeometry(.04, .04, 1.4, 6), wood); p.position.set(x, 1.6, .3); g.add(p); });
+  const roof = new THREE.Mesh(new THREE.BoxGeometry(1.9, .08, 1.1), mat(0x2f6fb0)); roof.position.set(1.1, 2.3, .05); roof.rotation.x = .15; g.add(roof);
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.7, .5), signMat(signTex([["강태공 미끼", 42, .55]], "#6b4f35", "#fff6e0", 512, 150))); sign.position.set(1.1, 2.05, -.47); sign.rotation.y = Math.PI; g.add(sign);
+  const sign2 = sign.clone(); sign2.rotation.y = 0; sign2.position.z = .58; g.add(sign2);
+  // the old angler on a stool: straw hat, white beard, a rod leaning on the cart
+  const av = makeAvatar({ g: "m", c: 4, name: "강태공" }); setAvatarState(av, "stool", false, true); av.position.set(-.2, 0, .1); av.rotation.y = Math.PI; g.add(av);
+  const stool = new THREE.Mesh(new THREE.CylinderGeometry(.24, .22, .45, 10), wood); stool.position.set(-.2, .22, .1); g.add(stool);
+  const head = av.userData.head, straw = mat(0xe8c870);
+  const brim = new THREE.Mesh(new THREE.CylinderGeometry(.85, .85, .04, 24), straw); brim.position.y = .33; head.add(brim);
+  const crown = new THREE.Mesh(new THREE.CylinderGeometry(.42, .5, .3, 20), straw); crown.position.y = .5; head.add(crown);
+  const band = new THREE.Mesh(new THREE.CylinderGeometry(.505, .505, .07, 20), mat(0x8a2a2a)); band.position.y = .4; head.add(band);
+  const beard = new THREE.Mesh(new THREE.SphereGeometry(.26, 12, 10), mat(0xf4f1ea)); beard.scale.set(1.1, .9, .6); beard.position.set(0, -.36, -.33); head.add(beard);
+  const rod = new THREE.Mesh(new THREE.CylinderGeometry(.015, .03, 2.6, 6), mat(0x3a2a1a)); rod.position.set(.3, 1.3, .55); rod.rotation.z = -.35; g.add(rod);
+  g.traverse(m => { if (m.isMesh) m.castShadow = true; });
+  OBST.push({ x0: BAIT_NPC.x - .6, x1: BAIT_NPC.x + 2, z0: BAIT_NPC.z - .55, z1: BAIT_NPC.z + .55 });
+  updateAvatar(av, .016, 0, {});
+  return { g, av };
+})();
+const nearBaitNpc = () => me.level === "ground" && me.st === "walk" && Math.hypot(me.x - (BAIT_NPC.x + .6), me.z - (BAIT_NPC.z - 1.3)) < 1.9;
+const NPC_LINES = ["허허, 오늘은 물이 좋구먼", "떡밥엔 붕어, 루어엔 쏘가리지", "새우를 쓰면 바닥 녀석들이 올라온다네", "바위에 가면 꺽지가 산다던데…", "낚시는 기다림이야, 기다림"];
+let npcSaid = 0;
+
+/* ---------- actions: bait shop, stairs, a full rock ---------- */
+function spotActions(acts, status) {
+  if (!started || anim || boarded || me.st !== "walk") return status;
+  if (nearBaitNpc()) { acts.unshift(["baitshop", "🪱 강태공에게 미끼 사기", "primary"]); status = "강태공 미끼 가게 · 미끼마다 잘 무는 물고기가 달라요"; }
+  if (me.level !== "loft" && onRange1(me.x, me.z) && me.x < RANGE.stairX + 1.6 && me.z > RANGE.z0) acts.unshift(["loftup", "⬆ 2층으로 올라가기", ""]);
+  if (me.level === "loft" && me.x < RANGE.stairX + 2.4) acts.unshift(["loftdown", "⬇ 1층으로 내려가기", ""]);
+  if (me.level === "loft" && !status) status = "수상 낚시터 2층 · 여기선 더 멀리 던져져요";
+  return status;
+}
+function spotClick(a) {
+  if (a === "baitshop") { openBaitShop(); return true; }
+  if (a === "loftup" || a === "loftdown") {
+    const up = a === "loftup";
+    anim = { t: 0, dur: .9, from: [me.x, me.z, me.y || 0], to: [RANGE.stairX + 1.6, up ? -4.4 : -2.6, up ? RANGE.y2 : 0], hop: .3, then: () => { me.level = up ? "loft" : "ground"; me.y = up ? RANGE.y2 : 0; publish(true); actKey = ""; refreshActions(); } };
+    if (audio.ready) audio.step("deck", true); return true;
+  }
+  return false;
+}
+function openBaitShop() {
+  const grid = $("baitGrid"); grid.textContent = "";
+  BAITS.filter(b => b.price).forEach(B => {
+    const cell = document.createElement("div"); cell.className = "item";
+    const ic = document.createElement("div"); ic.className = "bait-ic"; ic.textContent = B.icon;
+    const nm = document.createElement("b"); nm.textContent = `${B.name} ${BAIT_PACK}개`;
+    const ds = document.createElement("span"); ds.className = "bait-desc"; ds.textContent = B.desc;
+    const pr = document.createElement("span"); pr.className = "price"; pr.textContent = `${won(B.price)} · 가진 것 ${baitCount(B.k)}개`;
+    const btn = document.createElement("button"); btn.textContent = "사기"; btn.dataset.k = B.k; btn.disabled = wallet.money < B.price;
+    cell.append(ic, nm, ds, pr, btn); grid.appendChild(cell);
+  });
+  $("baitWallet").textContent = "내 돈 " + won(wallet.money); $("baitModal").hidden = false;
+  showBubble(() => baitNpc.av, NPC_LINES[Math.floor(Math.random() * NPC_LINES.length)], 2.6, "npc-bait");
+}
+$("baitGrid").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return; const B = BAIT_BY[b.dataset.k];
+  if (wallet.money < B.price) { toast("돈이 모자라요"); return; }
+  wallet.money -= B.price; wallet.bait = wallet.bait || {}; wallet.bait[B.k] = (wallet.bait[B.k] || 0) + BAIT_PACK; saveWallet();
+  toast(`${B.icon} ${B.name} ${BAIT_PACK}개를 샀어요. 낚시 창에서 골라 쓰세요`); if (audio.ready) audio.click(); openBaitShop();
+});
+$("baitClose").addEventListener("click", () => { $("baitModal").hidden = true; });
+$("baitModal").addEventListener("click", e => { if (e.target === $("baitModal")) $("baitModal").hidden = true; });
+
+/* ---------- bait chips in the fishing panel ---------- */
+function drawBaitRow() {
+  const row = $("baitRow"); row.textContent = "";
+  BAITS.forEach(B => {
+    const n = baitCount(B.k), b = document.createElement("button"); b.type = "button"; b.dataset.k = B.k;
+    b.className = "bait-chip" + ((fishing.bait || "worm") === B.k ? " on" : ""); b.disabled = n <= 0;
+    b.textContent = `${B.icon} ${B.name} ${n === Infinity ? "∞" : n}`; row.appendChild(b);
+  });
+}
+$("baitRow").addEventListener("click", e => {
+  const b = e.target.closest(".bait-chip"); if (!b || b.disabled) return;
+  if (fishing.st !== "ready") { toast("줄을 걷은 다음에 미끼를 바꿀 수 있어요"); return; }
+  fishing.bait = b.dataset.k; drawBaitRow(); toast(`${BAIT_BY[fishing.bait].icon} ${BAIT_BY[fishing.bait].name}를 끼웠어요 · ${BAIT_BY[fishing.bait].desc}`);
+});
+
+function updateSpots() {
+  if (!started) return;
+  // the old angler greets people walking by now and then
+  const d = Math.hypot(me.x - BAIT_NPC.x, me.z - BAIT_NPC.z);
+  if (d < 6 && Date.now() - npcSaid > 25000) { npcSaid = Date.now(); showBubble(() => baitNpc.av, NPC_LINES[Math.floor(Math.random() * NPC_LINES.length)], 3, "npc-bait"); }
+  baitNpc.av.userData.head.rotation.x = Math.sin(T * .6) * .05;
+  // inside the range the camera sits behind you, i.e. inside the back wall: hide it on this screen only
+  const inside = me.level === "loft" || (onRange1(me.x, me.z) && me.z < RANGE.z1 + .5);
+  if (RANGE.backs[0].visible === inside) RANGE.backs.forEach(m => { m.visible = !inside; });
+  if (!$("fishModal").hidden && $("baitRow").dataset.sig !== JSON.stringify(wallet.bait || {}) + fishing.bait) { $("baitRow").dataset.sig = JSON.stringify(wallet.bait || {}) + fishing.bait; drawBaitRow(); }
 }
 })();
 </script>

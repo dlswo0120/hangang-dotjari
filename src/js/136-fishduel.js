@@ -31,10 +31,10 @@ function duelActions(acts, status) {
     if (left > 0 && now >= d.fd.go) return `🎣 ${fmt(left / 1000)} · ${fdBoardText(d)}`;
     return status;
   }
-  if (me.st !== "walk" || !onFishDeck(me.x, me.z)) return status;
+  if (me.st !== "walk" || !fishSpot(me.x, me.z, me.level)) return status;
   for (const [peer, o] of others) {
     const fd = o.p.fd; if (!fd || fd.st !== "open" || now - fd.id > 180000) continue;
-    const r = fdOf(peer); if (r && r.list.length < FD_MAX && Math.hypot(o.x - me.x, o.z - me.z) < 15) acts.push(["fdjoin:" + peer, `🎣 ${o.p.n}님 대결 참가 · ${won(fd.bet)} (${r.list.length}/${FD_MAX})`, ""]);
+    const r = fdOf(peer); if (r && r.list.length < FD_MAX && Math.hypot(o.x - me.x, o.z - me.z) < 90) acts.push(["fdjoin:" + peer, `🎣 ${o.p.n}님 대결 참가 · ${won(fd.bet)} (${r.list.length}/${FD_MAX})`, ""]);
   }
   acts.push(["fdopen", "낚시 대결 열기", ""]);
   return status;

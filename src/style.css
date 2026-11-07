@@ -223,6 +223,13 @@ body.mung #jumpBtn{opacity:0!important;pointer-events:none!important}
 .race-btns button{pointer-events:auto;width:38vw;max-width:170px;height:96px;border-radius:24px;border:0;font-size:20px;font-weight:800;background:rgba(193,84,63,.92);color:#fff;touch-action:manipulation;user-select:none;-webkit-user-select:none}
 .race-btns button:active{transform:scale(.95)}
 .race-btns.whip{justify-content:flex-end}.race-btns.whip button{background:rgba(42,157,143,.94)}
+.bait-row{display:flex;gap:6px;flex-wrap:wrap}
+.bait-chip{border:1px solid var(--line);background:rgba(255,255,255,.06);color:inherit;border-radius:999px;padding:6px 10px;font:inherit;font-size:12.5px}
+.bait-chip.on{border-color:#f2b46b;background:rgba(242,180,107,.2);font-weight:700}.bait-chip:disabled{opacity:.4}
+.bait-ic{font-size:34px;line-height:1;text-align:center}.bait-desc{font-size:11.5px;opacity:.75;line-height:1.35}
+#baitGrid{grid-template-columns:1fr}
+#baitGrid .item{display:grid;grid-template-columns:44px 1fr auto;column-gap:12px;row-gap:2px;align-items:center;text-align:left}
+#baitGrid .bait-ic{grid-row:1/4}#baitGrid b,#baitGrid .bait-desc,#baitGrid .price{grid-column:2}#baitGrid button{grid-column:3;grid-row:1/4;padding:10px 16px}
 .bite-alert{text-align:center;font-size:20px;font-weight:900;color:#ff6b5b;letter-spacing:.04em;animation:alertShake .35s ease-in-out infinite alternate}
 .bite-alert.now{font-size:44px;color:#ffe08a;text-shadow:0 0 18px rgba(255,200,80,.7);animation:alertPop .5s ease-out infinite alternate}
 @keyframes alertShake{from{transform:translateX(-3px) rotate(-1deg)}to{transform:translateX(3px) rotate(1deg)}}

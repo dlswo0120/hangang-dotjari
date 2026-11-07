@@ -1,33 +1,34 @@
 /* ================= 한강 낚시: 데크 · 대여 · 던지기 · 챔질 · 도감 ================= */
 const FISH_DECK = { x: 120, half: 6, z0: -2.6 }, ROD_FEE = 1000, ROD_TIME = 30 * 60000, FISH_DAY_CAP = 4000;
 const FISH = [
-  { k: "bung", name: "붕어", rare: 0, w: 20, cm: [15, 32], col: 0x8a7a4a, pay: 200 },
-  { k: "ing", name: "잉어", rare: 0, w: 20, cm: [30, 72], col: 0xb08a40, pay: 200 },
-  { k: "nuchi", name: "누치", rare: 0, w: 20, cm: [25, 48], col: 0x9aa0a8, pay: 200 },
-  { k: "megi", name: "메기", rare: 1, w: 8, cm: [30, 75], col: 0x55504a, pay: 600 },
-  { k: "junchi", name: "강준치", rare: 1, w: 8, cm: [40, 85], col: 0xc8d0d8, pay: 600 },
-  { k: "sogari", name: "쏘가리", rare: 1, w: 8, cm: [20, 42], col: 0xb89040, pay: 600 },
-  { k: "pirami", name: "피라미", rare: 0, w: 14, cm: [8, 16], col: 0xb8c4cc, pay: 150, desc: "작지만 반짝반짝 빛나요" },
-  { k: "bluegill", name: "블루길", rare: 0, w: 10, cm: [12, 24], col: 0x4f7a8a, pay: 300, alien: true, desc: "외래종이라 강에 돌려보내지 않고 수거해요" },
-  { k: "bass", name: "배스", rare: 0, w: 9, cm: [25, 55], col: 0x5f7a3a, pay: 300, alien: true, desc: "외래종이라 강에 돌려보내지 않고 수거해요" },
-  { k: "kkeuri", name: "끄리", rare: 0, w: 5, cm: [20, 40], col: 0x9aa8b8, pay: 200, body: [.08, .1, .32], desc: "입이 커서 먹이를 덥석 물어요" },
-  { k: "moraemuji", name: "모래무지", rare: 0, w: 5, cm: [12, 25], col: 0xc8b48a, pay: 200, body: [.07, .07, .3], desc: "모래 속에 숨어 있다가 걸렸어요" },
-  { k: "chammaja", name: "참마자", rare: 0, w: 5, cm: [15, 30], col: 0xa8a090, pay: 200, body: [.07, .08, .3], desc: "몸에 점무늬가 콕콕" },
-  { k: "napjaru", name: "납자루", rare: 0, w: 5, cm: [6, 10], col: 0x8a7ad0, pay: 150, body: [.05, .09, .18], desc: "무지갯빛이 도는 작은 물고기예요" },
-  { k: "bbaga", name: "동자개", rare: 0, w: 5, cm: [15, 30], col: 0xc89a3a, pay: 200, body: [.09, .08, .28], desc: "빠가빠가 소리를 내서 '빠가사리'라고도 불러요" },
-  { k: "sungeo", name: "숭어", rare: 0, w: 5, cm: [30, 70], col: 0x8a96a4, pay: 200, body: [.09, .1, .34], desc: "한강 숭어는 물 위로 점프를 잘해요" },
-  { k: "eel", name: "뱀장어", rare: 1, w: 2.5, cm: [40, 90], col: 0x3a4a3a, pay: 600, desc: "미끌미끌… 손에서 자꾸 빠져나가요" },
-  { k: "chamge", name: "참게", rare: 1, w: 2.5, cm: [6, 10], col: 0x5a4a34, pay: 600, shape: "up", desc: "털 난 집게발로 낚싯줄을 꽉 잡았어요" },
-  { k: "saeu", name: "징거미새우", rare: 1, w: 2.5, cm: [8, 15], col: 0x8a9a7a, pay: 500, shape: "up", desc: "팔이 몸보다 길어요" },
-  { k: "jara", name: "자라", rare: 1, w: 2, cm: [20, 35], col: 0x6a7a4a, pay: 700, shape: "up", desc: "놀라서 목을 쏙 집어넣었어요" },
-  { k: "gamulchi", name: "가물치", rare: 1, w: 2, cm: [40, 85], col: 0x3f4a3a, pay: 700, body: [.1, .11, .38], desc: "힘이 엄청 세서 팔이 저려요" },
-  { k: "ungeo", name: "웅어", rare: 1, w: 2, cm: [20, 30], col: 0xd8dce2, pay: 600, body: [.05, .08, .32], desc: "옛날 한강의 명물이었던 물고기예요" },
-  { k: "jjukku", name: "쭈꾸미", rare: 1, w: 4, cm: [12, 24], col: 0x9a6a7a, pay: 600, shape: "up", desc: "민물에 웬 쭈꾸미…? 누가 놓쳤나 봐요" },
-  { k: "gold", name: "황금 잉어", rare: 2, w: 2, cm: [55, 95], col: 0xffcf3a, pay: 3000, icon: "✨", ann: true },
-  { k: "octo", name: "문어", rare: 2, w: 1.4, cm: [40, 90], col: 0xd2553a, pay: 2000, icon: "🐙", ann: true, shape: "up", desc: "여덟 다리로 낚싯줄을 꽉 붙잡고 버텼어요!" },
-  { k: "hwangso", name: "황쏘가리", rare: 2, w: 1, cm: [20, 45], col: 0xf2c230, pay: 2500, icon: "🟡", ann: true, body: [.08, .1, .3], desc: "천연기념물이에요! 사진만 찍고 바로 놓아줘요" },
-  { k: "puffer", name: "복어", rare: 2, w: .9, cm: [15, 30], col: 0xd8c27a, pay: 2000, icon: "🐡", ann: true, shape: "up", desc: "화가 나서 빵빵하게 부풀었어요" },
-  { k: "sturgeon", name: "철갑상어", rare: 2, w: .7, cm: [80, 160], col: 0x6a7480, pay: 2500, icon: "🦈", ann: true, desc: "공룡 시대부터 살아온 갑옷 물고기예요" },
+  { k: "bung", g: "veg", name: "붕어", rare: 0, w: 20, cm: [15, 32], col: 0x8a7a4a, pay: 200 },
+  { k: "ing", g: "veg", name: "잉어", rare: 0, w: 20, cm: [30, 72], col: 0xb08a40, pay: 200 },
+  { k: "nuchi", g: "veg", name: "누치", rare: 0, w: 20, cm: [25, 48], col: 0x9aa0a8, pay: 200 },
+  { k: "megi", g: "bottom", name: "메기", rare: 1, w: 8, cm: [30, 75], col: 0x55504a, pay: 600 },
+  { k: "junchi", g: "pred", name: "강준치", rare: 1, w: 8, cm: [40, 85], col: 0xc8d0d8, pay: 600 },
+  { k: "sogari", g: "pred", name: "쏘가리", rare: 1, w: 8, cm: [20, 42], col: 0xb89040, pay: 600 },
+  { k: "pirami", g: "veg", name: "피라미", rare: 0, w: 14, cm: [8, 16], col: 0xb8c4cc, pay: 150, desc: "작지만 반짝반짝 빛나요" },
+  { k: "bluegill", g: "pred", name: "블루길", rare: 0, w: 10, cm: [12, 24], col: 0x4f7a8a, pay: 300, alien: true, desc: "외래종이라 강에 돌려보내지 않고 수거해요" },
+  { k: "bass", g: "pred", name: "배스", rare: 0, w: 9, cm: [25, 55], col: 0x5f7a3a, pay: 300, alien: true, desc: "외래종이라 강에 돌려보내지 않고 수거해요" },
+  { k: "kkeuri", g: "pred", name: "끄리", rare: 0, w: 5, cm: [20, 40], col: 0x9aa8b8, pay: 200, body: [.08, .1, .32], desc: "입이 커서 먹이를 덥석 물어요" },
+  { k: "moraemuji", g: "veg", name: "모래무지", rare: 0, w: 5, cm: [12, 25], col: 0xc8b48a, pay: 200, body: [.07, .07, .3], desc: "모래 속에 숨어 있다가 걸렸어요" },
+  { k: "chammaja", g: "veg", name: "참마자", rare: 0, w: 5, cm: [15, 30], col: 0xa8a090, pay: 200, body: [.07, .08, .3], desc: "몸에 점무늬가 콕콕" },
+  { k: "napjaru", g: "veg", name: "납자루", rare: 0, w: 5, cm: [6, 10], col: 0x8a7ad0, pay: 150, body: [.05, .09, .18], desc: "무지갯빛이 도는 작은 물고기예요" },
+  { k: "bbaga", g: "bottom", name: "동자개", rare: 0, w: 5, cm: [15, 30], col: 0xc89a3a, pay: 200, body: [.09, .08, .28], desc: "빠가빠가 소리를 내서 '빠가사리'라고도 불러요" },
+  { k: "sungeo", g: "veg", name: "숭어", rare: 0, w: 5, cm: [30, 70], col: 0x8a96a4, pay: 200, body: [.09, .1, .34], desc: "한강 숭어는 물 위로 점프를 잘해요" },
+  { k: "kkeokji", g: "pred", name: "꺽지", rare: 1, w: 0, rockW: 5, cm: [10, 22], col: 0x6a6040, pay: 700, body: [.07, .1, .24], desc: "바위틈에만 사는 물고기예요. 바위 포인트 전용!" },
+  { k: "eel", g: "bottom", name: "뱀장어", rare: 1, w: 2.5, cm: [40, 90], col: 0x3a4a3a, pay: 600, desc: "미끌미끌… 손에서 자꾸 빠져나가요" },
+  { k: "chamge", g: "bottom", name: "참게", rare: 1, w: 2.5, cm: [6, 10], col: 0x5a4a34, pay: 600, shape: "up", desc: "털 난 집게발로 낚싯줄을 꽉 잡았어요" },
+  { k: "saeu", g: "bottom", name: "징거미새우", rare: 1, w: 2.5, cm: [8, 15], col: 0x8a9a7a, pay: 500, shape: "up", desc: "팔이 몸보다 길어요" },
+  { k: "jara", g: "bottom", name: "자라", rare: 1, w: 2, cm: [20, 35], col: 0x6a7a4a, pay: 700, shape: "up", desc: "놀라서 목을 쏙 집어넣었어요" },
+  { k: "gamulchi", g: "pred", name: "가물치", rare: 1, w: 2, cm: [40, 85], col: 0x3f4a3a, pay: 700, body: [.1, .11, .38], desc: "힘이 엄청 세서 팔이 저려요" },
+  { k: "ungeo", g: "bottom", name: "웅어", rare: 1, w: 2, cm: [20, 30], col: 0xd8dce2, pay: 600, body: [.05, .08, .32], desc: "옛날 한강의 명물이었던 물고기예요" },
+  { k: "jjukku", g: "bottom", name: "쭈꾸미", rare: 1, w: 4, cm: [12, 24], col: 0x9a6a7a, pay: 600, shape: "up", desc: "민물에 웬 쭈꾸미…? 누가 놓쳤나 봐요" },
+  { k: "gold", g: "veg", name: "황금 잉어", rare: 2, w: 2, cm: [55, 95], col: 0xffcf3a, pay: 3000, icon: "✨", ann: true },
+  { k: "octo", g: "bottom", name: "문어", rare: 2, w: 1.4, cm: [40, 90], col: 0xd2553a, pay: 2000, icon: "🐙", ann: true, shape: "up", desc: "여덟 다리로 낚싯줄을 꽉 붙잡고 버텼어요!" },
+  { k: "hwangso", g: "pred", name: "황쏘가리", rare: 2, w: 1, cm: [20, 45], col: 0xf2c230, pay: 2500, icon: "🟡", ann: true, body: [.08, .1, .3], desc: "천연기념물이에요! 사진만 찍고 바로 놓아줘요" },
+  { k: "puffer", g: "bottom", name: "복어", rare: 2, w: .9, cm: [15, 30], col: 0xd8c27a, pay: 2000, icon: "🐡", ann: true, shape: "up", desc: "화가 나서 빵빵하게 부풀었어요" },
+  { k: "sturgeon", g: "bottom", name: "철갑상어", rare: 2, w: .7, cm: [80, 160], col: 0x6a7480, pay: 2500, icon: "🦈", ann: true, desc: "공룡 시대부터 살아온 갑옷 물고기예요" },
   { k: "boot", name: "장화", rare: 3, w: 7, cm: [0, 0], col: 0x3a4a3a, pay: 100 },
   { k: "can", name: "깡통", rare: 3, w: 7, cm: [0, 0], col: 0xb0b6bc, pay: 100 },
   { k: "cupra", name: "컵라면 용기", rare: 3, w: 5, cm: [0, 0], col: 0xf4f1ea, pay: 100, desc: "누가 라면 먹고 버렸어요… 분리수거!" },
@@ -86,7 +87,7 @@ function fishActions(acts, status) {
     else acts.unshift(["rodret", "낚싯대 반납하기", ""]);
   }
   if (me.rod && me.st === "walk") {
-    if (onFishDeck(me.x, me.z)) acts.unshift(["fish", "낚시하기", "primary"]);
+    if (fishSpot(me.x, me.z, me.level)) acts.unshift(["fish", "낚시하기", "primary"]);
     else if (!status) status = `낚싯대 대여 중 · ${fmt(Math.max(0, (ROD_TIME - (Date.now() - me.rod.at)) / 1000))} 남음 · 낚시 데크로 가 보세요`;
   }
   return status;
@@ -109,7 +110,8 @@ function endRod(msg) { me.rod = null; me.fs = null; closeFish(); toast(msg); pub
 const fishing = { st: "ready", power: 0, pDir: 1, castAt: 0, biteAt: 0, catch: null, raf: 0 };
 function openFish() {
   if (!me.rod) return; me.r = 0; fishing.st = "ready"; fishing.catch = null;
-  $("fishModal").hidden = false; $("dexBox").hidden = true; drawFish(); fishLoop();
+  $("fishModal").hidden = false; $("dexBox").hidden = true; drawBaitRow(); drawFish(); fishLoop();
+  const sp = fishSpot(me.x, me.z, me.level); if (sp && sp.id !== "deck") toast(`${sp.name}${sp.reach > 1.2 ? " · 높은 곳이라 더 멀리 던져져요" : sp.id === "rock" ? " · 꺽지는 여기서만 잡혀요" : ""}`);
 }
 function closeFish() {
   $("fishModal").hidden = true; fishing.st = "ready"; cancelAnimationFrame(fishing.raf);
@@ -168,7 +170,7 @@ function fishLoop() {
       $("reelNeedle").style.left = (R.pos * 100) + "%";
       if (now > R.end) { fishing.st = "ready"; $("biteAlert").hidden = true; toast(R.tense ? "버티다 버티다 놓쳤어요… 엄청 큰 녀석이었는데!" : "힘이 빠져서 놓쳤어요… 다시 던져 보세요"); setFs("idle"); drawFish(); }
     }
-    if ((fishing.st === "wait" || fishing.st === "bite") && (me.moving || me.st !== "walk" || !onFishDeck(me.x, me.z))) { fishing.st = "ready"; setFs("idle"); closeFish(); toast("움직여서 낚싯줄을 걷었어요"); return; }
+    if ((fishing.st === "wait" || fishing.st === "bite") && (me.moving || me.st !== "walk" || !fishSpot(me.x, me.z, me.level))) { fishing.st = "ready"; setFs("idle"); closeFish(); toast("움직여서 낚싯줄을 걷었어요"); return; }
     fishing.raf = requestAnimationFrame(tick);
   };
   fishing.raf = requestAnimationFrame(tick);
@@ -198,8 +200,10 @@ function reelTap() {
 const castRelease = () => {
   if (fishing.st !== "charge") return;
   // every cast lands a little differently: wobble in distance and direction, a high or a flat arc
-  const d = (3 + fishing.power * 9) * (.75 + Math.random() * .5), ang = (Math.random() - .5) * .9; me.r = 0;
-  const bx = clamp(me.x - Math.sin(ang) * d, BOUND.x0, BOUND.x1), bz = Math.min(FISH_DECK.z0 - 1, me.z - Math.cos(ang) * d);
+  const sp = fishSpot(me.x, me.z, me.level) || { reach: 1, edge: FISH_DECK.z0 };
+  const d = (3 + fishing.power * 9) * sp.reach * (.75 + Math.random() * .5), ang = (Math.random() - .5) * .9; me.r = 0;
+  const bx = clamp(me.x - Math.sin(ang) * d, BOUND.x0, BOUND.x1), bz = Math.min(sp.edge - 1, me.z - Math.cos(ang) * d);
+  fishing.baitUsed = useBait(); // one bait per cast (worms are free)
   const ah = +(1 + Math.random() * 2.4).toFixed(2), ft = +(.45 + d / 16).toFixed(2);
   fishing.st = "wait"; fishing.castAt = Date.now(); fishing.biteAt = fishing.castAt + 5000 + Math.random() * 17000;
   setFs("cast", { bx: +bx.toFixed(2), bz: +bz.toFixed(2), ah, ft }); if (audio.ready) audio.tone(audio.sfx, "sine", 900, 300, .25, .08);
@@ -208,9 +212,28 @@ const castRelease = () => {
 };
 ["pointerup", "pointerleave", "pointercancel"].forEach(ev => $("fishBtn").addEventListener(ev, castRelease));
 const RARE_BOOST = 1.35; // more kinds of common fish shouldn't make the rare ones rarer
+// what bites depends on where you are, how far you cast, the time and the bait
+const BAIT_MULT = {
+  worm: {},
+  paste: { veg: 2.2, pred: .5, gold: 2 },
+  lure: { pred: 2.4, veg: .4, trash: .7 },
+  shrimp: { bottom: 2, deep: 1.5 }
+};
+function fishWeight(f, c) {
+  let w = c.spot === "rock" ? (f.rockW != null ? f.rockW : f.w * (f.k === "sogari" || f.k === "hwangso" ? 2 : 1)) : f.w;
+  w *= f.rare === 2 || f.rare >= 4 ? RARE_BOOST : 1;
+  if (f.deep) w *= (c.far ? 2.2 : 1) * (c.night ? 1.6 : 1);
+  const B = BAIT_MULT[c.bait] || {};
+  if (f.g && B[f.g]) w *= B[f.g];
+  if (f.k === "gold" && B.gold) w *= B.gold;
+  if (f.rare === 3 && B.trash) w *= B.trash;
+  if (f.deep && B.deep) w *= B.deep;
+  return w;
+}
 function rollFish() {
-  const h = kst().getHours(), night = h >= 20 || h < 5, far = fishing.power > .7;
-  const wt = f => f.w * (f.rare === 2 || f.rare >= 4 ? RARE_BOOST : 1) * (f.deep ? (far ? 2.2 : 1) * (night ? 1.6 : 1) : 1);
+  const h = kst().getHours(), sp = fishSpot(me.x, me.z, me.level);
+  const c = { night: h >= 20 || h < 5, far: fishing.power * (sp ? sp.reach : 1) > .7, bait: fishing.baitUsed || "worm", spot: sp && sp.id };
+  const wt = f => fishWeight(f, c);
   const total = FISH.reduce((s, f) => s + wt(f), 0); let r = Math.random() * total;
   for (const f of FISH) { r -= wt(f); if (r <= 0) return f; } return FISH[0];
 }

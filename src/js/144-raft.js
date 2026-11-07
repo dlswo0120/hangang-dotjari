@@ -1,8 +1,8 @@
 /* ================= 확률 게시판 뗏목: 낚시터 앞을 천천히 가로질러 떠다님 ================= */
 // The odds come straight from FISH (the same weights rollFish uses), so the board never goes stale.
-const RAFT = { z: -11, span: 40, period: 220 }; // just past where the floats land, clear of the bridge piers (z 14 / -16)
+const RAFT = { z: -12.5, span: 34, period: 220 }; // just past where the floats land, clear of the bridge piers (z 14 / -16)
 function fishOdds(night, far) {
-  const wt = f => f.w * (f.rare === 2 || f.rare >= 4 ? RARE_BOOST : 1) * (f.deep ? (far ? 2.2 : 1) * (night ? 1.6 : 1) : 1);
+  const wt = f => fishWeight(f, { night, far, bait: "worm", spot: "deck" });
   const total = FISH.reduce((s, f) => s + wt(f), 0);
   return [0, 1, 2, 5, 4, 3].map(t => ({ t, pct: FISH.filter(f => f.rare === t).reduce((s, f) => s + wt(f), 0) / total * 100, n: FISH.filter(f => f.rare === t).length }));
 }
