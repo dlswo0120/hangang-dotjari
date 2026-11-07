@@ -23,7 +23,9 @@ const EMOTES = [
   // poses used by other features (not in the menu)
   { id: "rail", name: "난간에 기대기", dur: 900, hidden: true },
   { id: "dive", name: "다이빙", dur: 2.4, hidden: true },
-  { id: "thanks", name: "감사 인사", dur: 2.2, seat: true, hidden: true, say: "감사합니다! 🙇" }
+  { id: "thanks", name: "감사 인사", dur: 2.2, seat: true, hidden: true, say: "감사합니다! 🙇" },
+  // new entries go at the end: others' screens find poses by their place in this list
+  { id: "love", name: "연애의 조건 춤", icon: "💸", dur: 8, seat: false, dance: true, bpm: 2, say: "♪", credit: "베스티 - 연애의 조건 챌린지" }
 ];
 const PHOTO_SHOT_AT = { solo: 3.2, duo: 6.2, group: 6.2 }; // seconds from the start until the shutter
 const CHEST_BPM = 2.25; // beats per second
@@ -45,6 +47,39 @@ function thumbs(u, on) {
   }
   if (u.thumbs) u.thumbs.forEach(f => { f.visible = on; });
 }
+// "money" hands: a little ring (thumb and finger touching) on each fist
+function moneyHands(u, on) {
+  if (on && !u.money) {
+    const sk = new THREE.MeshLambertMaterial({ color: 0xf2c9a0 });
+    u.money = [0, 1].map(k => { const r = new THREE.Mesh(new THREE.TorusGeometry(.05, .016, 6, 14), sk); r.position.set(0, -.36, -.07); u.arms[k].add(r); return r; });
+  }
+  if (u.money) u.money.forEach(r => { r.visible = on; });
+}
+/* 연애의 조건 춤 (베스티 - 연애의 조건 챌린지 참고): 8박자 한 바퀴를 두 번.
+   팔꿈치·손목·발목·골반 옆 이동·고개 돌리기는 캐릭터에 관절이 없어 어깨 각도·몸 기울기·무릎으로 비슷하게 표현.
+   박 0 시작 자세 = 박 8 끝 자세라 반복해도 이어짐 */
+const LOVE_KEYS = [
+  // beat, pose  (ar = 팔 앞으로 들기, az = 팔 옆으로 벌리기(−는 몸 안쪽), lean = 상체 숙이기, nod = 고개 숙이기, roll = 몸 좌우 기울기, th/kn = 허벅지·무릎, hipY = 몸 높이)
+  [0,   { arL: .25, arR: .25, azL: .25, azR: .25 }],                                                      // 준비: 팔 내리고 바로 서기
+  [1,   { arL: 1.1, arR: 1.1, azL: -.3, azR: -.3, thL: .28, knL: -.18, nod: .05 }],                       // 1-2: 왼발을 오른발 앞으로, 가슴 앞에서 돈 모양 손 흔들기
+  [2,   { arL: 1.15, arR: 1.15, azL: -.28, azR: -.28, thL: .28, knL: -.18, nod: .05 }],
+  [3,   { arL: 1.55, arR: 1.55, azL: .02, azR: .02, lean: .42, nod: .12, thL: .3, knL: -.28, knR: -.2, thR: .08 }], // 3 "하나 앤": 상체 숙이며 손 뻗기
+  [4,   { arL: 1.45, arR: 1.45, azL: .05, azR: .05, lean: .55, nod: .16, thL: .32, knL: -.36, knR: -.28, thR: .12 }], // 4 "둘": 더 깊게
+  [5,   { arL: .35, arR: .35, azL: 1.45, azR: 1.45, lean: .02, nod: -.04 }],                             // 5: 오른발 빼며 양팔 크게 벌리기
+  [6,   { arL: .15, arR: .95, azL: .5, azR: -.55, roll: .16, knR: -.22, thR: .1, nod: .02 }],             // 6: 오른손 배 위, 왼손 허리, 무게 왼쪽으로
+  [6.5, { arL: .15, arR: .95, azL: .5, azR: -.55, roll: .24, knR: -.36, thR: .16 }],                     // 7 "하나 둘": 골반 왼쪽으로 두 번
+  [6.75,{ arL: .15, arR: .95, azL: .5, azR: -.55, roll: .14, knR: -.18, thR: .08 }],
+  [7,   { arL: .15, arR: .95, azL: .5, azR: -.55, roll: .24, knR: -.36, thR: .16 }],
+  [7.5, { arL: .15, arR: .95, azL: .5, azR: -.55, roll: .1, hipY: -.13, knL: -.62, knR: -.62, thL: .32, thR: .32, nod: .08 }], // 8 "오": 살짝 앉기
+  [8,   { arL: .25, arR: .25, azL: .25, azR: .25 }]                                                       // 처음 자세로 → 다음 바퀴
+];
+const LOVE_ARMS = ["arL", "arR", "azL", "azR"], LOVE_ADD = ["lean", "nod", "roll", "thL", "thR", "knL", "knR", "hipY"];
+function lovePose(beat) {
+  const b = ((beat % 8) + 8) % 8; let i = 0; while (i < LOVE_KEYS.length - 2 && LOVE_KEYS[i + 1][0] <= b) i++;
+  const [b0, p0] = LOVE_KEYS[i], [b1, p1] = LOVE_KEYS[i + 1], k = ease(clamp((b - b0) / (b1 - b0), 0, 1)), o = {};
+  [...LOVE_ARMS, ...LOVE_ADD].forEach(n => { const a = p0[n] ?? (LOVE_ARMS.includes(n) ? .25 : 0), c = p1[n] ?? (LOVE_ARMS.includes(n) ? .25 : 0); o[n] = a + (c - a) * k; });
+  return o;
+}
 // an empty tin can in front of someone asking for pocket money
 function begCan(u, on) {
   if (on && !u.can) {
@@ -58,7 +93,7 @@ function begCan(u, on) {
   if (u.can) u.can.visible = on;
 }
 function emotePose(v, i, t, standing, u, side) {
-  if (u) { vSign(u, false); thumbs(u, false); begCan(u, false); }
+  if (u) { vSign(u, false); thumbs(u, false); begCan(u, false); moneyHands(u, false); }
   const E = EMOTES[i]; if (!E || t < 0 || t > E.dur) return;
   const env = clamp(Math.min(t / .2, (E.dur - t) / .25), 0, 1), to = (k, val) => { v[k] += (val - v[k]) * env; };
   // arms are short next to the big head, so raises go out to the side where they stay visible
@@ -111,6 +146,14 @@ function emotePose(v, i, t, standing, u, side) {
     to("arL", .35); to("arR", .35);
     const hit = Math.exp(-f * 9); v.nod += (.08 * hit - .04) * env;
     if (standing) { v.lift += hit * .04 * env; v.knL -= hit * .12 * env; v.knR -= hit * .12 * env; }
+  }
+  else if (E.id === "love") {
+    const beat = t * E.bpm, P = lovePose(beat), b = beat % 8;
+    LOVE_ARMS.forEach(n => to(n, P[n]));
+    if (standing) LOVE_ADD.forEach(n => { v[n] = (v[n] || 0) + P[n] * env; });
+    else { v.lean += P.lean * env; v.nod += P.nod * env; v.roll = (v.roll || 0) + P.roll * env; }
+    if (b < 2.6) { const sh = Math.sin(t * 22) * .1 * env; v.azL += sh; v.azR -= sh; } // 돈 모양 손 흔들기
+    if (u) moneyHands(u, env > .4 && b > .6 && b < 4.6);
   }
   // photo poses (the arms are short, so hands go to the side of the big face)
   else if (E.id === "pv" || E.id === "pv2") { to("arR", .75); to("azR", 1.55); v.roll = (v.roll || 0) + .14 * env; v.nod += .05 * env; if (u) vSign(u, env > .5); }
