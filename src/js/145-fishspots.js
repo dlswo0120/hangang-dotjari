@@ -1,12 +1,12 @@
-/* ================= 낚시 자리 늘리기: 징검다리 바위 · 2층 수상 낚시터 · 강태공 미끼 가게 ================= */
+/* ================= 낚시 자리 늘리기: 징검다리 바위 · 2층 선상 낚시터 · 강태공 미끼 가게 ================= */
 // Spots: where fishing is allowed, how far a cast reaches, and where the water starts in front.
 const ROCK = { x: 150, z: -7, r: 2.4, cap: 3, stones: [[150, -.2], [150.4, -1.6], [149.7, -3], [150.2, -4.3]] }; // each overlaps the next a little: walk straight and you stay dry
 const RANGE = { x0: 168, x1: 196, z0: -6.3, z1: -2, walk: [180.5, 183.5], y2: 3.4, stairX: 171, bays: 7 };
 const SPOT_DEFS = [
   { id: "deck", name: "낚시 데크", reach: 1, edge: FISH_DECK.z0, test: (x, z, lv) => lv !== "loft" && onFishDeck(x, z) },
   { id: "rock", name: "바위 포인트", reach: 1.1, edge: ROCK.z - ROCK.r, test: (x, z, lv) => lv !== "loft" && onRock(x, z) },
-  { id: "range1", name: "수상 낚시터 1층", reach: 1.1, edge: RANGE.z0, test: (x, z, lv) => lv !== "loft" && x > RANGE.x0 && x < RANGE.x1 && z > RANGE.z0 - .1 && z < RANGE.z1 + .1 },
-  { id: "range2", name: "수상 낚시터 2층", reach: 1.45, edge: RANGE.z0, test: (x, z, lv) => lv === "loft" }
+  { id: "range1", name: "선상 낚시터 1층", reach: 1.1, edge: RANGE.z0, test: (x, z, lv) => lv !== "loft" && x > RANGE.x0 && x < RANGE.x1 && z > RANGE.z0 - .1 && z < RANGE.z1 + .1 },
+  { id: "range2", name: "선상 낚시터 2층", reach: 1.45, edge: RANGE.z0, test: (x, z, lv) => lv === "loft" }
 ];
 function fishSpot(x, z, lv) { for (const s of SPOT_DEFS) if (s.test(x, z, lv || me.level)) return s; return null; }
 const onRock = (x, z) => Math.hypot(x - ROCK.x, z - ROCK.z) < ROCK.r;
@@ -91,9 +91,9 @@ function loftStep(nx, nz) { return [clamp(nx, RANGE.stairX + 1.4, RANGE.x1 - .3)
   for (let i = 0; i < 10; i++) add(new THREE.BoxGeometry(1.2, .12, .5), wood, R.stairX - .2, .1 + i * R.y2 / 10, R.z1 - .5 - i * .38);
   add(new THREE.BoxGeometry(.06, .06, 4), rail, R.stairX + .45, 2.1, R.z1 - 2.2).rotation.x = -.72;
   // name board on the roof
-  const sign = add(new THREE.PlaneGeometry(7, 1.1), signMat(signTex([["한강 수상 낚시터", 60, .55]], "#1f5f3a", "#ffffff", 768, 120)), cx, R.y2 + 3.9, R.z0 - 1.05);
+  const sign = add(new THREE.PlaneGeometry(7, 1.1), signMat(signTex([["한강 선상 낚시터", 60, .55]], "#1f5f3a", "#ffffff", 768, 120)), cx, R.y2 + 3.9, R.z0 - 1.05);
   sign.rotation.x = -.08; sign.castShadow = false; const back = sign.clone(); back.rotation.y = Math.PI; back.position.z = R.z1 + .25; scene.add(back);
-  const info = add(new THREE.PlaneGeometry(1.8, .9), signMat(signTex([["수상 낚시터", 38, .3], ["2층은 더 멀리 던져져요", 24, .62], ["→ 심해어가 잘 나와요", 24, .86]], "#1f5f3a", "#ffffff", 384, 192)), R.walk[0] - .6, 1.4, BOUND.landZ0 + .2);
+  const info = add(new THREE.PlaneGeometry(1.8, .9), signMat(signTex([["선상 낚시터", 38, .3], ["2층은 더 멀리 던져져요", 24, .62], ["→ 심해어가 잘 나와요", 24, .86]], "#1f5f3a", "#ffffff", 384, 192)), R.walk[0] - .6, 1.4, BOUND.landZ0 + .2);
   info.rotation.y = 0;
 }
 
@@ -147,7 +147,7 @@ function spotActions(acts, status) {
   if (nearBaitNpc()) { acts.unshift(["baitshop", "🪱 강태공에게 미끼 사기", "primary"]); status = "강태공 미끼 가게 · 미끼마다 잘 무는 물고기가 달라요"; }
   if (me.level !== "loft" && onRange1(me.x, me.z) && me.x < RANGE.stairX + 1.6 && me.z > RANGE.z0) acts.unshift(["loftup", "⬆ 2층으로 올라가기", ""]);
   if (me.level === "loft" && me.x < RANGE.stairX + 2.4) acts.unshift(["loftdown", "⬇ 1층으로 내려가기", ""]);
-  if (me.level === "loft" && !status) status = "수상 낚시터 2층 · 여기선 더 멀리 던져져요";
+  if (me.level === "loft" && !status) status = "선상 낚시터 2층 · 여기선 더 멀리 던져져요";
   return status;
 }
 function spotClick(a) {

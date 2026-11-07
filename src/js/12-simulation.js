@@ -72,9 +72,10 @@ function stepPlayer(dt) {
     [nx, nz] = pushOut(nx, nz, .35);
     [nx, nz] = storeGate(nx, nz);
     if (onRock(nx, nz) && !onRock(me.x, me.z) && rockFull()) { nx = me.x; nz = me.z; if (!me._rockToast || Date.now() - me._rockToast > 3000) { me._rockToast = Date.now(); toast("바위에 벌써 3명이 있어요. 조금 기다려 주세요"); } }
-    // on the stepping stones you don't slip off sideways: slide along the path instead (jumping off the big rock still means a swim)
-    if (nz < BOUND.landZ0 && !onDock(nx, nz) && onStone(me.x, me.z) && !onRock(me.x, me.z)) {
-      [nx, nz] = stoneClamp(nx, nz);
+    // on the stepping stones and the big rock you never slip into the river: slide along the edge instead
+    if (nz < BOUND.landZ0 && !onDock(nx, nz) && (onStone(me.x, me.z) || onRock(me.x, me.z))) {
+      if (!onRock(me.x, me.z)) [nx, nz] = stoneClamp(nx, nz);
+      else { const d = Math.hypot(nx - ROCK.x, nz - ROCK.z) || 1, k = Math.min(1, (ROCK.r - .08) / d); nx = ROCK.x + (nx - ROCK.x) * k; nz = ROCK.z + (nz - ROCK.z) * k; }
     }
     if (nz < BOUND.landZ0 && !onDock(nx, nz)) {
       if (me.hold) dropRamen(me.hold === "ramen" ? "앗, 라면이 한강에 빠졌어요…" : "앗, 들고 있던 간식이 한강에 빠졌어요…");

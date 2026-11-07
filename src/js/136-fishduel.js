@@ -1,7 +1,7 @@
 /* ================= 낚시 대결: 같은 낚시터에 있는 사람 누구나, 3분 점수전 ================= */
-// 낚시터 = 데크 · 징검다리 바위 · 수상 낚시터(1·2층 합쳐 한 곳). 대결을 연 곳에 있는 사람만 참가하고, 그곳에서 잡은 물고기만 점수
+// 낚시터 = 데크 · 징검다리 바위 · 선상 낚시터(1·2층 합쳐 한 곳). 대결을 연 곳에 있는 사람만 참가하고, 그곳에서 잡은 물고기만 점수
 const FD_TIME = 180000, FD_COUNT = 3000, FD_MULT = [1, 2, 5, 0, 0, 6], FD_MAX = 20; // 20 = 공원 정원 (사실상 제한 없음)
-const FD_ZONE_NAME = { deck: "데크", rock: "징검다리 바위", range: "수상 낚시터" };
+const FD_ZONE_NAME = { deck: "데크", rock: "징검다리 바위", range: "선상 낚시터" };
 const fdZone = () => { const s = fishSpot(me.x, me.z, me.level); return s ? (s.id === "range1" || s.id === "range2" ? "range" : s.id) : null; };
 const FD_SHARE = { 2: [.8, .2], 3: [.55, .3, .15], 4: [.5, .25, .15, .1] };
 // 5명부터: 1등부터 꼴등까지 모두 받고, 한 등수 내려갈 때마다 같은 만큼 줄어듦 (n명이면 n : n-1 : … : 1)
@@ -72,7 +72,7 @@ function duelClick(a) {
 }
 BET_FN.fish = bet => {
   if (!me.rod) { toast("낚싯대를 빌린 뒤에 대결을 열 수 있어요"); return; }
-  const z = fdZone(); if (!z) { toast("낚시터(데크·바위·수상 낚시터)에서 대결을 열 수 있어요"); return; }
+  const z = fdZone(); if (!z) { toast("낚시터(데크·바위·선상 낚시터)에서 대결을 열 수 있어요"); return; }
   wallet.money -= bet; saveWallet(); me.fd = { id: Date.now(), bet, st: "open", z }; me.fj = null; me.fsc = { id: me.fd.id, s: 0, n: 0 };
   toast(`${won(bet)}을 걸고 낚시 대결을 열었어요. ${FD_ZONE_NAME[z]}에 있는 사람은 누구나 참가할 수 있어요`); publish(true); actKey = ""; refreshActions();
 };
