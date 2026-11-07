@@ -10,7 +10,20 @@ const SPOT_DEFS = [
 ];
 function fishSpot(x, z, lv) { for (const s of SPOT_DEFS) if (s.test(x, z, lv || me.level)) return s; return null; }
 const onRock = (x, z) => Math.hypot(x - ROCK.x, z - ROCK.z) < ROCK.r;
-const onStone = (x, z) => ROCK.stones.some(([sx, sz]) => Math.hypot(x - sx, z - sz) < .8);
+// stepping stones: the whole line from the bank, over every stone, to the rock is walkable (a 1m-wide path), not just each stone's circle
+const STONE_PATH = [[150, BOUND.landZ0 + .6], ...ROCK.stones, [ROCK.x, ROCK.z]];
+function stoneNearest(x, z) { // closest point on the stepping-stone line, and how far away it is
+  let best = null;
+  for (let i = 0; i < STONE_PATH.length - 1; i++) {
+    const [ax, az] = STONE_PATH[i], [bx, bz] = STONE_PATH[i + 1], dx = bx - ax, dz = bz - az;
+    const k = clamp(((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz), 0, 1), px = ax + dx * k, pz = az + dz * k, d = Math.hypot(x - px, z - pz);
+    if (!best || d < best.d) best = { x: px, z: pz, d };
+  }
+  return best;
+}
+const onStone = (x, z) => stoneNearest(x, z).d < 1;
+// pull a step back inside the path: walking at an angle you glide along the stones instead of stopping or falling
+function stoneClamp(x, z) { const n = stoneNearest(x, z); if (n.d < .95) return [x, z]; const k = .95 / n.d; return [n.x + (x - n.x) * k, n.z + (z - n.z) * k]; }
 // the ground floor of the fishing range (and the boardwalk out to it) is walkable like the deck
 const onRange1 = (x, z) => (x > RANGE.x0 && x < RANGE.x1 && z > RANGE.z0 && z < RANGE.z1) || (x > RANGE.walk[0] && x < RANGE.walk[1] && z >= RANGE.z1 - .1 && z < BOUND.landZ0 + .1);
 const onWaterFloor = (x, z) => onRock(x, z) || onStone(x, z) || onRange1(x, z);
@@ -49,6 +62,10 @@ function loftStep(nx, nz) { return [clamp(nx, RANGE.stairX + 1.4, RANGE.x1 - .3)
   add(new THREE.BoxGeometry(W, .3, D + .4), mat(0xbfc3be), cx, R.y2 - .15, cz - .2);
   const backs = [add(new THREE.BoxGeometry(W, R.y2 - .2, .15), wall, cx, (R.y2 - .2) / 2, R.z1 + .1), add(new THREE.BoxGeometry(W, 3.2, .15), wall, cx, R.y2 + 1.6, R.z1 + .1)];
   for (let i = 0; i < R.bays; i++) { const x = R.x0 + (i + .5) * W / R.bays; [1.3, R.y2 + 1.7].forEach(y => backs.push(add(new THREE.BoxGeometry(2.2, .9, .05), mat(0xbfe1f2), x, y, R.z1 + .02))); }
+  // posters on the back wall, facing the bank: you can tell what the building is from the path
+  const poster = (lines, bg, fg, w, h, tw, th, y) => { const p = add(new THREE.PlaneGeometry(w, h), signMat(signTex(lines, bg, fg, tw, th)), cx, y, R.z1 + .19); p.castShadow = false; backs.push(p); return p; };
+  poster([["🎣 한강 선상 낚시터", 66, .56]], "#1f5f3a", "#ffffff", 13, 1.05, 1024, 84, R.y2 + 2.72);
+  poster([["낚시 전용 공간 · 1층 / 2층 (계단은 왼쪽 끝) · 2층은 더 멀리 던져요", 34, .55]], "#f6efdf", "#2a2a2e", 15, .6, 1280, 52, R.y2 - .65);
   RANGE.backs = backs;
   [[R.y2 - .45, 1.2], [R.y2 + 3.3, 1.6]].forEach(([y, over]) => { // canopies over each floor's front, like a driving range
     const c = add(new THREE.BoxGeometry(W + .6, .12, D + over), steel, cx, y, cz - over / 2); c.rotation.x = -.08;
