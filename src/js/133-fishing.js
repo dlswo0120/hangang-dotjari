@@ -143,7 +143,9 @@ function fishLoop() {
   const tick = () => {
     if ($("fishModal").hidden) return;
     const now = Date.now(), pn = performance.now(), dt = Math.min(.25, (pn - last) / 1000); last = pn;
-    { const dl = $("fishDuel"), d = myDuel(); if (d && d.fd.st === "go") { const left = d.fd.go + FD_TIME - now; dl.hidden = false; dl.textContent = left > FD_TIME ? "대결 준비…" : left > 0 ? `🎣 대결 ${fmt(left / 1000)} · ${fdBoardText(d)}` : "대결 끝!"; } else dl.hidden = true; }
+    { const dl = $("fishDuel"), d = myDuel(); if (d && d.fd.st === "go") { const left = d.fd.go + FD_TIME - now; dl.hidden = false; const toGo = d.fd.go - now, fresh = toGo <= 0 && toGo > -4000;
+        dl.textContent = toGo > 0 ? `대결 시작까지 ${Math.ceil(toGo / 1000)}초… 줄을 던져 두고 기다려요` : fresh ? "🎣 대결 시작! 지금부터 잡는 물고기가 점수예요" : left > 0 ? `🎣 대결 ${fmt(left / 1000)} · ${fdBoardText(d)}` : "대결 끝!";
+        dl.classList.toggle("go", fresh || (toGo > 0 && toGo < 3500)); } else dl.hidden = true; }
     if (fishing.st === "charge") { fishing.power += fishing.pDir * dt * 1.1; if (fishing.power >= 1) { fishing.power = 1; fishing.pDir = -1; } if (fishing.power <= 0) { fishing.power = 0; fishing.pDir = 1; } $("fishPowerBar").style.width = Math.round(fishing.power * 100) + "%"; }
     if (fishing.st === "wait" && now >= fishing.biteAt) {
       const F = rollFish(), tense = TENSE(F);

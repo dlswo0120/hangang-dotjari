@@ -73,8 +73,16 @@ function updateDuel() {
   if (d.fd.st !== "go") return;
   const now = Date.now(), left = d.fd.go - now;
   if (left > 0) { const n = String(Math.ceil(left / 1000)); if (fdShown !== d.fd.id + n) { fdShown = d.fd.id + n; cd.textContent = n; cd.hidden = false; cd.classList.remove("pop"); void cd.offsetWidth; cd.classList.add("pop"); if (audio.ready) audio.pop(); } return; }
-  if (left > -900) { if (fdShown !== d.fd.id + "go") { fdShown = d.fd.id + "go"; cd.textContent = "시작!"; cd.hidden = false; cd.classList.remove("pop"); void cd.offsetWidth; cd.classList.add("pop"); if (audio.ready) audio.ding(); } return; }
-  if (fdShown === d.fd.id + "go") { cd.hidden = true; fdShown = d.fd.id + "on"; }
+  if (left > -1600) {
+    if (fdShown !== d.fd.id + "go") {
+      fdShown = d.fd.id + "go"; cd.textContent = "🎣 대결 시작!"; cd.classList.add("wide"); cd.hidden = false; cd.classList.remove("pop"); void cd.offsetWidth; cd.classList.add("pop");
+      if (audio.ready) { audio.ding(); setTimeout(() => audio.ready && audio.ding(), 220); }
+      if (navigator.vibrate) try { navigator.vibrate([120, 80, 120]); } catch (e) {}
+      const bar = $("annBar"); bar.textContent = `🎣 낚시 대결 시작! 3분 동안 잡은 물고기가 점수예요 (${d.list.length}명)`; bar.hidden = false; bar.classList.remove("go"); void bar.offsetWidth; bar.classList.add("go"); clearTimeout(bar._t); bar._t = setTimeout(() => { bar.hidden = true; }, 5000);
+    }
+    return;
+  }
+  if (fdShown === d.fd.id + "go") { cd.hidden = true; cd.classList.remove("wide"); fdShown = d.fd.id + "on"; }
   if (now < d.fd.go + FD_TIME || fdPaid === d.fd.id) return;
   fdPaid = d.fd.id;
   // rank by score; people tied on points split the shares of the places they share

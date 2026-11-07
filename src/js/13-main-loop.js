@@ -207,6 +207,7 @@ function frame() {
   updateBeg();
   updateShare();
   updateJump();
+  updateRaft();
   updateCircuit(dt);
   // bubbles follow their owners
   for (let i = bubbles.length - 1; i >= 0; i--) {

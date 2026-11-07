@@ -197,6 +197,8 @@ body.mung #jumpBtn{opacity:0!important;pointer-events:none!important}
 .photo-now{border:1px solid var(--line);background:transparent;border-radius:12px;padding:9px;font-size:13px;color:var(--ink-soft)}
 .countdown{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);z-index:16;font-size:min(28vw,150px);font-weight:700;color:#fff;text-shadow:0 4px 30px rgba(0,0,0,.45);pointer-events:none;font-family:var(--display)}
 .countdown.pop{animation:cdPop .9s ease forwards}
+.countdown.wide{font-size:min(13vw,84px);white-space:nowrap}.countdown.wide.pop{animation:cdPop 1.6s ease forwards}
+.card.fish p.fish-duel.go{border-radius:10px;padding:6px 10px;text-align:center;background:#f2b46b;color:#2a1d0f;font-weight:800;animation:alertPop .5s ease-out infinite alternate}
 @keyframes cdPop{0%{transform:translate(-50%,-50%) scale(1.5);opacity:0}20%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{opacity:.15}}
 .flash{position:fixed;inset:0;z-index:17;background:#fff;pointer-events:none;opacity:0}
 .flash.go{animation:flash .6s ease-out}
@@ -785,7 +787,7 @@ window.HANGANG_CONFIG = {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
-const APP_VERSION = "2026.11.05d", UPDATES = [{"v": "2026.11.05d", "date": "11월 5일", "items": ["낚시 도감이 45칸으로 늘었어요! 피라미·끄리·숭어·동자개 같은 한강 물고기, 블루길·배스(외래종은 수거!), 뱀장어·참게·자라·가물치", "재밌는 손님들: 쭈꾸미, 🐙문어, 🐡복어, 🦈철갑상어, 🟡황쏘가리(천연기념물이라 바로 놓아줘요)", "강 청소도 늘었어요: 컵라면 용기, 비닐봉지, 슬리퍼, 축구공, 우산, 자전거 바퀴", "깊은 곳에서 심해어가 올라와요: 🏮초롱아귀, 🎏산갈치, 🫠블롭피쉬, 🦴실러캔스, 🪼심해 해파리. 멀리 던질수록, 밤일수록 잘 나와요", "문어·황금 잉어·심해어·보물이 물면 '…!'가 뜨고, 초록 칸이 좁아지고 움직여요. 3번 맞춰야 잡혀요", "잡은 것마다 짧은 설명이 붙고, 희귀한 걸 낚으면 모두에게 알려져요"]}, {"v": "2026.11.05c", "date": "11월 5일", "items": ["입장할 때 갈 한강공원을 고를 수 있어요: 여의도·반포·뚝섬·잠실·망원 등 10곳, 공원마다 20명까지", "공원마다 지금 몇 명 있는지, 누가 있는지 보고 친구가 있는 곳으로 갈 수 있어요. 적당히 붐비는 곳을 '추천'해 드려요", "설정 → 한강공원에서 초대 링크를 복사하거나 다른 공원으로 옮길 수 있어요"]}, {"v": "2026.11.05b", "date": "11월 5일", "items": ["사람이 많아져도 끊기지 않게: 한 방에 20명까지 들어가고, 꽉 차면 다음 방(최대 10개)으로 자동 입장해요", "설정 → 방에서 지금 몇 번 방인지 보고, 초대 링크를 복사하거나 다른 방으로 옮길 수 있어요", "다른 사람 움직임이 훨씬 부드러워졌어요. 사람이 많을수록 데이터를 아껴 보내요", "연결이 잠깐 끊겨도 화면이 멈추지 않고 '다시 연결하는 중' 표시 후 이어져요", "설정 → 화질: 자동(휴대폰 성능에 맞춰 조절)·높음·낮음을 고를 수 있어요"]}, {"v": "2026.11.05", "date": "11월 5일", "items": ["피크닉 테이블 의자에 앉아 치킨을 먹으면 치킨 상자가 바닥이 아니라 테이블 위에 놓여요"]}, {"v": "2026.11.04d", "date": "11월 4일", "items": ["점프가 생겼어요! PC는 Space, 모바일은 오른쪽 아래 '⤴ 점프' 버튼을 눌러요", "대교 난간 옆에서 점프해도 떨어지지 않아요 (뛰어내리고 싶으면 난간에 기대서 다이빙!)"]}, {"v": "2026.11.04c", "date": "11월 4일", "items": ["모바일 사진 화면을 세로 화면에 맞게 다시 만들었어요. 큰 '닫기'·'📥 사진 저장' 버튼이 항상 보이고, 사진 바깥을 눌러도 닫혀요", "휴대폰에서 '사진 저장'을 누르고 '이미지 저장'을 고르면 사진 앱에 바로 들어가요", "치킨 나눠 먹기: 치킨을 먹는 중에 근처 사람에게 한 조각씩 나눠 줄 수 있어요 (최대 3명, 한 번 줄 때마다 내 치킨이 20초 줄어요)", "나눠 받은 치킨을 세 입 먹으면 \"너무 맛있어~!\" 하고 얼굴을 파묻어요. 양념치킨이면 볼에 양념이 묻어요", "편의점과 치킨 배달에 양념치킨이 생겼어요", "동물 레이스: 동물마다 빠르기·가속·코너링·지구력이 달라요. 적토마는 박자를 5번 맞추면 🔥불꽃 질주, 유니콘은 바퀴마다 🌈무지개 질주를 해요"]}, {"v": "2026.11.04b", "date": "11월 4일", "items": ["두 번째 대교 동쪽에 '한강 동물 레이스' 서킷이 생겼어요. 헤어핀·S자·시케인이 있는 코스를 3바퀴 돌아요 (2~4명, 판돈 500~2,000원)", "출발하면 동물 11종 중 하나가 랜덤으로 공짜 배정돼요. 얼룩말·적토마는 가끔, 유니콘은 아주 드물게 나와요. 빠르기는 모두 같아요", "Space·W(모바일은 🥕 버튼)를 박자 맞춰 누르면 달려요. 너무 급하게 누르면 지쳐요. 코너 안쪽이 더 빨라요", "돈이 1,000원 아래로 떨어지면 감정 표현에 '용돈 구걸'이 생겨요. 근처 사람이 500~2,000원을 깡통에 넣어 줄 수 있어요 (주기 하루 3,000원, 받기 하루 5,000원까지)"]}, {"v": "2026.11.04", "date": "11월 4일", "items": ["새 춤 3가지: 공중 미끄럼 걸음, 엄지 흔들기 응원, 손 탑 쌓기 (말하기 → 춤추기)", "엄지 흔들기 응원과 손 탑 쌓기는 앉아서도 출 수 있어요", "달리기 경주 출발 카운트를 3·2·1로 맞췄어요"]}, {"v": "2026.11.03g", "date": "11월 3일", "items": ["치킨이 훨씬 커졌어요. 앉아서 먹으면 앞에 치킨 상자를 놓고 닭다리를 들고 먹어요", "치킨은 2분 동안 천천히 먹어요. 먹는 중에도 짠이나 감정 표현을 할 수 있어요", "김은 라면과 치킨에서만 모락모락 나요"]}, {"v": "2026.11.03f", "date": "11월 3일", "items": ["낚시 대결을 최대 4명까지 함께할 수 있어요. 낚시 창에서 실시간 순위를 볼 수 있어요"]}, {"v": "2026.11.03e", "date": "11월 3일", "items": ["아주 드물게 유리병 편지·지갑·금반지·보물상자·아기 고래가 낚여요. 누가 낚으면 모두에게 알려 줘요", "지갑은 주인에게 돌려주면 사례금을 받아요. 돈을 주는 보물은 하루 한 번씩만 보상이 있어요", "낚싯대를 빌린 채로 달리기·자전거·먹기 같은 다른 활동도 할 수 있어요. 안 쓸 때는 등에 메고 다녀요"]}, {"v": "2026.11.03d", "date": "11월 3일", "items": ["낚싯대를 휘둘러 던질 때마다 찌가 날아가는 거리·방향·높이가 조금씩 달라요", "찌가 떨어진 자리에 물결이 퍼지고, 낚은 물고기는 낚싯줄 끝에 매달려 올라와요"]}];
+const APP_VERSION = "2026.11.07", UPDATES = [{"v": "2026.11.07", "date": "11월 7일", "items": ["낚시 대결이 시작되면 화면 가운데 '🎣 대결 시작!'과 함께 모두에게 알림이 떠요. 시작 전에는 '대결 시작까지 3초…'가 보여요", "낚시터 앞을 확률표 뗏목이 천천히 지나가요. 등급별로 몇 종이 있고 몇 % 확률인지 낚시하면서 볼 수 있어요"]}, {"v": "2026.11.05d", "date": "11월 5일", "items": ["낚시 도감이 45칸으로 늘었어요! 피라미·끄리·숭어·동자개 같은 한강 물고기, 블루길·배스(외래종은 수거!), 뱀장어·참게·자라·가물치", "재밌는 손님들: 쭈꾸미, 🐙문어, 🐡복어, 🦈철갑상어, 🟡황쏘가리(천연기념물이라 바로 놓아줘요)", "강 청소도 늘었어요: 컵라면 용기, 비닐봉지, 슬리퍼, 축구공, 우산, 자전거 바퀴", "깊은 곳에서 심해어가 올라와요: 🏮초롱아귀, 🎏산갈치, 🫠블롭피쉬, 🦴실러캔스, 🪼심해 해파리. 멀리 던질수록, 밤일수록 잘 나와요", "문어·황금 잉어·심해어·보물이 물면 '…!'가 뜨고, 초록 칸이 좁아지고 움직여요. 3번 맞춰야 잡혀요", "잡은 것마다 짧은 설명이 붙고, 희귀한 걸 낚으면 모두에게 알려져요"]}, {"v": "2026.11.05c", "date": "11월 5일", "items": ["입장할 때 갈 한강공원을 고를 수 있어요: 여의도·반포·뚝섬·잠실·망원 등 10곳, 공원마다 20명까지", "공원마다 지금 몇 명 있는지, 누가 있는지 보고 친구가 있는 곳으로 갈 수 있어요. 적당히 붐비는 곳을 '추천'해 드려요", "설정 → 한강공원에서 초대 링크를 복사하거나 다른 공원으로 옮길 수 있어요"]}, {"v": "2026.11.05b", "date": "11월 5일", "items": ["사람이 많아져도 끊기지 않게: 한 방에 20명까지 들어가고, 꽉 차면 다음 방(최대 10개)으로 자동 입장해요", "설정 → 방에서 지금 몇 번 방인지 보고, 초대 링크를 복사하거나 다른 방으로 옮길 수 있어요", "다른 사람 움직임이 훨씬 부드러워졌어요. 사람이 많을수록 데이터를 아껴 보내요", "연결이 잠깐 끊겨도 화면이 멈추지 않고 '다시 연결하는 중' 표시 후 이어져요", "설정 → 화질: 자동(휴대폰 성능에 맞춰 조절)·높음·낮음을 고를 수 있어요"]}, {"v": "2026.11.05", "date": "11월 5일", "items": ["피크닉 테이블 의자에 앉아 치킨을 먹으면 치킨 상자가 바닥이 아니라 테이블 위에 놓여요"]}, {"v": "2026.11.04d", "date": "11월 4일", "items": ["점프가 생겼어요! PC는 Space, 모바일은 오른쪽 아래 '⤴ 점프' 버튼을 눌러요", "대교 난간 옆에서 점프해도 떨어지지 않아요 (뛰어내리고 싶으면 난간에 기대서 다이빙!)"]}, {"v": "2026.11.04c", "date": "11월 4일", "items": ["모바일 사진 화면을 세로 화면에 맞게 다시 만들었어요. 큰 '닫기'·'📥 사진 저장' 버튼이 항상 보이고, 사진 바깥을 눌러도 닫혀요", "휴대폰에서 '사진 저장'을 누르고 '이미지 저장'을 고르면 사진 앱에 바로 들어가요", "치킨 나눠 먹기: 치킨을 먹는 중에 근처 사람에게 한 조각씩 나눠 줄 수 있어요 (최대 3명, 한 번 줄 때마다 내 치킨이 20초 줄어요)", "나눠 받은 치킨을 세 입 먹으면 \"너무 맛있어~!\" 하고 얼굴을 파묻어요. 양념치킨이면 볼에 양념이 묻어요", "편의점과 치킨 배달에 양념치킨이 생겼어요", "동물 레이스: 동물마다 빠르기·가속·코너링·지구력이 달라요. 적토마는 박자를 5번 맞추면 🔥불꽃 질주, 유니콘은 바퀴마다 🌈무지개 질주를 해요"]}, {"v": "2026.11.04b", "date": "11월 4일", "items": ["두 번째 대교 동쪽에 '한강 동물 레이스' 서킷이 생겼어요. 헤어핀·S자·시케인이 있는 코스를 3바퀴 돌아요 (2~4명, 판돈 500~2,000원)", "출발하면 동물 11종 중 하나가 랜덤으로 공짜 배정돼요. 얼룩말·적토마는 가끔, 유니콘은 아주 드물게 나와요. 빠르기는 모두 같아요", "Space·W(모바일은 🥕 버튼)를 박자 맞춰 누르면 달려요. 너무 급하게 누르면 지쳐요. 코너 안쪽이 더 빨라요", "돈이 1,000원 아래로 떨어지면 감정 표현에 '용돈 구걸'이 생겨요. 근처 사람이 500~2,000원을 깡통에 넣어 줄 수 있어요 (주기 하루 3,000원, 받기 하루 5,000원까지)"]}, {"v": "2026.11.04", "date": "11월 4일", "items": ["새 춤 3가지: 공중 미끄럼 걸음, 엄지 흔들기 응원, 손 탑 쌓기 (말하기 → 춤추기)", "엄지 흔들기 응원과 손 탑 쌓기는 앉아서도 출 수 있어요", "달리기 경주 출발 카운트를 3·2·1로 맞췄어요"]}, {"v": "2026.11.03g", "date": "11월 3일", "items": ["치킨이 훨씬 커졌어요. 앉아서 먹으면 앞에 치킨 상자를 놓고 닭다리를 들고 먹어요", "치킨은 2분 동안 천천히 먹어요. 먹는 중에도 짠이나 감정 표현을 할 수 있어요", "김은 라면과 치킨에서만 모락모락 나요"]}, {"v": "2026.11.03f", "date": "11월 3일", "items": ["낚시 대결을 최대 4명까지 함께할 수 있어요. 낚시 창에서 실시간 순위를 볼 수 있어요"]}, {"v": "2026.11.03e", "date": "11월 3일", "items": ["아주 드물게 유리병 편지·지갑·금반지·보물상자·아기 고래가 낚여요. 누가 낚으면 모두에게 알려 줘요", "지갑은 주인에게 돌려주면 사례금을 받아요. 돈을 주는 보물은 하루 한 번씩만 보상이 있어요", "낚싯대를 빌린 채로 달리기·자전거·먹기 같은 다른 활동도 할 수 있어요. 안 쓸 때는 등에 메고 다녀요"]}];
 "use strict";
 const $ = id => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -4208,6 +4210,7 @@ function frame() {
   updateBeg();
   updateShare();
   updateJump();
+  updateRaft();
   updateCircuit(dt);
   // bubbles follow their owners
   for (let i = bubbles.length - 1; i >= 0; i--) {
@@ -4867,7 +4870,9 @@ function fishLoop() {
   const tick = () => {
     if ($("fishModal").hidden) return;
     const now = Date.now(), pn = performance.now(), dt = Math.min(.25, (pn - last) / 1000); last = pn;
-    { const dl = $("fishDuel"), d = myDuel(); if (d && d.fd.st === "go") { const left = d.fd.go + FD_TIME - now; dl.hidden = false; dl.textContent = left > FD_TIME ? "대결 준비…" : left > 0 ? `🎣 대결 ${fmt(left / 1000)} · ${fdBoardText(d)}` : "대결 끝!"; } else dl.hidden = true; }
+    { const dl = $("fishDuel"), d = myDuel(); if (d && d.fd.st === "go") { const left = d.fd.go + FD_TIME - now; dl.hidden = false; const toGo = d.fd.go - now, fresh = toGo <= 0 && toGo > -4000;
+        dl.textContent = toGo > 0 ? `대결 시작까지 ${Math.ceil(toGo / 1000)}초… 줄을 던져 두고 기다려요` : fresh ? "🎣 대결 시작! 지금부터 잡는 물고기가 점수예요" : left > 0 ? `🎣 대결 ${fmt(left / 1000)} · ${fdBoardText(d)}` : "대결 끝!";
+        dl.classList.toggle("go", fresh || (toGo > 0 && toGo < 3500)); } else dl.hidden = true; }
     if (fishing.st === "charge") { fishing.power += fishing.pDir * dt * 1.1; if (fishing.power >= 1) { fishing.power = 1; fishing.pDir = -1; } if (fishing.power <= 0) { fishing.power = 0; fishing.pDir = 1; } $("fishPowerBar").style.width = Math.round(fishing.power * 100) + "%"; }
     if (fishing.st === "wait" && now >= fishing.biteAt) {
       const F = rollFish(), tense = TENSE(F);
@@ -5493,8 +5498,16 @@ function updateDuel() {
   if (d.fd.st !== "go") return;
   const now = Date.now(), left = d.fd.go - now;
   if (left > 0) { const n = String(Math.ceil(left / 1000)); if (fdShown !== d.fd.id + n) { fdShown = d.fd.id + n; cd.textContent = n; cd.hidden = false; cd.classList.remove("pop"); void cd.offsetWidth; cd.classList.add("pop"); if (audio.ready) audio.pop(); } return; }
-  if (left > -900) { if (fdShown !== d.fd.id + "go") { fdShown = d.fd.id + "go"; cd.textContent = "시작!"; cd.hidden = false; cd.classList.remove("pop"); void cd.offsetWidth; cd.classList.add("pop"); if (audio.ready) audio.ding(); } return; }
-  if (fdShown === d.fd.id + "go") { cd.hidden = true; fdShown = d.fd.id + "on"; }
+  if (left > -1600) {
+    if (fdShown !== d.fd.id + "go") {
+      fdShown = d.fd.id + "go"; cd.textContent = "🎣 대결 시작!"; cd.classList.add("wide"); cd.hidden = false; cd.classList.remove("pop"); void cd.offsetWidth; cd.classList.add("pop");
+      if (audio.ready) { audio.ding(); setTimeout(() => audio.ready && audio.ding(), 220); }
+      if (navigator.vibrate) try { navigator.vibrate([120, 80, 120]); } catch (e) {}
+      const bar = $("annBar"); bar.textContent = `🎣 낚시 대결 시작! 3분 동안 잡은 물고기가 점수예요 (${d.list.length}명)`; bar.hidden = false; bar.classList.remove("go"); void bar.offsetWidth; bar.classList.add("go"); clearTimeout(bar._t); bar._t = setTimeout(() => { bar.hidden = true; }, 5000);
+    }
+    return;
+  }
+  if (fdShown === d.fd.id + "go") { cd.hidden = true; cd.classList.remove("wide"); fdShown = d.fd.id + "on"; }
   if (now < d.fd.go + FD_TIME || fdPaid === d.fd.id) return;
   fdPaid = d.fd.id;
   // rank by score; people tied on points split the shares of the places they share
@@ -6407,6 +6420,54 @@ function qualityTick(dt) {
   if (fps < 40 && qLevel < 3 && since > 4000) { qGood = 0; applyQuality(qLevel + 1); }
   else if (fps > 57) { if (++qGood >= 10 && qLevel > 0 && since > 60000) { qGood = 0; applyQuality(qLevel - 1); } } // 30 smooth seconds before trying one step up
   else qGood = 0;
+}
+/* ================= 확률 게시판 뗏목: 낚시터 앞을 천천히 가로질러 떠다님 ================= */
+// The odds come straight from FISH (the same weights rollFish uses), so the board never goes stale.
+const RAFT = { z: -11, span: 40, period: 220 }; // just past where the floats land, clear of the bridge piers (z 14 / -16)
+function fishOdds(night, far) {
+  const wt = f => f.w * (f.rare === 2 || f.rare >= 4 ? RARE_BOOST : 1) * (f.deep ? (far ? 2.2 : 1) * (night ? 1.6 : 1) : 1);
+  const total = FISH.reduce((s, f) => s + wt(f), 0);
+  return [0, 1, 2, 5, 4, 3].map(t => ({ t, pct: FISH.filter(f => f.rare === t).reduce((s, f) => s + wt(f), 0) / total * 100, n: FISH.filter(f => f.rare === t).length }));
+}
+const raftTex = (() => {
+  const W = 1024, H = 640, c = document.createElement("canvas"); c.width = W; c.height = H; const x = c.getContext("2d");
+  x.fillStyle = "#f6efdf"; x.fillRect(0, 0, W, H);
+  x.strokeStyle = "#8a6a48"; x.lineWidth = 18; x.strokeRect(9, 9, W - 18, H - 18);
+  x.fillStyle = "#2f6fb0"; x.fillRect(18, 18, W - 36, 104);
+  x.fillStyle = "#fff"; x.font = "700 58px 'Pretendard', 'Noto Sans KR', sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("🎣 한강 낚시 확률표", W / 2, 72);
+  const NAMES = { 0: "흔해요", 1: "가끔 잡혀요", 2: "아주 드물어요", 3: "강 청소", 4: "보물·전설", 5: "심해어" };
+  const COLS = { 0: "#7fa7c9", 1: "#5cc58a", 2: "#f2b46b", 3: "#9aa0a8", 4: "#e0a53a", 5: "#6c5ce7" };
+  const rows = fishOdds(false, false), max = Math.max(...rows.map(r => r.pct));
+  rows.forEach((r, i) => {
+    const y = 160 + i * 64;
+    x.textAlign = "left"; x.fillStyle = "#2a2a2e"; x.font = "700 38px 'Pretendard', 'Noto Sans KR', sans-serif"; x.fillText(NAMES[r.t], 52, y + 20);
+    x.font = "500 26px 'Pretendard', 'Noto Sans KR', sans-serif"; x.fillStyle = "#6a6a70"; x.fillText(`${r.n}종`, 342, y + 22);
+    x.fillStyle = "#e6dcc8"; x.fillRect(420, y + 4, 390, 34); x.fillStyle = COLS[r.t]; x.fillRect(420, y + 4, Math.max(6, 390 * r.pct / max), 34);
+    x.textAlign = "right"; x.fillStyle = "#2a2a2e"; x.font = "800 38px 'Pretendard', 'Noto Sans KR', sans-serif"; x.fillText(r.pct >= 10 ? r.pct.toFixed(0) + "%" : r.pct.toFixed(1) + "%", W - 52, y + 22);
+  });
+  const deepBest = fishOdds(true, true).find(r => r.t === 5).pct;
+  x.textAlign = "center"; x.fillStyle = "#4a3a6a"; x.font = "600 27px 'Pretendard', 'Noto Sans KR', sans-serif";
+  x.fillText(`🌙 밤에 멀리 던지면 심해어 ${deepBest.toFixed(1)}%까지 올라가요`, W / 2, H - 48);
+  const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
+})();
+const raft = (() => {
+  const g = new THREE.Group(), wood = mat(0x9a7350), dark = mat(0x6b4f35);
+  for (let i = 0; i < 7; i++) { const log = new THREE.Mesh(new THREE.CylinderGeometry(.26, .26, 9.4, 10), i % 2 ? wood : dark); log.rotation.z = Math.PI / 2; log.position.set(0, 0, -1.5 + i * .5); g.add(log); }
+  [-1, 1].forEach(s => { const band = new THREE.Mesh(new THREE.BoxGeometry(.18, .08, 3.6), mat(0x4a3424)); band.position.set(s * 3.8, .24, 0); g.add(band); });
+  [-3.9, 3.9].forEach(px => { const post = new THREE.Mesh(new THREE.CylinderGeometry(.1, .12, 5.6, 8), dark); post.position.set(px, 2.8, -.2); g.add(post); });
+  const front = new THREE.Mesh(new THREE.PlaneGeometry(8, 5), new THREE.MeshBasicMaterial({ map: raftTex })); front.position.set(0, 3.2, -.1); g.add(front);
+  const back = front.clone(); back.rotation.y = Math.PI; back.position.z = -.3; g.add(back); // readable from the far side too
+  const flag = new THREE.Mesh(new THREE.PlaneGeometry(.9, .55), new THREE.MeshLambertMaterial({ color: 0xe0433a, side: THREE.DoubleSide })); flag.position.set(-3.45, 5.4, -.2); g.add(flag); g.userData.flag = flag;
+  const lamp = new THREE.Mesh(new THREE.SphereGeometry(.16, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffe4a0 })); lamp.position.set(3.9, 5.75, -.2); g.add(lamp);
+  g.traverse(m => { if (m.isMesh) m.castShadow = true; });
+  scene.add(g); return g;
+})();
+function updateRaft() {
+  // the same place on every screen: driven by the clock, a slow glide from one end to the other and back
+  const t = Date.now() / 1000, ph = (t % RAFT.period) / RAFT.period * Math.PI * 2;
+  raft.position.set(FISH_DECK.x + Math.sin(ph) * RAFT.span, -.42 + Math.sin(T * 1.3) * .05, RAFT.z);
+  raft.rotation.set(Math.sin(T * 1.1) * .02, 0, Math.sin(T * .9) * .025);
+  raft.userData.flag.rotation.y = Math.sin(T * 3) * .3;
 }
 })();
 </script>
