@@ -5589,8 +5589,18 @@ const FD_TIME = 180000, FD_COUNT = 3000, FD_MULT = [1, 2, 5, 0, 0, 6], FD_MAX = 
 const FD_ZONE_NAME = { deck: "데크", rock: "징검다리 바위", range: "수상 낚시터" };
 const fdZone = () => { const s = fishSpot(me.x, me.z, me.level); return s ? (s.id === "range1" || s.id === "range2" ? "range" : s.id) : null; };
 const FD_SHARE = { 2: [.8, .2], 3: [.55, .3, .15], 4: [.5, .25, .15, .1] };
-// 5명부터: 1등 40% · 2등 22% · 3등 13%, 나머지 25%는 4등 아래가 똑같이 나눔
-function fdShare(n) { if (n <= 4) return FD_SHARE[Math.max(2, n)]; const rest = .25 / (n - 3); return [.4, .22, .13, ...new Array(n - 3).fill(rest)]; }
+// 5명부터: 1등부터 꼴등까지 모두 받고, 한 등수 내려갈 때마다 같은 만큼 줄어듦 (n명이면 n : n-1 : … : 1)
+function fdShare(n) { if (n <= 4) return FD_SHARE[Math.max(2, n)]; const sum = n * (n + 1) / 2; return Array.from({ length: n }, (_, k) => (n - k) / sum); }
+// 상금을 10원 단위 정수로 나눔: 같은 점수는 같은 금액, 남는 10원은 소수점이 큰 등수부터, 총액은 판돈 합과 정확히 같게
+function fdPays(board, pot) {
+  const n = board.length, share = fdShare(n), groups = [];
+  for (let i = 0; i < n;) { let j = i; while (j + 1 < n && board[j + 1].s === board[i].s) j++; let sum = 0; for (let k = i; k <= j; k++) sum += share[k]; groups.push({ i, size: j - i + 1, raw: pot * sum / (j - i + 1) }); i = j + 1; }
+  groups.forEach(g => { g.each = Math.floor(g.raw / 10) * 10; g.frac = g.raw - g.each; });
+  let left = pot - groups.reduce((a, g) => a + g.each * g.size, 0);
+  [...groups].sort((a, b) => b.frac - a.frac || a.i - b.i).forEach(g => { if (left >= 10 * g.size) { g.each += 10; left -= 10 * g.size; } });
+  const pays = new Array(n).fill(0); groups.forEach(g => { for (let k = 0; k < g.size; k++) pays[g.i + k] = g.each; });
+  pays[0] += left; return pays;
+}
 // host: me.fd = { id, bet, st: "open" | "go", go }   joiner: me.fj = { h, id, at, bet }   score: me.fsc = { id, s, n }
 function fdOf(hostKey) {
   const h = hostKey === "me" ? { key: "me", peer: myPeer, fd: me.fd, n: me.name } : (() => { const o = others.get(hostKey); return o && o.p.fd ? { key: hostKey, peer: hostKey, fd: o.p.fd, n: o.p.n } : null; })();
@@ -5679,10 +5689,7 @@ function updateDuel() {
   if (now < d.fd.go + FD_TIME || fdPaid === d.fd.id) return;
   fdPaid = d.fd.id;
   // rank by score; people tied on points split the shares of the places they share
-  const board = fdBoard(d), n = board.length, pot = d.fd.bet * n, share = fdShare(n);
-  const pays = new Array(n).fill(0);
-  for (let i = 0; i < n;) { let j = i; while (j + 1 < n && board[j + 1].s === board[i].s) j++; let sum = 0; for (let k = i; k <= j; k++) sum += share[k]; for (let k = i; k <= j; k++) pays[k] = Math.floor(pot * sum / (j - i + 1) / 10) * 10; i = j + 1; }
-  const rest = pot - pays.reduce((a, b) => a + b, 0); pays[0] += rest;
+  const board = fdBoard(d), n = board.length, pot = d.fd.bet * n, pays = fdPays(board, pot);
   const mine = board.findIndex(m => m.key === "me");
   if (mine >= 0) { wallet.money += pays[mine]; saveWallet(); }
   const box = $("raceResList"); box.textContent = "";
