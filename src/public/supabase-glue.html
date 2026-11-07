@@ -10,7 +10,8 @@ window.HANGANG_CONFIG = {
 };
 /* ============================================================ */
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js" integrity="sha384-BWcjm9OdFth9TbhCxZPdm+gAOUMAzQy9nmTs12ioXdCcbVnJaPMn+fMUoQCLt60R" crossorigin="anonymous"></script>
+<script>window.supabase || document.write('<script src="https://unpkg.com/@supabase/supabase-js@2.117.3/dist/umd/supabase.js" integrity="sha384-BWcjm9OdFth9TbhCxZPdm+gAOUMAzQy9nmTs12ioXdCcbVnJaPMn+fMUoQCLt60R" crossorigin="anonymous"><\/script>')</script>
 <script>
 /* ============================================================
    한강 돗자리 · 공개 배포용 연결 코드
@@ -54,6 +55,77 @@ window.HANGANG_CONFIG = {
 
   const sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, { realtime: { params: { eventsPerSecond: 20 } } });
   const myId = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+  /* ---------- 보안: 보낸 사람 확인(서명) · 너무 많이 보내는 사람 막기 ---------- */
+  // 들어올 때 이 화면만의 열쇠를 만들고, 공개 열쇠는 접속 정보에 같이 실어 보냄.
+  // 내 메시지는 모두 서명해서 보내고, 받은 메시지는 그 id의 공개 열쇠로 확인 → 다른 사람 id로 꾸민 메시지는 버림
+  const ECDSA = { name: "ECDSA", namedCurve: "P-256" }, SIGN = { name: "ECDSA", hash: "SHA-256" };
+  const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+  const unb64 = str => Uint8Array.from(atob(str), c => c.charCodeAt(0));
+  const te = new TextEncoder();
+  // server may re-encode JSON and reorder keys, so both ends sign the same canonical text
+  const canon = v => Array.isArray(v) ? "[" + v.map(canon).join(",") + "]"
+    : v && typeof v === "object" ? "{" + Object.keys(v).sort().filter(k => v[k] !== undefined).map(k => JSON.stringify(k) + ":" + canon(v[k])).join(",") + "}"
+    : JSON.stringify(v === undefined ? null : v);
+  const SEC = { priv: null, pub: "", seq: 0 };
+  const keyReady = (async () => {
+    try { const kp = await crypto.subtle.generateKey(ECDSA, false, ["sign", "verify"]); SEC.priv = kp.privateKey; SEC.pub = b64(await crypto.subtle.exportKey("raw", kp.publicKey)); }
+    catch (e) { console.warn("[한강 돗자리] 서명 열쇠를 만들지 못했습니다", e); }
+  })();
+  const MAX_BYTES = 6000, FLOOD = 15, MUTE_MS = 60000;
+  const bound = new Map();   // id -> Promise<CryptoKey|false>, or null = old page with no key (until they refresh)
+  const verifyBudget = { t: 0, n: 0 }, lastQ = new Map(), chains = new Map(), muted = new Map(), rate = new Map(), pending = new Map();
+  function bindKeys(ch) {
+    // first key seen for an id stays for the whole visit: someone joining later with the same id can't swap it
+    const st = ch.presenceState();
+    for (const id in st) {
+      if (bound.has(id) || id === myId) continue;
+      const k = (st[id] || []).map(m => m && m.k).find(v => typeof v === "string" && v.length < 200);
+      let kp = null;
+      if (k) { try { kp = crypto.subtle.importKey("raw", unb64(k), ECDSA, false, ["verify"]).catch(() => false); } catch (e) { kp = Promise.resolve(false); } }
+      bound.set(id, kp);
+    }
+  }
+  function flooding(id) {
+    const now = Date.now(), m = muted.get(id);
+    if (m && now < m) return true;
+    const r = rate.get(id) || { t: now, n: 0 };
+    if (now - r.t > 1000) { r.t = now; r.n = 0; }
+    r.n++; rate.set(id, r);
+    if (r.n > FLOOD) { muted.set(id, now + MUTE_MS); console.warn("[한강 돗자리] 메시지를 너무 많이 보내는 접속을 1분 동안 무시합니다", id); return true; }
+    return false;
+  }
+  // every incoming "s"/"p": right size, right sender, in order, signed → apply
+  function receive(ch, ev, payload, body, apply) {
+    const id = payload.id;
+    if (muted.get(id) > Date.now()) return;
+    let size = 0; try { size = JSON.stringify(payload).length; } catch (e) { return; }
+    if (size > MAX_BYTES) return;
+    if (!bound.has(id)) bindKeys(ch);
+    if (!bound.has(id)) { // not in the room list yet: keep the latest full state until the list catches up
+      if (ev === "s" && (pending.has(id) || pending.size < 40)) pending.set(id, () => receive(ch, ev, payload, body, apply));
+      return;
+    }
+    const kp = bound.get(id);
+    if (kp === null) { if (typeof payload.g !== "string" && !flooding(id)) apply(); return; } // old page: unsigned is all it can do
+    const run = async () => {
+      const key = await kp, q = payload.q;
+      if (!key || typeof payload.g !== "string" || typeof q !== "number" || q <= (lastQ.get(id) || 0) || payload.g.length > 120) return;
+      const now = Date.now(); if (now - verifyBudget.t > 1000) { verifyBudget.t = now; verifyBudget.n = 0; }
+      if (++verifyBudget.n > 300) return; // a flood of forged messages can't eat the whole screen
+      let ok = false;
+      try { ok = await crypto.subtle.verify(SIGN, key, unb64(payload.g), te.encode(canon([id, ev, q, body]))); } catch (e) {}
+      if (!ok || q <= (lastQ.get(id) || 0)) return;
+      lastQ.set(id, q);
+      if (!flooding(id)) apply(); // only messages really from them count, so nobody can get someone else muted
+    };
+    chains.set(id, (chains.get(id) || Promise.resolve()).then(run, run));
+  }
+  async function signed(ev, payload, body) {
+    if (!SEC.priv) return payload;
+    const q = ++SEC.seq;
+    try { payload.q = q; payload.g = b64(await crypto.subtle.sign(SIGN, SEC.priv, te.encode(canon([myId, ev, q, body])))); } catch (e) {}
+    return payload;
+  }
   /* ---------- 방 나누기: 한 방 20명, 꽉 차면 다음 방 (무료 플랜 동시 접속 200명 = 방 10개) ---------- */
   const ROOM_CAP = CFG.roomCap || 20, ROOM_MAX = 10, BASE = CFG.roomName || "hangang-dotjari";
   const chanName = n => n === 1 ? BASE : BASE + "-" + n; // 1번 방은 예전 이름 그대로라 옛 버전 사용자와도 만남
@@ -86,15 +158,21 @@ window.HANGANG_CONFIG = {
   // 사람이 많을수록 위치를 덜 자주 보냄 (5명까지 0.2초 → 20명이면 0.6초). 받는 쪽은 사이를 부드럽게 이어 그림
   const POS_KEYS = ["x", "z", "y", "r", "bx", "bz", "br"];
   const sendGap = () => Math.min(600, 200 + Math.max(0, members.size - 5) * 27);
-  let lastSend = 0, sendTimer = null, lastFull = "", needFull = true;
+  let lastSend = 0, sendTimer = null, lastFull = "", needFull = true, sendChain = Promise.resolve();
+  const sentAt = []; // my own cap: at most 6 messages a second, whatever the game asks for
   const legacy = new Set(); // people on the old page that only understands full messages (until they refresh)
   const restKey = () => { const o = {}; for (const k in mine) if (!POS_KEYS.includes(k)) o[k] = mine[k]; return JSON.stringify(o); };
   function sendState() {
     if (!subscribed || !channel || !Object.keys(mine).length) return;
-    lastSend = performance.now();
-    const rest = restKey();
-    if (needFull || rest !== lastFull || [...legacy].some(id => members.has(id))) { lastFull = rest; needFull = false; channel.send({ type: "broadcast", event: "s", payload: { id: myId, s: mine, v: 2 } }); }
-    else channel.send({ type: "broadcast", event: "p", payload: { id: myId, p: [mine.x, mine.z, mine.y, mine.r, mine.bx ?? null, mine.bz ?? null, mine.br ?? null] } });
+    const now = performance.now();
+    while (sentAt.length && now - sentAt[0] > 1000) sentAt.shift();
+    if (sentAt.length >= 6) { if (!sendTimer) sendTimer = setTimeout(() => { sendTimer = null; sendState(); }, 1005 - (now - sentAt[0])); return; }
+    sentAt.push(now); lastSend = now;
+    const rest = restKey(), ch = channel;
+    let ev, body, payload;
+    if (needFull || rest !== lastFull || [...legacy].some(id => members.has(id))) { lastFull = rest; needFull = false; ev = "s"; body = JSON.parse(JSON.stringify(mine)); payload = { id: myId, s: body, v: 2 }; }
+    else { ev = "p"; body = [mine.x, mine.z, mine.y, mine.r, mine.bx ?? null, mine.bz ?? null, mine.br ?? null]; payload = { id: myId, p: body }; }
+    sendChain = sendChain.then(() => signed(ev, payload, body)).then(pl => { if (ch === channel) ch.send({ type: "broadcast", event: ev, payload: pl }); }).catch(() => {});
   }
   function queueSend(force) {
     const wait = sendGap() - (performance.now() - lastSend);
@@ -112,7 +190,7 @@ window.HANGANG_CONFIG = {
         if (decided) return; decided = true;
         if (full) { try { sb.removeChannel(ch); } catch (e) {} resolve(false); return; }
         channel = ch; roomNo = n; everJoined = true;
-        ch.track({ at: Date.now(), n: myName }).then(() => { subscribed = true; needFull = true; queueSend(true); schedule(); netNote(""); });
+        keyReady.then(() => ch.track({ at: Date.now(), n: myName, k: SEC.pub })).then(() => { subscribed = true; needFull = true; queueSend(true); schedule(); netNote(""); });
         resolve(true);
       };
       ch.on("presence", { event: "sync" }, () => {
@@ -121,28 +199,37 @@ window.HANGANG_CONFIG = {
         if (ch !== channel) return;
         members = new Set(ids);
         for (const id of [...states.keys()]) if (!members.has(id)) states.delete(id);
+        bindKeys(ch);
+        for (const [id, f] of [...pending]) if (bound.has(id)) { pending.delete(id); f(); } else if (!members.has(id)) pending.delete(id);
         schedule();
       });
       ch.on("presence", { event: "join" }, ({ key }) => { if (ch === channel && key !== myId) { needFull = true; queueSend(true); } });
       ch.on("broadcast", { event: "s" }, ({ payload }) => {
-        if (ch !== channel || !payload || typeof payload.id !== "string" || payload.id === myId || !payload.s || typeof payload.s !== "object") return;
-        if (payload.v === 2) legacy.delete(payload.id); else legacy.add(payload.id);
-        states.set(payload.id, payload.s); members.add(payload.id); schedule();
+        if (ch !== channel || !payload || typeof payload.id !== "string" || payload.id === myId || !payload.s || typeof payload.s !== "object" || Array.isArray(payload.s)) return;
+        receive(ch, "s", payload, payload.s, () => {
+          if (ch !== channel || !members.has(payload.id)) return;
+          if (payload.v === 2) legacy.delete(payload.id); else legacy.add(payload.id);
+          states.set(payload.id, payload.s); schedule();
+        });
       });
       ch.on("broadcast", { event: "p" }, ({ payload }) => {
-        if (ch !== channel || !payload || typeof payload.id !== "string" || !Array.isArray(payload.p)) return;
-        const st = states.get(payload.id); if (!st) return; // 전체 상태를 받기 전이면 무시 (곧 전체가 옴)
-        const [x, z, y, r, bx, bz, br] = payload.p;
-        const next = Object.assign({}, st, { x, z, y, r }); if (bx !== null) { next.bx = bx; next.bz = bz; next.br = br; } else { delete next.bx; delete next.bz; delete next.br; }
-        states.set(payload.id, next); schedule();
+        if (ch !== channel || !payload || typeof payload.id !== "string" || payload.id === myId || !Array.isArray(payload.p) || payload.p.length !== 7) return;
+        if (!states.has(payload.id)) return; // 전체 상태를 받기 전이면 무시 (곧 전체가 옴)
+        receive(ch, "p", payload, payload.p, () => {
+          const st = states.get(payload.id); if (!st || ch !== channel) return;
+          const [x, z, y, r, bx, bz, br] = payload.p;
+          const next = Object.assign({}, st, { x, z, y, r }); if (bx !== null) { next.bx = bx; next.bz = bz; next.br = br; } else { delete next.bx; delete next.bz; delete next.br; }
+          states.set(payload.id, next); schedule();
+        });
       });
       ch.on("broadcast", { event: "weather" }, ({ payload }) => {
-        if (payload && typeof payload.w === "string") weatherListeners.forEach(f => f(payload.w));
+        // anyone can send this message, so it only means "go look": the weather itself comes from the database
+        if (payload && typeof payload.w === "string" && !flooding("weather")) weatherReloads.forEach(f => f());
       });
       ch.subscribe((status, err) => {
         if (status === "SUBSCRIBED") {
           if (!decided) setTimeout(() => decide(Object.keys(ch.presenceState()).filter(id => id !== myId).length >= ROOM_CAP), 1500); // 빈 방이면 sync가 늦게 옴
-          else if (ch === channel) { ch.track({ at: Date.now(), n: myName }).then(() => { subscribed = true; needFull = true; queueSend(true); netNote(""); }); }
+          else if (ch === channel) { ch.track({ at: Date.now(), n: myName, k: SEC.pub }).then(() => { subscribed = true; needFull = true; queueSend(true); netNote(""); }); }
         } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
           const msg = String((err && err.message) || "");
           if (!decided) { if (/too_many|connections/i.test(msg)) { decided = true; resolve("busy"); } return; }
@@ -151,7 +238,7 @@ window.HANGANG_CONFIG = {
       });
     });
   }
-  const weatherListeners = [];
+  const weatherReloads = [];
   // 입장 전: 모든 공원을 잠깐 들여다보고 인원과 이름만 세고 나옴 (내 자리는 차지하지 않음)
   function peek(n) {
     return new Promise(resolve => {
@@ -211,7 +298,7 @@ window.HANGANG_CONFIG = {
             if (!error && data && data.weather) deliver(data.weather);
           };
           load(); const t = setInterval(load, 60000);
-          weatherListeners.push(deliver);
+          weatherReloads.push(load);
           return () => clearInterval(t);
         },
         async set({ w }) {

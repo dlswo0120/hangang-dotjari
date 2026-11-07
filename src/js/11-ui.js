@@ -22,7 +22,7 @@ $("joinForm").addEventListener("submit", async e => {
   if (room && typeof room.join === "function") { // public build: join the park picked in the list
     if (!parkSel) { $("err").textContent = "갈 한강공원을 골라 주세요."; return; }
     joiningNow = true; const go = $("joinForm").querySelector(".go"), label = go.textContent; go.disabled = true; go.textContent = "들어가는 중…";
-    const ok = await room.join(parkSel, n.slice(0, 10));
+    const ok = await room.join(parkSel, lobbyNameOn() ? n.slice(0, 10) : "");
     joiningNow = false; go.disabled = false; go.textContent = label;
     if (!ok) { $("err").textContent = "방금 그곳이 꽉 찼어요. 다른 공원을 골라 주세요."; loadParks(true); return; }
   } else if (others.size >= MAX_PEOPLE) { $("err").textContent = `지금 ${MAX_PEOPLE}명이 모두 와 있습니다. 조금 뒤에 다시 와 주세요.`; return; }

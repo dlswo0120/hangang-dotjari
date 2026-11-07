@@ -34,7 +34,15 @@ function updateMung(dt) {
 /* ---------- 종이배: write a line, float it down the river; everyone sees it for a while ---------- */
 const BOAT_LIFE = 90, PAPER_GAP = 20000;
 const BAD_WORDS = /(씨\s*발|시\s*발|ㅅ\s*ㅂ|ㅆ\s*ㅂ|병\s*신|ㅂ\s*ㅅ|좆|존\s*나|ㅈ\s*ㄴ|개\s*새\s*끼|새\s*끼|지\s*랄|미\s*친\s*놈|미\s*친\s*년|닥\s*쳐|fuck|shit|bitch)/gi;
-function cleanWords(t) { return String(t).replace(/[\u0000-\u001f\u200b-\u200f\u202a-\u202e]/g, "").replace(BAD_WORDS, "♡").trim().slice(0, 30); }
+// second pass: squeeze out spaces, dots, digits and symbols so "씨.1.발" or "f u c k" is caught too
+const BAD_SQUEEZED = /(씨발|씨빨|시발|시빨|쓰발|ㅅㅂ|ㅆㅂ|ㅄ|병신|븅신|ㅂㅅ|좆|존나|ㅈㄴ|개새끼|개색|새끼|지랄|ㅈㄹ|미친놈|미친년|닥쳐|꺼져|엠창|느금|니애미|니에미|섹스|fuck|fck|shit|bitch|sex)/i;
+const squeeze = t => String(t).toLowerCase().replace(/[^가-힣ㄱ-ㅎㅏ-ㅣa-z]/g, "");
+const isRude = t => BAD_SQUEEZED.test(squeeze(t));
+function cleanWords(t) {
+  const s = String(t).replace(/[\u0000-\u001f\u200b-\u200f\u202a-\u202e]/g, "").replace(BAD_WORDS, "♡").trim().slice(0, 30);
+  return isRude(s) ? "(고운 말을 써 주세요 ♡)" : s;
+}
+const cleanName = n => (isRude(n) ? "" : n); // a rude name just shows as 손님
 function nearRiver() { return me.level === "ground" && me.st === "walk" && !me.hold && me.z < 4.2 && me.x > BOUND.x0 + 2 && me.x < BOUND.x1 - 2; }
 const paperBoats = [], seenPb = new Map();
 const paperM = new THREE.MeshLambertMaterial({ color: 0xf8f4ea, emissive: 0x3a352c, side: THREE.DoubleSide });

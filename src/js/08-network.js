@@ -7,7 +7,7 @@ function cleanPresence(p) {
   if (!p || typeof p !== "object" || typeof p.n !== "string") return null;
   const st = ["walk", "sit", "lie", "swim", "boat", "bench", "stool", "bike", "ride"].includes(p.st) ? p.st : "walk";
   const o = {
-    n: p.n.replace(/[\u0000-\u001f\u200b-\u200f\u202a-\u202e]/g, "").slice(0, 10) || "손님",
+    n: cleanName(p.n.replace(/[\u0000-\u001f\u200b-\u200f\u202a-\u202e]/g, "").slice(0, 10)) || "손님",
     g: p.g === "f" ? "f" : "m", c: Number.isInteger(p.c) ? Math.abs(p.c) % SHIRTS.length : 0, m: Number.isInteger(p.m) ? Math.abs(p.m) % MAT_STYLES.length : 0,
     x: num(p.x, WORLD.x0, WORLD.x1, 0), z: num(p.z, WORLD.z0, WORLD.z1, 30), r: num(p.r, -100, 100, 0),
     y: num(p.y, -2, 14, 0), st, tb: p.tb === true, bt: null, say: null,
@@ -77,6 +77,7 @@ function syncPeers(peers) {
     if (peer.kind !== "viewer") continue;
     const p = cleanPresence(peer.presence); if (!p) continue;
     live.add(peer.peer);
+    if (isHidden(peer.peer, p.n)) { p.hidName = p.n; p.n = "가린 손님"; p.say = null; p.pb = null; p.gv = null; p.sh = null; p.em = null; } // 가리기: their words and gifts never reach my screen
     const key = [p.n, p.g, p.c, p.m].join("|"); let cur = others.get(peer.peer);
     if (!cur || cur.key !== key) {
       if (cur) scene.remove(cur.obj);
@@ -93,7 +94,7 @@ function syncPeers(peers) {
     if (!seen.has(peer.peer)) { seen.add(peer.peer); if (started) toast(p.n + "님이 한강에 왔습니다"); }
   }
   for (const [peer, o] of others) if (!live.has(peer)) { scene.remove(o.obj); others.delete(peer); seen.delete(peer); }
-  evaluateBoat();
+  evaluateBoat(); drawPeople();
   $("count").textContent = String(others.size + (started ? 1 : 0) || 1);
   if (!started) {
     const info = room && typeof room.info === "function" ? room.info() : null;

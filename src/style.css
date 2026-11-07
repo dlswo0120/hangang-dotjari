@@ -247,3 +247,13 @@ body.mung #jumpBtn{opacity:0!important;pointer-events:none!important}
 .ann-bar.go{animation:annIn .5s ease}
 @keyframes annIn{from{transform:translate(-50%,-20px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
 .shot{z-index:30!important}
+
+/* 같이 있는 사람 · 가리기 */
+#peopleBox{display:flex;flex-direction:column;gap:8px}
+.people-list{display:flex;flex-direction:column;gap:6px;max-height:168px;overflow-y:auto}
+.person{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14px;padding:4px 2px}
+.person span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.person.hid span{opacity:.55}
+.hide-btn{border:1px solid var(--line);background:rgba(255,255,255,.06);color:inherit;border-radius:999px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer;flex:none}
+.check-row{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft)}
+.check-row input{width:18px;height:18px;accent-color:#f1b26b}

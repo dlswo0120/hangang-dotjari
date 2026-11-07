@@ -12,6 +12,17 @@ import json, pathlib, re, sys
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SRC = ROOT / "src"
 THREE = '<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>'
+# 공개판: 외부 스크립트가 중간에 바뀌면 실행하지 않도록 무결성 값(SRI)을 붙임. 값은 npm 패키지 원본 파일에서 계산
+#   three@0.128.0 build/three.min.js, @supabase/supabase-js@2.117.3 dist/umd/supabase.js
+#   openssl dgst -sha384 -binary 파일 | openssl base64 -A
+# 첫 주소가 막히거나 값이 안 맞으면 다른 CDN에서 한 번 더 받아 옴 (그래도 무결성 확인은 함)
+THREE_SRI = "sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu"
+THREE_PUBLIC = ('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js" integrity="' + THREE_SRI + '" crossorigin="anonymous"></script>\n'
+                '<script>window.THREE || document.write(\'<script src="https://unpkg.com/three@0.128.0/build/three.min.js" integrity="' + THREE_SRI + '" crossorigin="anonymous"><\\/script>\')</script>')
+CSP = ("default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; "
+       "connect-src 'self' https://*.supabase.co wss://*.supabase.co; img-src 'self' data: blob:; media-src 'self' data: blob:; "
+       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; worker-src 'self' blob:; "
+       "object-src 'none'; base-uri 'none'; form-action 'self'")
 
 
 def read(p):
@@ -39,6 +50,8 @@ PUBLIC_HEAD = """<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="말없이 같이 앉아 강을 보는 곳, 한강 돗자리">
+<meta http-equiv="Content-Security-Policy" content="__CSP__">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}[hidden]{display:none!important}</style>
 """
 ARTIFACT_HEAD = """<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style></head><body>"""
@@ -53,7 +66,7 @@ def build():
     i = body.index('<canvas id="scene"')
     top, rest = body[:i], body[i:]
     assert rest.count(THREE) == 1
-    public = PUBLIC_HEAD + top + "</head>\n<body>\n" + rest.replace(THREE, glue + THREE) + "\n</body>\n</html>\n"
+    public = PUBLIC_HEAD.replace("__CSP__", CSP) + top + "</head>\n<body>\n" + rest.replace(THREE, glue + THREE_PUBLIC) + "\n</body>\n</html>\n"
     (ROOT / "index.html").write_text(public, encoding="utf-8")
     top = updates()[0]
     (ROOT / "version.json").write_text(json.dumps({"v": top["v"], "date": top["date"], "items": top["items"]}, ensure_ascii=False) + "\n", encoding="utf-8")

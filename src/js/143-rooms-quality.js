@@ -32,6 +32,7 @@ async function loadParks(force) {
     const bar = document.createElement("span"); bar.className = "bar"; const fill = document.createElement("i"); fill.style.width = Math.max(3, p.n / cap * 100) + "%"; fill.style.background = col; bar.appendChild(fill);
     const cnt = document.createElement("span"); cnt.className = "cnt"; cnt.textContent = `${p.n}/${cap} · ${label}`;
     b.append(nm, bar, cnt);
+    p.names = p.names.map(cleanName).filter(Boolean);
     if (p.names.length) { const who = document.createElement("span"); who.className = "who"; who.textContent = p.names.slice(0, 3).join(", ") + (p.names.length > 3 ? ` 외 ${p.names.length - 3}명` : ""); b.appendChild(who); }
     box.appendChild(b);
   });
