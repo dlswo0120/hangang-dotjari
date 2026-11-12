@@ -25,10 +25,24 @@ src/
     11-ui.js             입장·나가기·말하기·사진
     12-simulation.js     이동과 충돌
     13-main-loop.js      매 프레임 업데이트
+    125~129              소품·대여·배달·게시판·감정 표현과 춤
+    130~132              불꽃 가게, 사진, 생맥주
+    133-fishing.js       낚시와 물고기 도감
+    134~139              달리기 대회, 다이빙, 낚시 대결, 오리배 경주, 동물 레이스와 서킷
+    140~142              용돈 구걸·주기, 치킨 나눠 먹기, 점프
+    143-rooms-quality.js 한강공원 방 고르기, 화질 자동 조절
+    144-raft.js          확률표 뗏목
+    145-fishspots.js     징검다리 바위, 선상 낚시터, 강태공 미끼 가게
+    146-safety.js        가리기, 이름 숨기기
   public/supabase-glue.html   공개판에서 Supabase로 접속자를 잇는 코드
 supabase/setup.sql   Supabase 설정 (날씨·관리자 비밀번호)
 tools/build.py       src를 합쳐 index.html을 만드는 스크립트
 index.html           빌드 결과 (Vercel·깃허브 페이지가 보여주는 파일)
+dist/claude-artifact.html  혼자 보는 판 (접속 코드 없음, 로컬 확인용)
+docs/                작업 보고서
+vercel.json          보안 헤더 설정
+AGENTS.md            AI 코딩 도구용 작업 규칙 (CLAUDE.md가 이 파일을 불러옴)
+.claude/skills/      자세한 작업 절차 (배포, 테스트, 춤 만들기)
 ```
 
 ## 고치는 방법
@@ -41,7 +55,7 @@ index.html           빌드 결과 (Vercel·깃허브 페이지가 보여주는 
 
 ## 편의점 돈
 
-- 하루에 한 번(한국 시간 기준) 용돈 4,000원을 받습니다.
+- 하루에 한 번(한국 시간 기준) 용돈 5,000원을 받습니다.
 - 돈과 산 물건은 그 기기 브라우저에만 저장됩니다. 브라우저 기록을 지우면 사라집니다.
 
 ## 업데이트 공지 남기기
@@ -49,3 +63,7 @@ index.html           빌드 결과 (Vercel·깃허브 페이지가 보여주는 
 1. `src/updates.json` 맨 위에 새 항목을 추가합니다. `v`는 버전(예: `2026.11.03`), `date`는 화면에 보일 날짜, `items`는 바뀐 점입니다.
 2. `python3 tools/build.py`를 실행하면 `version.json`이 함께 만들어집니다.
 3. 올리면 접속 중인 사람 화면 위에 "한강이 새로 단장했어요 · 새로고침" 안내가 뜨고(3분마다 확인), 다시 들어온 사람에게는 업데이트 내용 창이 한 번 뜹니다. 처음 온 사람에게는 띄우지 않습니다.
+
+## AI 도구로 개발할 때
+
+VS Code 등에서 AI 코딩 도구를 쓴다면 `AGENTS.md`를 먼저 읽게 하세요. Claude Code는 `CLAUDE.md`를 통해 자동으로 읽습니다. 자세한 절차는 `.claude/skills/` 안의 스킬 문서에 있습니다.
