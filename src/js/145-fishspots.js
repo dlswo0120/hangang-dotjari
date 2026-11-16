@@ -1,7 +1,8 @@
 /* ================= 낚시 자리 늘리기: 징검다리 바위 · 2층 선상 낚시터 · 강태공 미끼 가게 ================= */
 // Spots: where fishing is allowed, how far a cast reaches, and where the water starts in front.
 const ROCK = { x: 150, z: -7, r: 2.4, cap: 3, stones: [[150, -.2], [150.4, -1.6], [149.7, -3], [150.2, -4.3]] }; // each overlaps the next a little: walk straight and you stay dry
-const RANGE = { x0: 168, x1: 196, z0: -6.3, z1: -2, walk: [180.5, 183.5], y2: 3.4, stairX: 171, bays: 7 };
+const RANGE = { x0: 168, x1: 196, z0: -6.3, z1: -2, walk: [180.5, 183.5], y2: 3.4, bays: 7 };
+RANGE.lift = { x: RANGE.x0 - 1.35, z: (RANGE.z0 + RANGE.z1) / 2 + .3 }; // 건물 왼쪽 옆면에 붙은 엘리베이터
 const SPOT_DEFS = [
   { id: "deck", name: "낚시 데크", reach: 1, edge: FISH_DECK.z0, test: (x, z, lv) => lv !== "loft" && onFishDeck(x, z) },
   { id: "rock", name: "바위 포인트", reach: 1.1, edge: ROCK.z - ROCK.r, test: (x, z, lv) => lv !== "loft" && onRock(x, z) },
@@ -29,8 +30,8 @@ const onRange1 = (x, z) => (x > RANGE.x0 && x < RANGE.x1 && z > RANGE.z0 && z < 
 const onWaterFloor = (x, z) => onRock(x, z) || onStone(x, z) || onRange1(x, z);
 // the rock holds three anglers at most
 function rockFull() { let n = 0; for (const o of others.values()) if (o.p.lv !== "loft" && onRock(o.x, o.z)) n++; return n >= ROCK.cap; }
-// upstairs: walk anywhere on the upper floor except the stairwell
-function loftStep(nx, nz) { return [clamp(nx, RANGE.stairX + 1.4, RANGE.x1 - .3), clamp(nz, RANGE.z0 + .2, RANGE.z1 - .6)]; }
+// upstairs: walk anywhere on the upper floor
+function loftStep(nx, nz) { return [clamp(nx, RANGE.x0 + .3, RANGE.x1 - .3), clamp(nz, RANGE.z0 + .2, RANGE.z1 - .6)]; }
 
 /* ---------- the rock and its stepping stones ---------- */
 {
@@ -60,14 +61,27 @@ function loftStep(nx, nz) { return [clamp(nx, RANGE.stairX + 1.4, RANGE.x1 - .3)
   add(new THREE.BoxGeometry(R.walk[1] - R.walk[0], .3, BOUND.landZ0 - R.z1 + .4), wood, (R.walk[0] + R.walk[1]) / 2, -.15, (R.z1 + BOUND.landZ0) / 2);
   // the upper floor slab, back wall with windows, and the long canopy roof (sloping down toward the river)
   add(new THREE.BoxGeometry(W, .3, D + .4), mat(0xbfc3be), cx, R.y2 - .15, cz - .2);
-  const backs = [add(new THREE.BoxGeometry(W, R.y2 - .2, .15), wall, cx, (R.y2 - .2) / 2, R.z1 + .1), add(new THREE.BoxGeometry(W, 3.2, .15), wall, cx, R.y2 + 1.6, R.z1 + .1)];
-  for (let i = 0; i < R.bays; i++) { const x = R.x0 + (i + .5) * W / R.bays; [1.3, R.y2 + 1.7].forEach(y => backs.push(add(new THREE.BoxGeometry(2.2, .9, .05), mat(0xbfe1f2), x, y, R.z1 + .02))); }
+  // 1층 뒷벽은 입구 자리를 크게 뚫음 (나무 다리가 닿는 곳): 왼쪽 벽 · 입구 위 벽 · 오른쪽 벽
+  const gx0 = R.walk[0] - .9, gx1 = R.walk[1] + .9, gh = R.y2 - .2, doorH = 2.5;
+  const backs = [
+    add(new THREE.BoxGeometry(gx0 - R.x0, gh, .15), wall, (R.x0 + gx0) / 2, gh / 2, R.z1 + .1),
+    add(new THREE.BoxGeometry(R.x1 - gx1, gh, .15), wall, (gx1 + R.x1) / 2, gh / 2, R.z1 + .1),
+    add(new THREE.BoxGeometry(gx1 - gx0, gh - doorH, .15), wall, (gx0 + gx1) / 2, doorH + (gh - doorH) / 2, R.z1 + .1),
+    add(new THREE.BoxGeometry(W, 3.2, .15), wall, cx, R.y2 + 1.6, R.z1 + .1)
+  ];
+  for (let i = 0; i < R.bays; i++) { const x = R.x0 + (i + .5) * W / R.bays; [1.3, R.y2 + 1.7].forEach(y => { if (y < R.y2 && Math.abs(x - (gx0 + gx1) / 2) < 3.2) return; backs.push(add(new THREE.BoxGeometry(2.2, .9, .05), mat(0xbfe1f2), x, y, R.z1 + .02)); }); }
+  // 입구: 초록 문틀 + 위에 "입구" 간판 + 바닥 매트 (강가에서 보면 바로 들어가는 곳이 보임)
+  const frame = mat(0x1f5f3a);
+  [gx0, gx1].forEach(x => backs.push(add(new THREE.BoxGeometry(.22, doorH + .15, .32), frame, x, (doorH + .15) / 2, R.z1 + .12)));
+  backs.push(add(new THREE.BoxGeometry(gx1 - gx0 + .22, .22, .32), frame, (gx0 + gx1) / 2, doorH + .1, R.z1 + .12));
+  const door = add(new THREE.PlaneGeometry(gx1 - gx0 - .3, .5), signMat(signTex([["🎣 입구 · 어서 오세요", 44, .56]], "#1f5f3a", "#ffffff", 640, 72)), (gx0 + gx1) / 2, doorH + .5, R.z1 + .3); door.castShadow = false; backs.push(door);
+  add(new THREE.BoxGeometry(gx1 - gx0 - .4, .02, 1.2), mat(0x2f6fb0), (gx0 + gx1) / 2, .02, R.z1 + .7);
   // posters on the back wall, facing the bank: you can tell what the building is from the path
   const poster = (lines, bg, fg, w, h, tw, th, y) => { const p = add(new THREE.PlaneGeometry(w, h), signMat(signTex(lines, bg, fg, tw, th)), cx, y, R.z1 + .19); p.castShadow = false; backs.push(p); return p; };
   poster([["🎣 한강 선상 낚시터", 66, .56]], "#1f5f3a", "#ffffff", 13, 1.05, 1024, 84, R.y2 + 2.72);
-  poster([["낚시 전용 공간 · 1층 / 2층 (계단은 왼쪽 끝) · 2층은 더 멀리 던져요", 34, .55]], "#f6efdf", "#2a2a2e", 15, .6, 1280, 52, R.y2 - .65);
+  poster([["낚시 전용 공간 · 2층은 왼쪽 옆 엘리베이터로 · 2층은 더 멀리 던져요", 34, .55]], "#f6efdf", "#2a2a2e", 15, .6, 1280, 52, R.y2 - .65);
   RANGE.backs = backs;
-  [[R.y2 - .45, 1.2], [R.y2 + 3.3, 1.6]].forEach(([y, over]) => { // canopies over each floor's front, like a driving range
+  [[R.y2 - .45, 1.2]].forEach(([y, over]) => { // 1층 앞 차양만 (2층은 지붕 없이 하늘이 열린 낚시터)
     const c = add(new THREE.BoxGeometry(W + .6, .12, D + over), steel, cx, y, cz - over / 2); c.rotation.x = -.08;
     for (let i = 0; i <= R.bays * 2; i++) add(new THREE.BoxGeometry(.08, .1, D + over), mat(0xc8ccc6), R.x0 + i * W / (R.bays * 2), y - .1, cz - over / 2).rotation.x = -.08;
     add(new THREE.BoxGeometry(W + .6, .08, .08), mat(0xfff1c0), cx, y - .18, R.z0 - over + .25); // a light strip under the lip
@@ -79,7 +93,7 @@ function loftStep(nx, nz) { return [clamp(nx, RANGE.stairX + 1.4, RANGE.x1 - .3)
     for (let i = 0; i <= R.bays; i++) add(new THREE.BoxGeometry(.18, f ? 3.2 : R.y2 - .3, .18), steel, R.x0 + i * W / R.bays, y + (f ? 1.6 : (R.y2 - .3) / 2), R.z0 + .15);
     for (let i = 0; i < R.bays; i++) {
       const x = R.x0 + (i + .5) * W / R.bays;
-      if (!(f === 1 && x < R.stairX + 1.4)) {
+      {
         add(new THREE.BoxGeometry(W / R.bays - .5, .03, 1.8), green, x, y + .02, R.z0 + 1.2);
         add(new THREE.CylinderGeometry(.22, .2, .45, 10), mat(0x2f6fb0), x + .9, y + .23, R.z0 + 1.9);
         const tag = add(new THREE.PlaneGeometry(.45, .45), signMat(numTex(f * R.bays + i + 1)), x - W / R.bays / 2 + .12, y + 1.6, R.z0 + .26); tag.castShadow = false;
@@ -87,12 +101,25 @@ function loftStep(nx, nz) { return [clamp(nx, RANGE.stairX + 1.4, RANGE.x1 - .3)
     }
     add(new THREE.BoxGeometry(W, .06, .06), rail, cx, y + .95, R.z0 + .08); add(new THREE.BoxGeometry(W, .05, .05), rail, cx, y + .5, R.z0 + .08);
   }
-  // stairs at the west end (ground floor → upper floor)
-  for (let i = 0; i < 10; i++) add(new THREE.BoxGeometry(1.2, .12, .5), wood, R.stairX - .2, .1 + i * R.y2 / 10, R.z1 - .5 - i * .38);
-  add(new THREE.BoxGeometry(.06, .06, 4), rail, R.stairX + .45, 2.1, R.z1 - 2.2).rotation.x = -.72;
-  // name board on the roof
-  const sign = add(new THREE.PlaneGeometry(7, 1.1), signMat(signTex([["한강 선상 낚시터", 60, .55]], "#1f5f3a", "#ffffff", 768, 120)), cx, R.y2 + 3.9, R.z0 - 1.05);
-  sign.rotation.x = -.08; sign.castShadow = false; const back = sign.clone(); back.rotation.y = Math.PI; back.position.z = R.z1 + .25; scene.add(back);
+  // 2층 옆 난간 (지붕이 없어진 대신 양 끝을 막음)
+  [R.x0 + .05, R.x1 - .05].forEach(x => add(new THREE.BoxGeometry(.06, .06, D), rail, x, R.y2 + .95, cz));
+  // 엘리베이터: 건물 왼쪽 옆면에 붙은 유리 승강로 + 오르내리는 칸
+  const L = RANGE.lift, glass = new THREE.MeshLambertMaterial({ color: 0xbfe1f2, transparent: true, opacity: .35 }), ltop = R.y2 + 3.1;
+  add(new THREE.BoxGeometry(2.3, .3, 2.3), wood, L.x, -.15, L.z);                                          // 바닥 받침(물 위)
+  [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => add(new THREE.BoxGeometry(.14, ltop, .14), steel, L.x + a * 1.08, ltop / 2, L.z + b * 1.08));
+  [-1, 1].forEach(b => add(new THREE.BoxGeometry(2.3, ltop, .04), glass, L.x, ltop / 2, L.z + b * 1.1));    // 앞뒤 유리
+  add(new THREE.BoxGeometry(.04, ltop, 2.3), glass, L.x - 1.1, ltop / 2, L.z);                               // 바깥쪽 유리
+  add(new THREE.BoxGeometry(2.4, .2, 2.4), steel, L.x, ltop + .1, L.z);
+  const cab = new THREE.Group(); cab.position.set(L.x, 0, L.z); scene.add(cab);
+  const cabFloor = new THREE.Mesh(new THREE.BoxGeometry(1.9, .12, 1.9), mat(0x6b7a86)); cabFloor.position.y = .06; cab.add(cabFloor);
+  const cabTop = new THREE.Mesh(new THREE.BoxGeometry(1.9, .08, 1.9), mat(0xe9ece8)); cabTop.position.y = 2.35; cab.add(cabTop);
+  const lamp = new THREE.Mesh(new THREE.BoxGeometry(.9, .03, .3), new THREE.MeshBasicMaterial({ color: 0xfff1c0 })); lamp.position.y = 2.3; cab.add(lamp);
+  cab.traverse(m => { if (m.isMesh) m.castShadow = true; });
+  RANGE.cab = cab;
+  const liftSign = add(new THREE.PlaneGeometry(1.6, .55), signMat(signTex([["🛗 엘리베이터 1F ⇄ 2F", 30, .56]], "#2f6fb0", "#ffffff", 384, 132)), L.x, 2.75, L.z + 1.16); liftSign.castShadow = false;
+  // 지붕 대신 2층 뒷벽 위에 강 쪽을 보는 이름 간판
+  const sign = add(new THREE.PlaneGeometry(7, 1.1), signMat(signTex([["한강 선상 낚시터", 60, .55]], "#1f5f3a", "#ffffff", 768, 120)), cx, R.y2 + 3.8, R.z1 + .02);
+  sign.rotation.y = Math.PI; sign.castShadow = false;
   const info = add(new THREE.PlaneGeometry(1.8, .9), signMat(signTex([["선상 낚시터", 38, .3], ["2층은 더 멀리 던져져요", 24, .62], ["→ 심해어가 잘 나와요", 24, .86]], "#1f5f3a", "#ffffff", 384, 192)), R.walk[0] - .6, 1.4, BOUND.landZ0 + .2);
   info.rotation.y = 0;
 }
@@ -137,7 +164,8 @@ const baitNpc = (() => {
   updateAvatar(av, .016, 0, {});
   return { g, av };
 })();
-const nearBaitNpc = () => me.level === "ground" && me.st === "walk" && Math.hypot(me.x - (BAIT_NPC.x + .6), me.z - (BAIT_NPC.z - 1.3)) < 1.9;
+// 수레 둘레 어느 쪽에서든 1.6m 안이면 말을 걸 수 있음
+const nearBaitNpc = () => { if (me.level !== "ground" || me.st !== "walk") return false; const x0 = BAIT_NPC.x - .6, x1 = BAIT_NPC.x + 2, z0 = BAIT_NPC.z - .55, z1 = BAIT_NPC.z + .55; return Math.hypot(Math.max(x0 - me.x, 0, me.x - x1), Math.max(z0 - me.z, 0, me.z - z1)) < 1.6; };
 const NPC_LINES = ["허허, 오늘은 물이 좋구먼", "떡밥엔 붕어, 루어엔 쏘가리지", "새우를 쓰면 바닥 녀석들이 올라온다네", "바위에 가면 꺽지가 산다던데…", "낚시는 기다림이야, 기다림"];
 let npcSaid = 0;
 
@@ -145,8 +173,8 @@ let npcSaid = 0;
 function spotActions(acts, status) {
   if (!started || anim || boarded || me.st !== "walk") return status;
   if (nearBaitNpc()) { acts.unshift(["baitshop", "🪱 강태공에게 미끼 사기", "primary"]); status = "강태공 미끼 가게 · 미끼마다 잘 무는 물고기가 달라요"; }
-  if (me.level !== "loft" && onRange1(me.x, me.z) && me.x < RANGE.stairX + 1.6 && me.z > RANGE.z0) acts.unshift(["loftup", "⬆ 2층으로 올라가기", ""]);
-  if (me.level === "loft" && me.x < RANGE.stairX + 2.4) acts.unshift(["loftdown", "⬇ 1층으로 내려가기", ""]);
+  if (me.level !== "loft" && onRange1(me.x, me.z) && me.x < RANGE.x0 + 3 && me.z > RANGE.z0) acts.unshift(["loftup", "🛗 엘리베이터 타고 2층으로", "primary"]);
+  if (me.level === "loft" && me.x < RANGE.x0 + 3) acts.unshift(["loftdown", "🛗 엘리베이터 타고 1층으로", "primary"]);
   if (me.level === "loft" && !status) status = "선상 낚시터 2층 · 여기선 더 멀리 던져져요";
   return status;
 }
@@ -154,7 +182,16 @@ function spotClick(a) {
   if (a === "baitshop") { openBaitShop(); return true; }
   if (a === "loftup" || a === "loftdown") {
     const up = a === "loftup";
-    anim = { t: 0, dur: .9, from: [me.x, me.z, me.y || 0], to: [RANGE.stairX + 1.6, up ? -4.4 : -2.6, up ? RANGE.y2 : 0], hop: .3, then: () => { me.level = up ? "loft" : "ground"; me.y = up ? RANGE.y2 : 0; publish(true); actKey = ""; refreshActions(); } };
+    // 엘리베이터: 칸으로 걸어 들어가 → 오르내리고 → 반대 층으로 걸어 나옴
+    const L = RANGE.lift, y0 = up ? 0 : RANGE.y2, y1 = up ? RANGE.y2 : 0, out = [RANGE.x0 + 1.2, L.z];
+    liftRide = { t0: performance.now(), y0, y1 };
+    anim = { t: 0, dur: .6, from: [me.x, me.z, y0], to: [L.x, L.z, y0], hop: 0, then: () => {
+      anim = { t: 0, dur: 2.2, from: [L.x, L.z, y0], to: [L.x, L.z, y1], hop: 0, then: () => {
+        me.level = up ? "loft" : "ground";
+        anim = { t: 0, dur: .6, from: [L.x, L.z, y1], to: [out[0], out[1], y1], hop: 0, then: () => { me.y = y1; liftRide = null; publish(true); actKey = ""; refreshActions(); } };
+      } };
+      if (audio.ready) audio.ding();
+    } };
     if (audio.ready) audio.step("deck", true); return true;
   }
   return false;
@@ -197,8 +234,14 @@ $("baitRow").addEventListener("click", e => {
   fishing.bait = b.dataset.k; drawBaitRow(); toast(`${BAIT_BY[fishing.bait].icon} ${BAIT_BY[fishing.bait].name}를 끼웠어요 · ${BAIT_BY[fishing.bait].desc}`);
 });
 
+let liftRide = null;
 function updateSpots() {
   if (!started) return;
+  // 엘리베이터 칸: 내가 타고 있으면 나를 따라, 아니면 칸 안에 있는 다른 사람 높이로, 아무도 없으면 그 자리에 머묾
+  { const L = RANGE.lift, cab = RANGE.cab; let ty = null;
+    if (liftRide) ty = me.y || 0;
+    else for (const [, o] of others) if (Math.hypot(o.x - L.x, o.z - L.z) < 1.1) { ty = o.obj ? o.obj.position.y : 0; break; }
+    if (ty !== null) cab.position.y = ty; }
   // the old angler greets people walking by now and then
   const d = Math.hypot(me.x - BAIT_NPC.x, me.z - BAIT_NPC.z);
   if (d < 6 && Date.now() - npcSaid > 25000) { npcSaid = Date.now(); showBubble(() => baitNpc.av, NPC_LINES[Math.floor(Math.random() * NPC_LINES.length)], 3, "npc-bait"); }

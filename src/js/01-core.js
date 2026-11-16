@@ -27,10 +27,28 @@ const P = {
   sunset:    { top:0x334a7a, mid:0xd98a6a, hor:0xf6c27f, sun:0xffb070, sunI:1.05, sunDir:[-.15,.10,-1], hemiS:0xf0b590, hemiG:0x3e4a35, hemiI:.7, fog:0xd9a07a, deep:0x2a3a55, shallow:0x7a6170, glow:.55, lamps:.6, stars:0, streak:.55, disk:1 },
   dusk:      { top:0x16203e, mid:0x403e64, hor:0xb06a62, sun:0xff9a6a, sunI:.5, sunDir:[-.25,.02,-1], hemiS:0x8a7aa0, hemiG:0x232a22, hemiI:.8, fog:0x4a4058, deep:0x121a30, shallow:0x3a3a58, glow:.85, lamps:1, stars:.4, streak:.9, disk:.6 }
 };
-const KEYS = [[0,"night"],[4.3,"night"],[5.6,"dawn"],[7.2,"morning"],[11,"day"],[14.5,"day"],[16.5,"afternoon"],[18.3,"sunset"],[19.4,"dusk"],[20.3,"night"],[24,"night"]];
+// 서울의 그날 해 뜨는·지는 시각을 계산해서 하늘 단계를 거기에 맞춤 (여름엔 늦게 지고 겨울엔 일찍 짐)
+const SEOUL = { lat: 37.55 * Math.PI / 180, lon: 126.98 };
+function solarDay(d) {
+  const n = Math.floor((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(d.getFullYear(), 0, 0)) / 864e5);
+  const decl = 23.44 * Math.PI / 180 * Math.sin(2 * Math.PI * (284 + n) / 365), B = 2 * Math.PI * (n - 81) / 364;
+  const eq = 9.87 * Math.sin(2 * B) - 7.53 * Math.cos(B) - 1.5 * Math.sin(B); // 균시차(분)
+  const noon = 12 + (135 - SEOUL.lon) * 4 / 60 - eq / 60;                        // 한국 표준시 기준 남중 시각
+  const c = (Math.sin(-.833 * Math.PI / 180) - Math.sin(SEOUL.lat) * Math.sin(decl)) / (Math.cos(SEOUL.lat) * Math.cos(decl));
+  const half = Math.acos(clamp(c, -1, 1)) * 180 / Math.PI / 15;
+  return { rise: noon - half, set: noon + half, noon, decl };
+}
+function solarElev(h, S) { const ha = (h - S.noon) * 15 * Math.PI / 180; return Math.asin(Math.sin(SEOUL.lat) * Math.sin(S.decl) + Math.cos(SEOUL.lat) * Math.cos(S.decl) * Math.cos(ha)); }
+let KEYS = [], SOLAR = null, solarKey = "";
+function updateSolar(d) {
+  const key = d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate(); if (key === solarKey) return; solarKey = key;
+  const S = SOLAR = solarDay(d), r = S.rise, s = S.set, nn = S.noon;
+  KEYS = [[0,"night"],[r-1.5,"night"],[r-.2,"dawn"],[r+1.2,"morning"],[nn-1.5,"day"],[nn+1.5,"day"],[s-1.6,"afternoon"],[s-.1,"sunset"],[s+.8,"dusk"],[s+1.5,"night"],[24,"night"]];
+}
 const SCALARS = ["sunI", "hemiI", "glow", "lamps", "stars", "streak", "disk"];
 function kst() { const d = new Date(); return new Date(d.getTime() + d.getTimezoneOffset() * 60000 + 9 * 3600000); }
-function phaseLabel(h) { return h >= 4 && h < 7 ? "새벽" : h >= 7 && h < 11 ? "아침" : h >= 11 && h < 14 ? "점심" : h >= 14 && h < 17.5 ? "오후" : h >= 17.5 && h < 19.5 ? "노을" : "밤"; }
+updateSolar(kst());
+function phaseLabel(h) { const r = SOLAR.rise, s = SOLAR.set; return h >= r - 1.6 && h < r + .6 ? "새벽" : h >= r + .6 && h < 11 ? "아침" : h >= 11 && h < 14 ? "점심" : h >= 14 && h < s - .7 ? "오후" : h >= s - .7 && h < s + 1.2 ? "노을" : "밤"; }
 const cA = new THREE.Color(), cB = new THREE.Color();
 function blend(h) {
   let i = 0; while (i < KEYS.length - 2 && KEYS[i + 1][0] <= h) i++;

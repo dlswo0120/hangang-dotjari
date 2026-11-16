@@ -175,8 +175,14 @@ audio.setMuted = function (m) { this.muted = m; if (this.ready) this.master.gain
 /* ================= apply environment ================= */
 let envStreak = 0;
 function applyEnv() {
-  const k = kst(); hourNow = k.getHours() + k.getMinutes() / 60; phase = phaseLabel(hourNow);
+  const k = kst(); updateSolar(k); hourNow = k.getHours() + k.getMinutes() / 60 + k.getSeconds() / 3600; phase = phaseLabel(hourNow);
   const T = blend(hourNow), w = weather;
+  { // 해가 실제 시각에 맞춰 동쪽(오른쪽)에서 떠서 하늘을 가로질러 서쪽(왼쪽)으로 짐. 강 위 하늘에 보이도록 앞쪽으로 살짝 기울임
+    const el = solarElev(hourNow, SOLAR), f = clamp((hourNow - SOLAR.rise) / (SOLAR.set - SOLAR.rise), 0, 1);
+    const wgt = clamp((el * 180 / Math.PI + 6) / 8, 0, 1), y = Math.max(Math.sin(el), -.04) + .03;
+    const dir = [Math.cos(Math.PI * f) * .95, y, -.6], len = Math.hypot(...dir);
+    T.sunDir = T.sunDir.map((v, i) => v + (dir[i] / len - v) * wgt);
+  }
   const overcast = w === "cloudy" ? 0.6 : w === "rain" ? 0.8 : w === "snow" ? 0.65 : w === "fog" ? 0.5 : 0;
   const grey = new THREE.Color(0x8e959d).multiplyScalar(0.25 + 0.75 * Math.min(1, T.hemiI));
   const mix = (hex, amt) => new THREE.Color(hex).lerp(grey, amt);

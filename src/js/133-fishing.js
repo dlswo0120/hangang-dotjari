@@ -1,5 +1,5 @@
 /* ================= 한강 낚시: 데크 · 대여 · 던지기 · 챔질 · 도감 ================= */
-const FISH_DECK = { x: 120, half: 6, z0: -2.6 }, ROD_FEE = 1000, ROD_TIME = 30 * 60000, FISH_DAY_CAP = 4000;
+const FISH_DECK = { x: 120, half: 6, z0: -2.6 }, ROD_FEE = 1000, ROD_TIME = 30 * 60000, FISH_DAY_CAP = 10000; // 하루 낚시 수입 한도 (4,000원 → 10,000원)
 const FISH = [
   { k: "bung", g: "veg", name: "붕어", rare: 0, w: 20, cm: [15, 32], col: 0x8a7a4a, pay: 200 },
   { k: "ing", g: "veg", name: "잉어", rare: 0, w: 20, cm: [30, 72], col: 0xb08a40, pay: 200 },
