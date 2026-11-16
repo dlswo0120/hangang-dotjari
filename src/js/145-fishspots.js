@@ -52,7 +52,7 @@ function loftStep(nx, nz) { return [clamp(nx, RANGE.x0 + .3, RANGE.x1 - .3), cla
 /* ---------- the floating fishing range: two floors of numbered bays under a long canopy ---------- */
 {
   const R = RANGE, W = R.x1 - R.x0, D = R.z1 - R.z0, cx = (R.x0 + R.x1) / 2, cz = (R.z0 + R.z1) / 2;
-  const wood = mat(0x9a7350), dark = mat(0x5b4430), steel = mat(0xe9ece8), green = mat(0x3f9a54), wall = mat(0xcfe0c4), rail = mat(0xf2f2ee);
+  const wood = mat(0x9a7350), dark = mat(0x5b4430), steel = mat(0xe9ece8), green = mat(0x3f9a54), wall = new THREE.MeshLambertMaterial({ color: 0xcfeaf6, transparent: true, opacity: .28, depthWrite: false }), rail = mat(0xf2f2ee);
   const add = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; scene.add(o); return o; };
   // piles in the water
   for (let i = 0; i <= R.bays; i++) [R.z0 + .2, R.z1 - .2].forEach(z => add(new THREE.CylinderGeometry(.18, .2, 2, 8), dark, R.x0 + i * W / R.bays, -.9, z));
@@ -69,7 +69,10 @@ function loftStep(nx, nz) { return [clamp(nx, RANGE.x0 + .3, RANGE.x1 - .3), cla
     add(new THREE.BoxGeometry(gx1 - gx0, gh - doorH, .15), wall, (gx0 + gx1) / 2, doorH + (gh - doorH) / 2, R.z1 + .1),
     add(new THREE.BoxGeometry(W, 3.2, .15), wall, cx, R.y2 + 1.6, R.z1 + .1)
   ];
-  for (let i = 0; i < R.bays; i++) { const x = R.x0 + (i + .5) * W / R.bays; [1.3, R.y2 + 1.7].forEach(y => { if (y < R.y2 && Math.abs(x - (gx0 + gx1) / 2) < 3.2) return; backs.push(add(new THREE.BoxGeometry(2.2, .9, .05), mat(0xbfe1f2), x, y, R.z1 + .02)); }); }
+  backs.forEach(m => { m.castShadow = false; }); // 통유리: 그림자 없이 비쳐 보임
+  // 유리 사이 얇은 창틀(기둥 칸마다 세로, 층마다 가로)
+  for (let i = 0; i <= R.bays; i++) { const x = R.x0 + i * W / R.bays; if (x > gx0 - .1 && x < gx1 + .1) continue; backs.push(add(new THREE.BoxGeometry(.08, R.y2 + 3.2, .2), steel, x, (R.y2 + 3.2) / 2, R.z1 + .1)); }
+  [R.y2, R.y2 + 3.2].forEach(y => backs.push(add(new THREE.BoxGeometry(W, .08, .2), steel, cx, y, R.z1 + .1)));
   // 입구: 초록 문틀 + 위에 "입구" 간판 + 바닥 매트 (강가에서 보면 바로 들어가는 곳이 보임)
   const frame = mat(0x1f5f3a);
   [gx0, gx1].forEach(x => backs.push(add(new THREE.BoxGeometry(.22, doorH + .15, .32), frame, x, (doorH + .15) / 2, R.z1 + .12)));
